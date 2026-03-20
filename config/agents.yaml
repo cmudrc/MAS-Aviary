@@ -1,0 +1,24 @@
+agents:
+  - name: "planner"
+    role: "Breaks down tasks into subtasks and decides which agent should handle each one"
+    system_prompt: |
+      Reasoning: medium
+      You are a planning agent. Given a task, break it into steps and decide which agent should handle each one.
+    tools: ["echo_tool"]
+    max_steps: 5
+
+  - name: "executor"
+    role: "Executes specific subtasks using available tools"
+    system_prompt: |
+      Reasoning: medium
+      You are an execution agent. Use your tools to complete the assigned subtask.
+    tools: ["calculator_tool", "state_tool"]
+    max_steps: 8
+
+  - name: "reviewer"
+    role: "Reviews outputs from other agents and decides if the task is complete"
+    system_prompt: |
+      Reasoning: medium
+      You are a review agent. Examine the output and decide if the task is complete or needs revision.
+    tools: ["echo_tool"]
+    max_steps: 4

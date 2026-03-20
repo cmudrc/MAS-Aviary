@@ -1,0 +1,155 @@
+# Aviary Staged Pipeline — 6-stage aircraft design workflow
+# Each stage has a defined meaning of "done" (not "done well" — just "done").
+# Pipeline ALWAYS advances regardless of completion criteria.
+
+aviary_pipeline:
+  stages:
+    - name: "mission_architect"
+      completion_criteria:
+        type: "tool_attempted"
+        check: "tool_called"
+        tool_name: "create_session"
+        description: "create_session tool was called"
+      stage_prompt: |
+        You are at the MISSION ARCHITECT stage. Your job:
+        1. Call create_session to get a session_id.
+        2. Call configure_mission with range=1500, passengers=162,
+           cruise_mach=0.785, cruise_altitude=35000.
+
+        CRITICAL: Include this exact line in your output:
+          SESSION_ID: <the UUID returned by create_session>
+
+    - name: "aerodynamics_analyst"
+      completion_criteria:
+        type: "tool_attempted"
+        check: "tool_called"
+        tool_name: "set_aircraft_parameters"
+        description: "set_aircraft_parameters tool was called for wing geometry"
+      stage_prompt: |
+        You are at the AERODYNAMICS ANALYST stage.
+        Use the session_id from the previous stage.
+
+        Your focus is wing geometry, but you may also adjust fuselage or
+        engine parameters if needed for a valid overall configuration.
+
+        Settable parameters:
+          WING: ASPECT_RATIO, AREA, SWEEP, TAPER_RATIO
+            (SPAN is read-only — derived as sqrt(AR × AREA), do not set it)
+          FUSELAGE: LENGTH, DIAMETER
+          ENGINE: SCALE_FACTOR
+
+        Steps:
+        1. Call get_design_space to check parameter bounds.
+        2. If the current parameters look reasonable, you may skip changes
+           and report "No wing adjustments needed" — the pipeline will
+           advance to the next stage.
+        3. Otherwise, call set_aircraft_parameters with your chosen values.
+        4. Call validate_parameters to verify validity. If invalid, adjust
+           and retry.
+
+        Include SESSION_ID: <value> in your output.
+
+    - name: "weights_analyst"
+      completion_criteria:
+        type: "output_contains"
+        check: "verdict_present"
+        description: "Agent produced WEIGHT_PARAMETERS_SET"
+      stage_prompt: |
+        You are at the WEIGHTS ANALYST stage.
+        Use the session_id from the previous stages.
+
+        Review ALL parameters set so far and verify they are physically
+        reasonable:
+        - Wing area vs aspect ratio consistency
+        - Fuselage dimensions vs passenger count (162 pax)
+        - Engine scale factor vs aircraft size
+        - No extreme values outside design space bounds
+
+        If any parameters need adjustment, call set_aircraft_parameters
+        and validate_parameters. You can adjust wing, fuselage, or engine
+        parameters as needed.
+
+        When done, output WEIGHT_PARAMETERS_SET on its own line.
+        Include SESSION_ID: <value> in your output.
+
+    - name: "propulsion_analyst"
+      completion_criteria:
+        type: "tool_attempted"
+        check: "tool_called"
+        tool_name: "set_aircraft_parameters"
+        description: "set_aircraft_parameters tool was called for engine"
+      stage_prompt: |
+        You are at the PROPULSION ANALYST stage.
+        Use the session_id from the previous stages.
+
+        Your focus is engine sizing, but you may also adjust wing or
+        fuselage parameters if needed for a valid overall configuration.
+
+        Settable parameters:
+          ENGINE: SCALE_FACTOR
+          WING: ASPECT_RATIO, AREA, SWEEP, TAPER_RATIO
+          FUSELAGE: LENGTH, DIAMETER
+
+        Steps:
+        1. Call get_design_space to check parameter bounds.
+        2. If the current parameters look reasonable and already validated,
+           you may skip changes and report "No engine adjustments needed"
+           — the pipeline will advance to the next stage.
+        3. Otherwise, call set_aircraft_parameters with your chosen values.
+        4. Call validate_parameters to verify the full parameter combination
+           (wing + fuselage + engine) is valid.
+           If valid: false, adjust parameters and retry.
+           If valid: true, report the validation summary.
+
+        Include SESSION_ID: <value> in your output.
+
+    - name: "simulation_executor"
+      completion_criteria:
+        type: "tool_attempted"
+        check: "tool_called"
+        tool_name: "run_simulation"
+        description: "run_simulation tool was called"
+      stage_prompt: |
+        You are at the SIMULATION EXECUTOR stage.
+        Use the session_id from the previous stages.
+
+        1. Call run_simulation with the session_id.
+        2. Call get_results with the session_id.
+
+        Report results using EXACTLY these field names:
+          fuel_burned_kg: <value>
+          gtow_kg: <value>
+          wing_mass_kg: <value>
+          reserve_fuel_kg: <value>
+          zero_fuel_weight_kg: <value>
+          converged: true/false
+
+        Include SESSION_ID: <value> in your output.
+
+    - name: "mdo_integrator"
+      completion_criteria:
+        type: "output_contains"
+        check: "verdict_present"
+        description: "Agent produced a VERDICT"
+      stage_prompt: |
+        You are at the MDO INTEGRATOR stage.
+        Use the session_id from the previous stages.
+
+        1. Call check_constraints with the session_id.
+           Use gtow_kg (not gross_mass_kg) as the variable name.
+           Constraints: fuel_burned_kg <= 8500, gtow_kg <= 72000.
+        2. Assess the optimality gap vs reference (7000.65 kg fuel burn).
+        3. Determine overall verdict.
+
+        Output results using EXACTLY these field names:
+          fuel_burned_kg: <value>
+          gtow_kg: <value>
+          optimality_gap_pct: <value>
+          VERDICT: PASSED/MINOR_ISSUES/MAJOR_ISSUES
+
+        Verdict options:
+        - PASSED: All constraints met and fuel burn within 15% of reference.
+        - MINOR_ISSUES: Constraints mostly met but fuel burn >15% above reference.
+        - MAJOR_ISSUES: Constraints violated or simulation diverged.
+
+        Include SESSION_ID: <value> in your output.

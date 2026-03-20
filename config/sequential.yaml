@@ -1,0 +1,38 @@
+strategy: "sequential"
+
+sequential:
+  # --- Decomposition Mode ---
+  # "human": pipeline defined by template in this config
+  # "llm": temporary planner agent generates the pipeline at runtime
+  decomposition_mode: "human"
+
+  # --- Pipeline Template ---
+  # Used when decomposition_mode is "human"
+  # "linear": generic 3-stage pipeline (plan → execute → review)
+  # "v_model": systems engineering V-Model (5 stages)
+  # "mbse": model-based systems engineering (5 stages)
+  # "custom": user-defined stages below
+  pipeline_template: "aviary"
+
+  # --- Custom Stages ---
+  # Used when pipeline_template is "custom"
+  # Same format as the named templates
+  custom_stages: []
+
+  # --- Interface Settings ---
+  # Whether to validate stage outputs against interface contracts
+  validate_interfaces: false
+
+  # --- Agent Settings ---
+  # Max steps per stage agent ReAct loop
+  stage_max_steps: 8
+
+# Shared termination settings
+termination:
+  keyword: "TASK_COMPLETE"
+  max_turns: 30
+  max_consecutive_errors: 3
+
+context:
+  max_recent_messages: 10
+  max_context_tokens: 3000

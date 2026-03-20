@@ -1,0 +1,55 @@
+# Iterative Feedback Operational Methodology
+# Controls how agents decide to move from current step to next step.
+#
+# This handler wraps agent execution with a feedback-driven retry loop.
+# When an agent's tool call fails, the handler injects feedback and retries.
+# When tool calls succeed (or retries exhaust), the handler moves on.
+
+iterative_feedback:
+  # --- Retry Settings ---
+  # Maximum retry attempts per agent (hard cap: 20)
+  max_retries: 20
+
+  # Number of recent attempts to include in retry context
+  # (older attempts summarized, not shown in full)
+  feedback_window: 5
+
+  # Whether to retry agents that have no tools (pure reasoning)
+  retry_toolless_agents: false
+
+  # --- Aspiration Settings ---
+  # How to determine "good enough to move on"
+  # "tool_success": all tool calls succeeded (no errors, return code 0)
+  # "any_output": agent produced non-empty output
+  # "no_tool_errors_or_max": tool success OR max retries reached
+  # "custom": user-defined check
+  aspiration_mode: "tool_success"
+
+  # For custom aspiration mode
+  aspiration_threshold: null
+
+  # --- Human Feedback Settings ---
+  # "none": fully automated, no human involvement
+  # "real_time": pause after each failed attempt for human input
+  # "between_prompt": human provides guidance between prompts
+  human_feedback_mode: "none"
+
+  # Persistent human guidance (for between_prompt mode)
+  # Set at runtime or in config
+  human_guidance: null
+
+  # Keyword for human to skip an agent's retries in real_time mode
+  human_skip_keyword: "SKIP"
+
+  # --- Similarity Settings ---
+  # Method for computing output similarity (ambidexterity, escalation)
+  # "tfidf": TF-IDF vectorization + cosine similarity (default)
+  # "jaccard": simple token overlap (fallback)
+  # "sentence_transformer": semantic embeddings (requires extra model)
+  similarity_method: "tfidf"
+
+  # Thresholds for similarity classification
+  exploitation_threshold: 0.8   # above this = exploitation (similar retry)
+  exploration_threshold: 0.4    # below this = exploration (different approach)
+  escalation_similarity_threshold: 0.8  # similarity threshold for escalation detection
+  escalation_min_length: 4      # minimum consecutive similar failures to flag escalation

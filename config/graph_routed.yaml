@@ -1,0 +1,51 @@
+# Graph-Routed Operational Methodology
+# Controls routing through a state machine during execution
+
+graph_routed:
+  # --- Graph Mode ---
+  # "predefined": graph loaded from config (default)
+  # "llm_generated": LLM designs the graph at runtime
+  graph_mode: "predefined"
+
+  # --- Predefined Graph ---
+  # Name of the graph to use when graph_mode is "predefined"
+  # "aviary": Aviary aircraft design graph
+  # "custom": user-defined graph below
+  predefined_graph: "aviary"
+
+  # Custom graph definition (used when predefined_graph is "custom")
+  custom_graph: null
+
+  # --- LLM Graph Settings ---
+  # Whether the LLM can modify the graph during execution
+  allow_graph_modification: false
+
+  # --- Internal Representations ---
+  # Whether to add mental model instructions to agent prompts
+  internal_representations:
+    enabled: false
+
+  # --- Condition Evaluation ---
+  # How error types are extracted from tool call stderr
+  error_type_patterns:
+    - pattern: "SyntaxError"
+      type: "SyntaxError"
+    - pattern: "NameError"
+      type: "NameError"
+    - pattern: "IndentationError"
+      type: "IndentationError"
+    - pattern: "AttributeError"
+      type: "AttributeError"
+    - pattern: "TypeError"
+      type: "TypeError"
+    - pattern: "ValueError"
+      type: "ValueError"
+    - pattern: "RuntimeError"
+      type: "RuntimeError"
+
+  # Fallback error type when no pattern matches
+  default_error_type: "UnknownError"
+
+  # --- Global Limits ---
+  # Absolute maximum state transitions (safety valve)
+  max_transitions: 50

@@ -1,0 +1,21 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * 1'  # Weekly Monday 6am UTC
+
+jobs:
+  integration:
+    runs-on: [self-hosted, gpu]  # Requires GPU runner
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        run: |
+          python3.12 -m venv .venv
+          source .venv/bin/activate
+          pip install -e ".[dev]"
+      - name: Run integration tests
+        run: |
+          source .venv/bin/activate
+          pytest -m "slow or gpu" -v --timeout=600

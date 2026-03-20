@@ -1,0 +1,14 @@
+strategy: "sequential"
+
+sequential:
+  order: ["planner", "executor", "reviewer"]
+  loop: false
+
+termination:
+  keyword: "TASK_COMPLETE"
+  max_turns: 20
+  max_consecutive_errors: 3
+
+context:
+  max_recent_messages: 10
+  max_context_tokens: 3000

@@ -1,0 +1,285 @@
+# Aviary Aircraft Design — Predefined State Machine Graph
+# Used by the Graph-Routed execution handler when predefined_graph is "aviary"
+
+aviary_graph:
+  initial_state: "TASK_CLASSIFIED"
+  terminal_states: ["COMPLETE"]
+
+  states:
+    TASK_CLASSIFIED:
+      agent: "mission_architect"
+      agent_prompt: |
+        You are the mission architect. A session has already been created
+        and the mission is configured. The session_id is: {session_id}
+
+        Your job is to classify the complexity of this aircraft design task
+        as one of: simple, moderate, complex.
+
+        Complexity guide:
+        - SIMPLE: Standard parameters, minor tweaks (e.g. engine scale only).
+        - MODERATE: Wing geometry optimisation with engine tuning.
+        - COMPLEX: Full wing + fuselage + engine optimisation with
+          coupled geometry constraints.
+
+        CRITICAL: Include this exact line in your output:
+          SESSION_ID: {session_id}
+
+        Output the complexity as a single word on its own line:
+        simple, moderate, or complex.
+      description: "Classify task complexity (session already created)"
+      transitions:
+        - condition: "complexity == 'simple'"
+          target: "QUICK_PARAM_SET"
+        - condition: "complexity == 'moderate'"
+          target: "STANDARD_PARAM_SET"
+        - condition: "complexity == 'complex'"
+          target: "FULL_PARAM_SET"
+
+    QUICK_PARAM_SET:
+      agent: "propulsion_analyst"
+      agent_prompt: |
+        You are the propulsion analyst handling a simple design task.
+        The session_id is: {session_id}
+
+        1. Call get_design_space to check parameter bounds.
+        2. Call set_aircraft_parameters with session_id="{session_id}" and
+           a SCALE_FACTOR value within the returned bounds.
+        3. Call validate_parameters with session_id="{session_id}" to verify
+           the parameter combination is valid.
+        4. If valid is false, adjust SCALE_FACTOR and repeat steps 2-3
+           until valid is true.
+
+        CRITICAL: You must state "success" ONLY if validate_parameters
+        returned valid: true. State "fail" if you cannot get valid: true.
+
+        Include SESSION_ID: {session_id} in your output.
+      description: "Engine-only parameter set for simple tasks"
+      transitions:
+        - condition: "execution_success == true"
+          target: "SIMULATION_RUN"
+        - condition: "execution_success == false"
+          target: "QUICK_PARAM_SET"
+
+    STANDARD_PARAM_SET:
+      agent: "aerodynamics_analyst"
+      agent_prompt: |
+        You are the aerodynamics analyst.
+        The session_id is: {session_id}
+
+        1. Call get_design_space to check parameter bounds.
+        2. Call set_aircraft_parameters with session_id="{session_id}" to
+           optimise wing geometry (ASPECT_RATIO, AREA, SWEEP, TAPER_RATIO).
+           SPAN is read-only (derived as sqrt(AR × AREA)) — do not set it.
+        3. Call validate_parameters with session_id="{session_id}" to verify
+           the parameter combination is valid.
+        4. If valid is false, adjust your parameters and repeat steps 2-3
+           until valid is true.
+
+        CRITICAL: You must state "success" ONLY if validate_parameters
+        returned valid: true. State "fail" if you cannot get valid: true.
+
+        Include SESSION_ID: {session_id} in your output.
+      description: "Wing geometry optimisation for moderate tasks"
+      transitions:
+        - condition: "execution_success == true"
+          target: "ENGINE_PARAM_SET"
+        - condition: "execution_success == false"
+          target: "STANDARD_PARAM_SET"
+
+    FULL_PARAM_SET:
+      agent: "aerodynamics_analyst"
+      agent_prompt: |
+        You are the aerodynamics analyst handling a complex design task.
+        The session_id is: {session_id}
+
+        1. Call get_design_space to check parameter bounds.
+        2. Call set_aircraft_parameters with session_id="{session_id}" to
+           set BOTH wing AND fuselage geometry.
+           Wing: ASPECT_RATIO, AREA, SWEEP, TAPER_RATIO are settable.
+           SPAN is read-only (derived as sqrt(AR × AREA)) — do not set it.
+        3. Call validate_parameters with session_id="{session_id}" to verify
+           the full parameter combination is valid.
+        4. If valid is false, adjust your parameters and repeat steps 2-3
+           until valid is true.
+
+        CRITICAL: You must state "success" ONLY if validate_parameters
+        returned valid: true. State "fail" if you cannot get valid: true.
+
+        Include SESSION_ID: {session_id} in your output.
+      description: "Wing + fuselage geometry for complex tasks"
+      transitions:
+        - condition: "execution_success == true"
+          target: "WEIGHT_CHECK"
+        - condition: "execution_success == false"
+          target: "FULL_PARAM_SET"
+
+    WEIGHT_CHECK:
+      agent: "weights_analyst"
+      agent_prompt: |
+        You are the weights analyst.
+        The session_id is: {session_id}
+
+        Review the geometry parameters set in the previous step and
+        verify they are physically reasonable:
+        - Wing area vs aspect ratio consistency
+        - Fuselage dimensions vs passenger count (162 pax)
+        - No extreme values outside design space bounds
+
+        If parameters look reasonable, state "success".
+        If parameters need adjustment, describe what should change
+        and state "fail".
+
+        Include SESSION_ID: {session_id} in your output.
+      description: "Verify weight implications of geometry changes"
+      transitions:
+        - condition: "always"
+          target: "ENGINE_PARAM_SET"
+
+    ENGINE_PARAM_SET:
+      agent: "propulsion_analyst"
+      agent_prompt: |
+        You are the propulsion analyst.
+        The session_id is: {session_id}
+
+        1. Call get_design_space to check parameter bounds.
+        2. Call set_aircraft_parameters with session_id="{session_id}" and
+           a SCALE_FACTOR value within the returned bounds.
+        3. Call validate_parameters with session_id="{session_id}" to verify
+           the full parameter combination is valid.
+        4. If valid is false, adjust SCALE_FACTOR and repeat steps 2-3
+           until valid is true.
+
+        CRITICAL: You must state "success" ONLY if validate_parameters
+        returned valid: true. State "fail" if you cannot get valid: true.
+
+        Include SESSION_ID: {session_id} in your output.
+      description: "Engine SCALE_FACTOR optimisation"
+      transitions:
+        - condition: "execution_success == true"
+          target: "SIMULATION_RUN"
+        - condition: "execution_success == false"
+          target: "ENGINE_PARAM_SET"
+
+    SIMULATION_RUN:
+      agent: "simulation_executor"
+      agent_prompt: |
+        You are the simulation executor.
+        The session_id is: {session_id}
+
+        1. Call run_simulation with session_id="{session_id}".
+        2. Call get_results with session_id="{session_id}".
+
+        CRITICAL: Report results using EXACTLY these field names:
+          fuel_burned_kg: <value>
+          gtow_kg: <value>
+          wing_mass_kg: <value>
+          reserve_fuel_kg: <value>
+          zero_fuel_weight_kg: <value>
+          converged: true/false
+
+        If the simulation ran and produced results, state "success".
+        If the simulation failed or did not converge, state "fail".
+
+        Include SESSION_ID: {session_id} in your output.
+      description: "Run simulation and retrieve results"
+      transitions:
+        - condition: "execution_success == true"
+          target: "RESULTS_REVIEW"
+        - condition: "execution_success == false"
+          target: "ERROR_CLASSIFICATION"
+
+    RESULTS_REVIEW:
+      agent: "mdo_integrator"
+      agent_prompt: |
+        You are the MDO integrator.
+        The session_id is: {session_id}
+
+        1. Call check_constraints with session_id="{session_id}".
+           Use gtow_kg (not gross_mass_kg) as the variable name.
+           Constraints: fuel_burned_kg <= 8500, gtow_kg <= 72000.
+        2. Assess the optimality gap vs reference (7000.65 kg fuel burn).
+        3. Determine overall verdict.
+
+        CRITICAL: Output results using EXACTLY these field names:
+          fuel_burned_kg: <value>
+          gtow_kg: <value>
+          wing_mass_kg: <value>
+          reserve_fuel_kg: <value>
+          zero_fuel_weight_kg: <value>
+          converged: true/false
+          optimality_gap_pct: <value>
+          VERDICT: PASSED/MINOR_ISSUES/MAJOR_ISSUES
+
+        Verdict options (output as EXACTLY one of these words):
+        - PASSED: All constraints met and fuel burn within 15% of reference.
+        - MINOR_ISSUES: Constraints mostly met but fuel burn >15% above
+          reference. Adjustments to wing geometry may help.
+        - MAJOR_ISSUES: Constraints violated or simulation diverged.
+          Fundamental re-scoping needed.
+
+        Include SESSION_ID: {session_id} in your output.
+      description: "Check constraints and assess optimality"
+      transitions:
+        - condition: "review_verdict == 'passed'"
+          target: "COMPLETE"
+        - condition: "review_verdict == 'minor_issues'"
+          target: "STANDARD_PARAM_SET"
+        - condition: "review_verdict == 'major_issues'"
+          target: "FULL_PARAM_SET"
+
+    ERROR_CLASSIFICATION:
+      agent: null
+      agent_prompt: null
+      description: "Route based on error type — no agent, pure routing logic"
+      transitions:
+        - condition: "passes_remaining <= 0"
+          target: "COMPLETE"
+        - condition: "cycle_count >= escalation_threshold"
+          target: "COMPLEXITY_ESCALATION"
+        - condition: "always"
+          target: "STANDARD_PARAM_SET"
+
+    COMPLEXITY_ESCALATION:
+      agent: "mission_architect"
+      agent_prompt: |
+        Re-classify this task's complexity. The previous classification
+        was {complexity}. The system has failed {cycle_count} times.
+        Consider upgrading the complexity level.
+
+        SESSION_ID: {session_id}
+
+        Output ONLY one word: simple, moderate, or complex.
+      description: "Re-evaluate complexity after repeated failures"
+      transitions:
+        - condition: "complexity == 'simple'"
+          target: "STANDARD_PARAM_SET"
+        - condition: "complexity == 'moderate'"
+          target: "FULL_PARAM_SET"
+        - condition: "complexity == 'complex'"
+          target: "FULL_PARAM_SET"
+
+    COMPLETE:
+      agent: null
+      agent_prompt: null
+      description: "Terminal state"
+      transitions: []
+
+  resource_budgets:
+    simple:
+      max_passes: 6
+      context_budget: 2000
+      reasoning_enabled: false
+      max_code_review_cycles: 1
+      escalation_threshold: 2
+    moderate:
+      max_passes: 12
+      context_budget: 3000
+      reasoning_enabled: true
+      max_code_review_cycles: 2
+      escalation_threshold: 3
+    complex:
+      max_passes: 20
+      context_budget: 4000
+      reasoning_enabled: true
+      max_code_review_cycles: 3
+      escalation_threshold: 4

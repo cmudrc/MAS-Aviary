@@ -1,0 +1,32 @@
+strategy: "graph_routed"  # or "sequential"
+
+# Strategy-specific config
+sequential:
+  decomposition_mode: "human"
+  pipeline_template: "linear"
+  validate_interfaces: false
+  stage_max_steps: 8
+
+graph_routed:
+  transitions:
+    planner: ["executor"]
+    executor: ["reviewer"]
+    reviewer: ["planner", "executor"]
+  routing_mode: "rule_based"  # or "llm_routed"
+  routing_rules:
+    "needs revision": "planner"
+    "needs calculation": "executor"
+    "default": "reviewer"
+
+# Execution handler: "placeholder" (default, no retries) or "iterative_feedback"
+execution_handler: "placeholder"
+
+# Shared settings
+termination:
+  keyword: "TASK_COMPLETE"
+  max_turns: 20
+  max_consecutive_errors: 3
+
+context:
+  max_recent_messages: 10
+  max_context_tokens: 3000

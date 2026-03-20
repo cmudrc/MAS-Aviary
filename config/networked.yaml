@@ -1,0 +1,48 @@
+strategy: "networked"
+
+networked:
+  # --- Agent Settings ---
+  # Number of initial peer agents created at startup
+  initial_agents: 5
+
+  # Maximum total agents (initial + spawned)
+  max_agents: 10
+
+  # Max steps per agent ReAct loop (passed to ToolCallingAgent)
+  agent_max_steps: 8
+
+  # --- Claiming Mode ---
+  # "none": no claiming enforcement, race conditions possible
+  # "soft": agents announce claims, duplicates warned but allowed
+  # "hard": claims are locked, duplicates rejected
+  claiming_mode: "soft"
+
+  # --- Peer Monitoring Toggle ---
+  # When true: agents can see each other's evaluation metrics
+  #   (tool error rates, retry counts) on the blackboard
+  # When false: only claims, statuses, results, and gaps are visible
+  #   (performance data hidden)
+  peer_monitoring_visible: true
+
+  # --- Trans-specialist Knowledge Toggle ---
+  # When true: reasoning explanations in result entries are visible
+  #   to all agents
+  # When false: result entries show outputs but strip the reasoning
+  #   trace (the "why")
+  trans_specialist_knowledge: true
+
+  # --- Predictive Knowledge Toggle ---
+  # When true: agents are prompted to predict what other agents will
+  #   do next, predictions are recorded and verified after the fact
+  # When false: no prediction prompting, prediction entries ignored
+  predictive_knowledge: false
+
+# Shared termination settings
+termination:
+  keyword: "TASK_COMPLETE"
+  max_turns: 40
+  max_consecutive_errors: 3
+
+context:
+  max_recent_messages: 15
+  max_context_tokens: 4000

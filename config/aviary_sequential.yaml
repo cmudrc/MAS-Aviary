@@ -1,0 +1,18 @@
+strategy: "sequential"
+
+sequential:
+  decomposition_mode: "human"
+  pipeline_template: "aviary"
+  validate_interfaces: false
+  stage_max_steps: 8
+
+execution_handler: "iterative_feedback"
+
+termination:
+  keyword: "TASK_COMPLETE"
+  max_turns: 30
+  max_consecutive_errors: 3
+
+context:
+  max_recent_messages: 10
+  max_context_tokens: 3000

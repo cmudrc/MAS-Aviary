@@ -1,0 +1,25 @@
+llm:
+  model_id: "Qwen/Qwen3-8B"
+  device_map: "balanced"
+  torch_dtype: "auto"
+  max_new_tokens: 1024
+  temperature: 0.7
+  reasoning_effort: "medium"
+
+mcp:
+  mode: "real"
+  servers:
+    - url: "http://127.0.0.1:8200/mcp"
+      transport: "streamable-http"
+
+agents_config: "config/sequential_agents.yaml"
+coordination_config: "config/sequential.yaml"
+
+logging:
+  level: "INFO"
+  output_dir: "logs/"
+  save_full_history: true
+
+ui:
+  enabled: true
+  port: 8501

@@ -1,0 +1,21 @@
+# Evaluation Thresholds
+# Used by eval_classifier to determine success/omission/commission/compile_fail/sim_fail
+
+# Aviary Evaluation Thresholds
+# Compares 5 output metrics against gradient-based reference optimum
+aviary:
+  # Whether simulation must converge (exit_code=0)
+  converged_required: true
+
+  # Reference benchmark: SLSQP coupled optimization
+  # 1,500 nmi / 162 pax / Mach 0.785 / FL350 / 200 iterations
+  reference:
+    fuel_burned_kg: 7000.65
+    gtow_kg: 67365.86
+    wing_mass_kg: 7466.35
+    reserve_fuel_kg: 1360.78
+    zero_fuel_weight_kg: 58604.23  # gross - fuel - reserve
+
+  # Max acceptable deviation from reference (percentage)
+  # Each metric is compared: abs(actual - ref) / ref * 100 <= max_deviation_pct
+  max_deviation_pct: 10.0

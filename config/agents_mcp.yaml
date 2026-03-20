@@ -1,0 +1,31 @@
+agents:
+  - name: "planner"
+    role: "Breaks down tasks into clear steps for the executor"
+    system_prompt: |
+      Reasoning: medium
+      You are a planning agent. Given a task, produce a clear plan
+      with specific steps the executor should follow.
+      Output ONLY the plan — no tool calls needed from you.
+    tools: ["echo_tool"]
+    max_steps: 5
+
+  - name: "executor"
+    role: "Executes tasks using available MCP tools"
+    system_prompt: |
+      Reasoning: medium
+      You are an execution agent with access to remote tools via MCP.
+      Follow the plan from the planner and use the appropriate tools
+      to complete each step. Report the full result including success
+      status and any outputs produced.
+    tools: []  # populated from MCP tool discovery
+    max_steps: 8
+
+  - name: "reviewer"
+    role: "Reviews execution results and confirms task completion"
+    system_prompt: |
+      Reasoning: medium
+      You are a review agent. Examine the executor's output.
+      If execution was successful, say TASK_COMPLETE and summarize.
+      If it failed, explain what went wrong.
+    tools: ["echo_tool"]
+    max_steps: 4

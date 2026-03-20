@@ -1,0 +1,51 @@
+strategy: "orchestrated"
+
+orchestrated:
+  # --- Authority Settings ---
+  # "orchestrator": fixed authority, orchestrator always in charge
+  # "delegated": after N prompts, transfer to best-performing worker
+  # "manual": specific agent designated as authority (for experiments)
+  authority_mode: "orchestrator"
+
+  # Number of completed prompts before evaluating authority transfer
+  # Only used when authority_mode is "delegated"
+  authority_transfer_after: 5
+
+  # Agent name to use as authority in manual mode
+  manual_authority_agent: null
+
+  # --- Information Settings ---
+  # "transparent": orchestrator sees full agent output, tool calls, reasoning
+  # "opaque": orchestrator only sees SUCCESS/FAILED per agent
+  information_mode: "transparent"
+
+  # --- Lifecycle Settings ---
+  # "active": orchestrator stays in loop, sees results, can create more agents
+  # "setup_only": orchestrator creates team, exits, placeholder runs agents
+  lifecycle_mode: "active"
+
+  # --- Limits ---
+  # Maximum worker agents the orchestrator can create
+  max_agents: 8
+
+  # Maximum orchestrator reasoning turns during team creation phase
+  max_orchestrator_turns: 8
+
+  # Max steps per worker agent ReAct loop (passed to ToolCallingAgent)
+  worker_max_steps: 20
+
+  # Consecutive orchestrator turns with zero delegation progress (no new
+  # create_agent / assign_task calls) before the strategy terminates.
+  # Prevents infinite re-invocations when the orchestrator completes the
+  # task directly without delegating.
+  stall_threshold: 2
+
+# Shared termination settings (same as other strategies)
+termination:
+  keyword: "TASK_COMPLETE"
+  max_turns: 30
+  max_consecutive_errors: 3
+
+context:
+  max_recent_messages: 10
+  max_context_tokens: 3000

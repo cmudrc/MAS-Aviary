@@ -1,0 +1,39 @@
+# Staged Pipeline Operational Methodology
+# Deterministic assembly line with per-stage completion criteria
+
+staged_pipeline:
+  # --- Pipeline Definition ---
+  # "aviary": Aviary aircraft design pipeline
+  # "custom": user-defined stages below
+  pipeline: "aviary"
+
+  # Custom stages (used when pipeline is "custom")
+  custom_stages: []
+
+  # --- Context Settings ---
+  # How much previous stage history to include in context
+  # "last_only": only the immediately previous stage's output
+  # "all_stages": all previous stages with completion status
+  # "summary": summary of all previous stages
+  context_mode: "last_only"
+
+  # Whether to include completion status in context passed to next stage
+  include_completion_status: true
+
+  # --- Termination ---
+  termination_keyword: "TASK_COMPLETE"
+
+  # --- Completion Criteria Settings ---
+  # Patterns recognized as Python code blocks
+  code_block_patterns:
+    - "```python"
+
+  # Patterns recognized as verdict keywords
+  verdict_patterns:
+    - "ACCEPTABLE"
+    - "ISSUES"
+    - "FAILED"
+    - "TASK_COMPLETE"
+    - "passed"
+    - "acceptable"
+    - "failed"

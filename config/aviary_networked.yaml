@@ -1,0 +1,64 @@
+strategy: "networked"
+
+networked:
+  # --- Agent Settings ---
+  # Number of initial peer agents created at startup.
+  # 3 provides observable peer coordination (session setup, parameters, simulation).
+  initial_agents: 3
+
+  # Maximum total agents (initial + spawned)
+  max_agents: 6
+
+  # Max steps per agent ReAct loop (passed to ToolCallingAgent)
+  # 15 steps gives agents room for multiple set_params + validate cycles
+  # (each cycle is 2 steps; validation often fails 2-3 times before passing).
+  agent_max_steps: 15
+
+  # --- Claiming Mode ---
+  # "soft": agents announce claims, duplicates warned but allowed.
+  # Important for Aviary to prevent duplicate create_session calls.
+  claiming_mode: "soft"
+
+  # --- Workflow Phase Gating ---
+  # When defined, the strategy structurally enforces one-phase-at-a-time
+  # by filtering each agent's available tools to ONLY the current phase's
+  # tools + peer tools. Phases are unlocked linearly: a phase is "open"
+  # when the previous phase's board_key exists on the blackboard.
+  workflow_phases:
+    - name: "session_setup"
+      tools: ["create_session", "configure_mission"]
+      board_key: "phase_session_setup"
+    - name: "parameter_setting"
+      tools: ["get_design_space", "set_aircraft_parameters", "validate_parameters"]
+      board_key: "phase_parameter_setting"
+    - name: "simulation"
+      tools: ["run_simulation"]
+      board_key: "phase_simulation"
+    - name: "evaluation"
+      tools: ["get_results", "check_constraints"]
+      board_key: "phase_evaluation"
+
+  # --- Peer Monitoring Toggle ---
+  # When true: agents can see each other's evaluation metrics
+  peer_monitoring_visible: true
+
+  # --- Trans-specialist Knowledge Toggle ---
+  # When true: reasoning explanations in result entries are visible
+  trans_specialist_knowledge: true
+
+  # --- Predictive Knowledge Toggle ---
+  # When true: agents predict what others will do next
+  predictive_knowledge: false
+
+# Shared termination settings.
+# Primary termination: mark_task_done writes "DONE" to blackboard,
+# detected by NetworkedStrategy.is_complete().
+# Fallback: TASK_COMPLETE keyword in last message content.
+termination:
+  keyword: "TASK_COMPLETE"
+  max_turns: 30
+  max_consecutive_errors: 3
+
+context:
+  max_recent_messages: 15
+  max_context_tokens: 4000

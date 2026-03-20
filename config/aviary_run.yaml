@@ -1,0 +1,28 @@
+llm:
+  model_id: "Qwen/Qwen3-8B"
+  device_map: "balanced"
+  torch_dtype: "auto"
+  max_new_tokens: 2048
+  temperature: 0.7
+  reasoning_effort: "medium"
+
+mcp:
+  mode: "real"
+  servers:
+    - url: "http://127.0.0.1:8600/mcp"
+      transport: "streamable-http"
+
+# sequential_agents.yaml contains the aviary pipeline template definition.
+# Coordinator.from_config() injects its templates dict into coord_config
+# so SequentialStrategy can resolve pipeline_template: "aviary".
+agents_config: "config/sequential_agents.yaml"
+coordination_config: "config/aviary_sequential.yaml"
+
+logging:
+  level: "INFO"
+  output_dir: "logs/"
+  save_full_history: true
+
+ui:
+  enabled: false
+  port: 8501
