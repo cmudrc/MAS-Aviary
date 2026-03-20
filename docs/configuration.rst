@@ -44,7 +44,7 @@ connection, and general run parameters.
 
 **MCP section**:
 
-- ``url`` -- Full URL to the Aviary MCP server.
+- ``url`` -- Full URL to the `Aviary MCP server <https://github.com/Jezemba/Aviary>`_.
 - ``transport`` -- Protocol transport. Use ``streamable-http`` for HTTP-based
   MCP.
 - ``timeout`` -- Per-request timeout in seconds.
