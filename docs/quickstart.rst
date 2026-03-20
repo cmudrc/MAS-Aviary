@@ -8,9 +8,9 @@ optimization, and viewing results.
 Prerequisites
 =============
 
-- Python 3.12+
-- A running Aviary MCP server (port 8600)
-- Access to a supported LLM provider
+- Python 3.12+ (for MAS-Aviary)
+- The `Aviary MCP server <https://github.com/Jezemba/Aviary>`_ (separate conda env, Python 3.11)
+- NVIDIA GPU with CUDA 12.x (for Qwen3-8B inference)
 
 Installation
 ============
@@ -19,7 +19,7 @@ Installation
 
    .. code-block:: bash
 
-      git clone <repo-url> MAS-Aviary
+      git clone https://github.com/Jezemba/MAS-Aviary.git
       cd MAS-Aviary
 
 2. **Create and activate a virtual environment**
@@ -39,19 +39,25 @@ Installation
 Starting the Aviary MCP Server
 ==============================
 
-The Aviary MCP server must be running before you launch any optimization. It
-exposes the aircraft design tools that agents interact with.
+The `Aviary MCP server <https://github.com/Jezemba/Aviary>`_ must be running
+before you launch any optimization. It exposes 9 aircraft design tools that
+agents interact with via the Model Context Protocol.
 
 .. code-block:: bash
 
-   # Start the MCP server on port 8600
-   python -m aviary_mcp_server --port 8600
+   # Clone and install in a separate conda environment
+   git clone https://github.com/Jezemba/Aviary.git
+   cd Aviary
+   conda create -n aviary python=3.11 -y
+   conda activate aviary
+   pip install -r requirements.txt
 
-Verify the server is reachable:
+   # Start the server (listens on http://localhost:8600/mcp)
+   python server/aviary_mcp_server.py
 
-.. code-block:: bash
-
-   curl http://localhost:8600/health
+See the `Aviary README <https://github.com/Jezemba/Aviary#readme>`_ for full
+server documentation including design parameters, mission configuration, and
+tool reference.
 
 Running a Single Optimization
 ==============================
@@ -113,7 +119,7 @@ strategy combinations and repeat runs.
 
 The dashboard opens in your browser and provides:
 
-- **Strategy Comparison** -- Side-by-side metrics for all nine combinations.
+- **Strategy Comparison** -- Side-by-side metrics for all eight combinations.
 - **Run History** -- Time-series view of repeated runs.
 - **Agent Traces** -- Step-by-step replay of agent reasoning and tool calls.
 - **Metric Distributions** -- Box plots and histograms for fuel, GTOW, and

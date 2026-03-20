@@ -10,6 +10,11 @@ explores eight distinct coordination strategies spanning three organizational
 structures and three task-handling paradigms, enabling rigorous comparison of
 multi-agent approaches on a real-world engineering optimization problem.
 
+| Repository | Description |
+|------------|-------------|
+| **MAS-Aviary** (this repo) | Multi-agent LLM framework (client) |
+| [Aviary](https://github.com/Jezemba/Aviary) | MCP server wrapping NASA OpenMDAO/Aviary (backend) |
+
 ---
 
 ## Architecture
@@ -174,13 +179,28 @@ Other environment variable overrides:
 
 ### 1. Start the Aviary MCP server
 
-The MCP server provides tool-based access to NASA OpenMDAO/Aviary simulations.
-It must be running before launching agents:
+The MCP server ([Aviary repo](https://github.com/Jezemba/Aviary)) provides
+tool-based access to NASA OpenMDAO/Aviary simulations. It must be running
+before launching agents:
 
 ```bash
-# See your Aviary MCP server documentation for startup instructions
-# Default: http://127.0.0.1:8600/mcp (configurable — see above)
+# Clone and install the Aviary MCP server (requires a separate conda env)
+git clone https://github.com/Jezemba/Aviary.git
+cd Aviary
+conda create -n aviary python=3.11 -y
+conda activate aviary
+pip install -r requirements.txt
+
+# Start the server (default: http://localhost:8600/mcp)
+python server/aviary_mcp_server.py
 ```
+
+The server exposes 9 MCP tools: `get_design_space`, `create_session`,
+`set_aircraft_parameters`, `configure_mission`, `validate_parameters`,
+`run_simulation`, `get_results`, `get_trajectory`, `check_constraints`.
+
+See the [Aviary README](https://github.com/Jezemba/Aviary#readme) for full
+server documentation.
 
 ### 2. Run a single optimization
 

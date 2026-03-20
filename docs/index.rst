@@ -6,8 +6,11 @@ MAS-Aviary
 
 MAS-Aviary is a multi-agent framework that orchestrates LLM-powered agents to
 perform aircraft design optimization using NASA's OpenMDAO Aviary toolkit. It
-supports nine distinct coordination strategies formed by combining three
+supports eight distinct coordination strategies formed by combining three
 organizational structures with three operational handlers.
+
+The Aviary MCP server backend is available at
+`github.com/Jezemba/Aviary <https://github.com/Jezemba/Aviary>`_.
 
 .. toctree::
    :maxdepth: 2

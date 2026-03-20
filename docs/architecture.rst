@@ -5,7 +5,7 @@ Architecture
 This page describes the full architecture of MAS-Aviary, covering the
 end-to-end flow from user request to Aviary optimization, the three
 organizational structures, the three operational handlers, and how they
-compose into nine distinct coordination strategies.
+compose into eight valid coordination strategies.
 
 Overview
 ========
@@ -243,7 +243,8 @@ Strategy x Handler Combinations
 ===============================
 
 Every organizational structure can be paired with every operational handler,
-producing a 3 x 3 matrix of nine combinations:
+producing eight valid combinations (one combination — Networked + Staged
+Pipeline — is excluded; see note below):
 
 .. list-table:: Combination Matrix
    :header-rows: 1
@@ -263,8 +264,15 @@ producing a 3 x 3 matrix of nine combinations:
      - orchestrated_graph_routed
    * - **Networked**
      - networked_iterative_feedback
-     - networked_staged_pipeline
+     - *not valid*
      - networked_graph_routed
+
+.. note::
+
+   **Networked + Staged Pipeline** is not a valid combination. The Staged
+   Pipeline handler assumes a fixed sequence of stages with deterministic
+   agent-to-stage assignment, which conflicts with the Networked strategy's
+   peer-based role rotation and blackboard claiming model.
 
 Each combination has a unique identifier (shown in the cells) used in
 configuration files and the ``stat_batch_runner.py`` ``--combinations`` flag.
