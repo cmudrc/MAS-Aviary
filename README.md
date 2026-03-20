@@ -241,7 +241,8 @@ pytest -m "slow or gpu" -v --timeout=600
 
 ## Documentation
 
-Full Sphinx documentation is available in the [`docs/`](docs/) directory.
+Full documentation is hosted at **https://jezemba.github.io/MAS-Aviary/**
+(auto-deployed on every push to main).
 
 To build locally:
 
