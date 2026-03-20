@@ -1,5 +1,7 @@
 """Tests for the configuration loader."""
 
+import os
+
 import pytest
 import yaml
 
@@ -172,3 +174,72 @@ def test_appconfig_defaults():
     assert isinstance(cfg.logging, LoggingConfig)
     assert isinstance(cfg.ui, UIConfig)
     assert cfg.agents_config == "config/agents.yaml"
+
+
+# ---- environment variable overrides -------------------------------------------
+
+def test_env_override_mcp_url(tmp_path, monkeypatch):
+    """MAS_AVIARY_MCP_URL overrides the first MCP server URL."""
+    cfg_file = tmp_path / "test.yaml"
+    cfg_file.write_text(yaml.dump({
+        "mcp": {
+            "mode": "real",
+            "servers": [{"url": "http://original:8600/mcp", "transport": "streamable-http"}],
+        }
+    }))
+    monkeypatch.setenv("MAS_AVIARY_MCP_URL", "http://custom-host:9999/mcp")
+    cfg = load_config(str(cfg_file))
+    assert cfg.mcp.servers[0].url == "http://custom-host:9999/mcp"
+
+
+def test_env_override_mcp_url_creates_server(tmp_path, monkeypatch):
+    """MAS_AVIARY_MCP_URL creates a server entry if none exist."""
+    cfg_file = tmp_path / "empty_mcp.yaml"
+    cfg_file.write_text(yaml.dump({"mcp": {"mode": "real"}}))
+    monkeypatch.setenv("MAS_AVIARY_MCP_URL", "http://new-host:7000/mcp")
+    cfg = load_config(str(cfg_file))
+    assert len(cfg.mcp.servers) == 1
+    assert cfg.mcp.servers[0].url == "http://new-host:7000/mcp"
+
+
+def test_env_override_mcp_mode(tmp_path, monkeypatch):
+    """MAS_AVIARY_MCP_MODE overrides mcp.mode."""
+    cfg_file = tmp_path / "test.yaml"
+    cfg_file.write_text(yaml.dump({"mcp": {"mode": "real"}}))
+    monkeypatch.setenv("MAS_AVIARY_MCP_MODE", "mock")
+    cfg = load_config(str(cfg_file))
+    assert cfg.mcp.mode == "mock"
+
+
+def test_env_override_model_id(tmp_path, monkeypatch):
+    """MAS_AVIARY_MODEL_ID overrides llm.model_id."""
+    cfg_file = tmp_path / "test.yaml"
+    cfg_file.write_text(yaml.dump({"llm": {"model_id": "original-model"}}))
+    monkeypatch.setenv("MAS_AVIARY_MODEL_ID", "Qwen/Qwen3-4B")
+    cfg = load_config(str(cfg_file))
+    assert cfg.llm.model_id == "Qwen/Qwen3-4B"
+
+
+def test_env_override_api_base(tmp_path, monkeypatch):
+    """MAS_AVIARY_API_BASE overrides llm.api_base."""
+    cfg_file = tmp_path / "test.yaml"
+    cfg_file.write_text(yaml.dump({"llm": {"backend": "vllm"}}))
+    monkeypatch.setenv("MAS_AVIARY_API_BASE", "http://gpu-box:8080/v1")
+    cfg = load_config(str(cfg_file))
+    assert cfg.llm.api_base == "http://gpu-box:8080/v1"
+
+
+def test_env_override_not_set(tmp_path):
+    """Without env vars, YAML values are preserved as-is."""
+    cfg_file = tmp_path / "test.yaml"
+    cfg_file.write_text(yaml.dump({
+        "mcp": {
+            "mode": "real",
+            "servers": [{"url": "http://yaml-host:8600/mcp"}],
+        }
+    }))
+    for var in ("MAS_AVIARY_MCP_URL", "MAS_AVIARY_MCP_MODE",
+                "MAS_AVIARY_MODEL_ID", "MAS_AVIARY_API_BASE"):
+        os.environ.pop(var, None)
+    cfg = load_config(str(cfg_file))
+    assert cfg.mcp.servers[0].url == "http://yaml-host:8600/mcp"

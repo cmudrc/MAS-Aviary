@@ -33,6 +33,7 @@ import argparse
 import gc
 import json
 import math
+import os
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -835,7 +836,15 @@ def main():
         "--timeout", type=float, default=_DEFAULT_TIMEOUT_MINUTES,
         help=f"Per-run timeout in minutes (default: {_DEFAULT_TIMEOUT_MINUTES})",
     )
+    parser.add_argument(
+        "--mcp-url", type=str, default=None,
+        help="MCP server URL (overrides config; e.g. http://127.0.0.1:8600/mcp)",
+    )
     args = parser.parse_args()
+
+    # Allow --mcp-url to override via environment variable.
+    if args.mcp_url:
+        os.environ["MAS_AVIARY_MCP_URL"] = args.mcp_url
 
     run_stat_batch(
         n_repeats=args.repeats,

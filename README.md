@@ -140,16 +140,46 @@ python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}, de
 
 ---
 
+## MCP Server Configuration
+
+The MCP server URL is configurable at three levels (highest priority wins):
+
+1. **CLI flag**: `--mcp-url http://your-host:port/mcp`
+2. **Environment variable**: `export MAS_AVIARY_MCP_URL=http://your-host:port/mcp`
+3. **YAML config**: edit `mcp.servers[0].url` in `config/aviary_run.yaml`
+
+The default config ships with `http://127.0.0.1:8600/mcp`. Override it for
+remote servers, non-standard ports, or containerized deployments:
+
+```bash
+# Environment variable (persists for the shell session)
+export MAS_AVIARY_MCP_URL=http://192.168.1.50:9000/mcp
+
+# Or pass directly to the runner
+python scripts/stat_batch_runner.py --mcp-url http://192.168.1.50:9000/mcp --repeats 1
+```
+
+Other environment variable overrides:
+
+| Variable | Overrides | Example |
+|----------|-----------|---------|
+| `MAS_AVIARY_MCP_URL` | MCP server URL | `http://10.0.0.5:8600/mcp` |
+| `MAS_AVIARY_MCP_MODE` | MCP mode (`mock` or `real`) | `mock` |
+| `MAS_AVIARY_MODEL_ID` | LLM model | `Qwen/Qwen3-4B` |
+| `MAS_AVIARY_API_BASE` | vLLM API endpoint | `http://localhost:8000/v1` |
+
+---
+
 ## Quickstart
 
 ### 1. Start the Aviary MCP server
 
 The MCP server provides tool-based access to NASA OpenMDAO/Aviary simulations.
-It must be running on port 8600 before launching agents:
+It must be running before launching agents:
 
 ```bash
 # See your Aviary MCP server documentation for startup instructions
-# The server should be accessible at http://127.0.0.1:8600/mcp
+# Default: http://127.0.0.1:8600/mcp (configurable — see above)
 ```
 
 ### 2. Run a single optimization
