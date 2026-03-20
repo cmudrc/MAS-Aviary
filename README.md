@@ -285,9 +285,27 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 If you use MAS-Aviary in your research, please cite:
 
 ```bibtex
-@article{ezemba2026masaviary,
-  title={MAS-Aviary: Multi-Agent Coordination for Aircraft Design Optimization},
-  author={Ezemba, Jessica},
+@inproceedings{ezemba2026structure,
+  title={Structure Shapes Coordination: An Empirical Evaluation of Organizational
+         Design Principles in Multi-Agent Engineering Design},
+  author={Ezemba, Jessica and McComb, Christopher and Tucker, Conrad},
+  booktitle={ASME 2026 International Design Engineering Technical Conferences
+             and Computers and Information in Engineering Conference (IDETC/CIE2026)},
+  address={Houston, TX},
+  month={August 23--26},
   year={2026}
+}
+```
+
+This work uses NASA's [OpenMDAO/Aviary](https://github.com/OpenMDAO/Aviary)
+for aircraft design optimization:
+
+```bibtex
+@software{aviary,
+  title={Aviary: A Multidisciplinary Design, Analysis, and Optimization Tool
+         for Aircraft},
+  author={{NASA Glenn Research Center}},
+  url={https://github.com/OpenMDAO/Aviary},
+  year={2024}
 }
 ```
