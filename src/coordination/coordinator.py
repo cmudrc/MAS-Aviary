@@ -17,6 +17,7 @@ from src.coordination.termination import TerminationChecker
 # smolagents extraction helpers (Fix 6 + Fix 7)
 # ---------------------------------------------------------------------------
 
+
 def _extract_tool_calls(agent: Any) -> list[ToolCallRecord]:
     """Extract ToolCallRecords from a smolagents agent after agent.run()."""
     tool_calls: list[ToolCallRecord] = []
@@ -32,12 +33,14 @@ def _extract_tool_calls(agent: Any) -> list[ToolCallRecord]:
         for tc in step_calls:
             name = getattr(tc, "name", "") or getattr(tc, "tool_name", "")
             args = getattr(tc, "arguments", {}) or {}
-            tool_calls.append(ToolCallRecord(
-                tool_name=name,
-                inputs=args if isinstance(args, dict) else {},
-                output=str(obs)[:2000] if obs else "",
-                duration_seconds=0.0,
-            ))
+            tool_calls.append(
+                ToolCallRecord(
+                    tool_name=name,
+                    inputs=args if isinstance(args, dict) else {},
+                    output=str(obs)[:2000] if obs else "",
+                    duration_seconds=0.0,
+                )
+            )
     return tool_calls
 
 
@@ -66,6 +69,7 @@ def _extract_token_count(agent: Any, content: str) -> tuple[int | None, bool]:
         return max(1, len(content) // 4), True
     return None, True
 
+
 # Strategy name → fully-qualified class path.
 _STRATEGY_MAP = {
     "sequential": "src.coordination.strategies.sequential.SequentialStrategy",
@@ -78,9 +82,7 @@ _STRATEGY_MAP = {
 def _load_strategy(name: str) -> CoordinationStrategy:
     """Instantiate a strategy by name from the registry."""
     if name not in _STRATEGY_MAP:
-        raise ValueError(
-            f"Unknown strategy {name!r}. Available: {list(_STRATEGY_MAP.keys())}"
-        )
+        raise ValueError(f"Unknown strategy {name!r}. Available: {list(_STRATEGY_MAP.keys())}")
     fqn = _STRATEGY_MAP[name]
     module_path, class_name = fqn.rsplit(".", 1)
     module = importlib.import_module(module_path)
@@ -91,8 +93,7 @@ def _load_strategy(name: str) -> CoordinationStrategy:
 class Coordinator:
     """Runs a coordination strategy loop over a set of agents."""
 
-    def __init__(self, agents: dict, strategy: CoordinationStrategy,
-                 config: dict, logger=None, execution_handler=None):
+    def __init__(self, agents: dict, strategy: CoordinationStrategy, config: dict, logger=None, execution_handler=None):
         """Create a Coordinator with explicit agents, strategy, and config.
 
         For convenience, use Coordinator.from_config() to build everything
@@ -208,6 +209,7 @@ class Coordinator:
             from src.coordination.iterative_feedback_handler import (
                 IterativeFeedbackHandler,
             )
+
             # Load iterative feedback config if available.
             ifb_config = coord_config.get("iterative_feedback", {})
             if not ifb_config:
@@ -221,6 +223,7 @@ class Coordinator:
             from src.coordination.graph_routed_handler import (
                 GraphRoutedHandler,
             )
+
             gr_config = coord_config.get("graph_routed", {})
             if not gr_config:
                 gr_path = getattr(config, "graph_routed_config", None)
@@ -233,9 +236,7 @@ class Coordinator:
             # strategy can inform the orchestrator what roles to create.
             try:
                 graph = execution_handler._load_graph({})
-                roles = sorted(
-                    {s.agent for s in graph.states.values() if s.agent}
-                )
+                roles = sorted({s.agent for s in graph.states.values() if s.agent})
                 if roles:
                     coord_config["_graph_roles"] = roles
             except Exception:
@@ -245,6 +246,7 @@ class Coordinator:
             from src.coordination.staged_pipeline_handler import (
                 StagedPipelineHandler,
             )
+
             sp_config = coord_config.get("staged_pipeline", {})
             if not sp_config:
                 sp_path = getattr(config, "staged_pipeline_config", None)
@@ -254,8 +256,11 @@ class Coordinator:
             execution_handler = StagedPipelineHandler(sp_config)
 
         return cls(
-            agents, strategy, coord_config,
-            logger=logger, execution_handler=execution_handler,
+            agents,
+            strategy,
+            coord_config,
+            logger=logger,
+            execution_handler=execution_handler,
         )
 
     def run(self, task: str, *, session_id: str | None = None) -> CoordinationResult:
@@ -277,9 +282,7 @@ class Coordinator:
         # the execution handler (for graph node prompt placeholders) and
         # the strategy (for orchestrated worker task context).
         if session_id:
-            if self.execution_handler is not None and hasattr(
-                self.execution_handler, "set_session_id"
-            ):
+            if self.execution_handler is not None and hasattr(self.execution_handler, "set_session_id"):
                 self.execution_handler.set_session_id(session_id)
             if hasattr(self.strategy, "set_session_id"):
                 self.strategy.set_session_id(session_id)
@@ -288,12 +291,14 @@ class Coordinator:
             # Let the strategy signal completion (e.g. orchestrated
             # strategy detects final_answer or delegation stall).
             if self.history and self.strategy.is_complete(
-                self.history.get_all(), state,
+                self.history.get_all(),
+                state,
             ):
                 break
 
             action = self.strategy.next_step(
-                self.history.get_all(), state,
+                self.history.get_all(),
+                state,
             )
 
             if action.action_type == "terminate":
@@ -304,11 +309,13 @@ class Coordinator:
                 break
 
             if action.agent_name not in self.agents:
-                self._log_error(CoordinationAction(
-                    action_type="error",
-                    agent_name=action.agent_name,
-                    input_context=f"Agent {action.agent_name!r} not found",
-                ))
+                self._log_error(
+                    CoordinationAction(
+                        action_type="error",
+                        agent_name=action.agent_name,
+                        input_context=f"Agent {action.agent_name!r} not found",
+                    )
+                )
                 break
 
             messages = self._execute_agent(action)
@@ -348,13 +355,10 @@ class Coordinator:
         """
         phase = (action.metadata or {}).get("phase")
         bypass = (action.metadata or {}).get("bypass_handler", False)
-        use_handler = (
-            self.execution_handler is not None
-            and phase != "creation"
-            and not bypass
-        )
+        use_handler = self.execution_handler is not None and phase != "creation" and not bypass
         if use_handler:
             from src.coordination.execution_handler import Assignment
+
             assignment = Assignment(
                 agent_name=action.agent_name,
                 task=action.input_context,
@@ -365,10 +369,7 @@ class Coordinator:
             net_ctx = getattr(self.strategy, "context", None)
             bb_writes_before = bb.write_count if bb is not None else 0
             bb_conflicts_before = bb.claim_conflicts if bb is not None else 0
-            peers_before = (
-                len(getattr(net_ctx, "spawned_agents", []))
-                if net_ctx is not None else 0
-            )
+            peers_before = len(getattr(net_ctx, "spawned_agents", [])) if net_ctx is not None else 0
             msgs = self.execution_handler.execute(
                 [assignment],
                 self.agents,
@@ -428,16 +429,18 @@ class Coordinator:
             if token_estimated:
                 msg_metadata["token_count_estimated"] = True
 
-            return [AgentMessage(
-                agent_name=action.agent_name,
-                content=content,
-                turn_number=self._turn_counter,
-                timestamp=time.time(),
-                duration_seconds=duration,
-                tool_calls=tool_calls,
-                token_count=token_count,
-                metadata=msg_metadata,
-            )]
+            return [
+                AgentMessage(
+                    agent_name=action.agent_name,
+                    content=content,
+                    turn_number=self._turn_counter,
+                    timestamp=time.time(),
+                    duration_seconds=duration,
+                    tool_calls=tool_calls,
+                    token_count=token_count,
+                    metadata=msg_metadata,
+                )
+            ]
         except Exception as e:
             duration = time.monotonic() - start
             if bb is not None:
@@ -447,15 +450,17 @@ class Coordinator:
             if net_ctx is not None:
                 peers_now = len(getattr(net_ctx, "spawned_agents", []))
                 msg_metadata["peers_spawned"] = peers_now - peers_before
-            return [AgentMessage(
-                agent_name=action.agent_name,
-                content="",
-                turn_number=self._turn_counter,
-                timestamp=time.time(),
-                duration_seconds=duration,
-                error=str(e),
-                metadata=msg_metadata,
-            )]
+            return [
+                AgentMessage(
+                    agent_name=action.agent_name,
+                    content="",
+                    turn_number=self._turn_counter,
+                    timestamp=time.time(),
+                    duration_seconds=duration,
+                    error=str(e),
+                    metadata=msg_metadata,
+                )
+            ]
 
     def _log_error(self, action: CoordinationAction) -> None:
         """Log a coordination-level error as an AgentMessage."""

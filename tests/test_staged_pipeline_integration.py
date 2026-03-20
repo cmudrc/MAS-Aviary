@@ -33,6 +33,7 @@ from src.logging.staged_pipeline_metrics import (
 
 # ---- Model stub (no GPU) ---------------------------------------------------
 
+
 class _FinalAnswerModel(Model):
     """Returns a final_answer tool call so ToolCallingAgents complete in 1 step."""
 
@@ -41,8 +42,7 @@ class _FinalAnswerModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         tc = ChatMessageToolCall(
             id=f"call_{self._call_count}",
@@ -56,6 +56,7 @@ class _FinalAnswerModel(Model):
 
 
 # ---- Mock agents -----------------------------------------------------------
+
 
 class _MockAgent:
     """Agent stub returning fixed output."""
@@ -110,6 +111,7 @@ class _FailingAgent:
 
 # ---- Minimal strategy for coordinator tests --------------------------------
 
+
 class _SingleAgentStrategy(CoordinationStrategy):
     """Invokes agents once each in order, then terminates."""
 
@@ -126,13 +128,17 @@ class _SingleAgentStrategy(CoordinationStrategy):
             self._task = state["task"]
         if self._index >= len(self._names):
             return CoordinationAction(
-                action_type="terminate", agent_name=None, input_context="",
+                action_type="terminate",
+                agent_name=None,
+                input_context="",
             )
         name = self._names[self._index]
         self._index += 1
         ctx = self._task if not history else history[-1].content
         return CoordinationAction(
-            action_type="invoke_agent", agent_name=name, input_context=ctx,
+            action_type="invoke_agent",
+            agent_name=name,
+            input_context=ctx,
         )
 
     def is_complete(self, history, state):
@@ -141,40 +147,47 @@ class _SingleAgentStrategy(CoordinationStrategy):
 
 def _sample_pipeline() -> PipelineDefinition:
     """Create a 4-stage sample pipeline for integration tests."""
-    return PipelineDefinition(stages=[
-        StageDefinition(
-            name="design_planning",
-            completion_criteria=CompletionCriteria(
-                type="output_contains", check="non_empty_output",
+    return PipelineDefinition(
+        stages=[
+            StageDefinition(
+                name="design_planning",
+                completion_criteria=CompletionCriteria(
+                    type="output_contains",
+                    check="non_empty_output",
+                ),
+                stage_prompt="Produce a design plan.",
             ),
-            stage_prompt="Produce a design plan.",
-        ),
-        StageDefinition(
-            name="code_writing",
-            completion_criteria=CompletionCriteria(
-                type="output_contains", check="code_block",
+            StageDefinition(
+                name="code_writing",
+                completion_criteria=CompletionCriteria(
+                    type="output_contains",
+                    check="code_block",
+                ),
+                stage_prompt="Write Python code for the simulation.",
             ),
-            stage_prompt="Write Python code for the simulation.",
-        ),
-        StageDefinition(
-            name="code_execution",
-            completion_criteria=CompletionCriteria(
-                type="tool_attempted", check="tool_called",
-                tool_name="run_simulation",
+            StageDefinition(
+                name="code_execution",
+                completion_criteria=CompletionCriteria(
+                    type="tool_attempted",
+                    check="tool_called",
+                    tool_name="run_simulation",
+                ),
+                stage_prompt="Run the simulation.",
             ),
-            stage_prompt="Run the simulation.",
-        ),
-        StageDefinition(
-            name="output_review",
-            completion_criteria=CompletionCriteria(
-                type="output_contains", check="verdict_present",
+            StageDefinition(
+                name="output_review",
+                completion_criteria=CompletionCriteria(
+                    type="output_contains",
+                    check="verdict_present",
+                ),
+                stage_prompt="Review the result. State ACCEPTABLE, ISSUES, or FAILED.",
             ),
-            stage_prompt="Review the result. State ACCEPTABLE, ISSUES, or FAILED.",
-        ),
-    ])
+        ]
+    )
 
 
 # ---- Handler-level integration tests (fast) --------------------------------
+
 
 class TestHandlerIntegration:
     def test_happy_path_all_met(self):
@@ -223,64 +236,58 @@ class TestHandlerIntegration:
         msgs = handler.execute(assignments, agents, None)
         assert len(msgs) == 4
         results = handler.last_stage_results
-        assert results[0].completion_met is True   # non-empty
-        assert results[1].completion_met is False   # no code block
-        assert results[2].completion_met is False   # no tool called
-        assert results[3].completion_met is True    # verdict present
+        assert results[0].completion_met is True  # non-empty
+        assert results[1].completion_met is False  # no code block
+        assert results[2].completion_met is False  # no tool called
+        assert results[3].completion_met is True  # verdict present
 
     def test_context_passing_between_stages(self):
         """Each stage receives the previous stage's output."""
-        pipeline = PipelineDefinition(stages=[
-            StageDefinition(
-                name="s1",
-                completion_criteria=CompletionCriteria(
-                    type="any", check="always"
+        pipeline = PipelineDefinition(
+            stages=[
+                StageDefinition(
+                    name="s1",
+                    completion_criteria=CompletionCriteria(type="any", check="always"),
+                    stage_prompt="Prompt1",
                 ),
-                stage_prompt="Prompt1",
-            ),
-            StageDefinition(
-                name="s2",
-                completion_criteria=CompletionCriteria(
-                    type="any", check="always"
+                StageDefinition(
+                    name="s2",
+                    completion_criteria=CompletionCriteria(type="any", check="always"),
+                    stage_prompt="Prompt2",
                 ),
-                stage_prompt="Prompt2",
-            ),
-        ])
+            ]
+        )
         handler = StagedPipelineHandler({})
         handler._pipeline = pipeline
 
         a1 = _MockAgent("stage1_output")
         a2 = _MockAgent("stage2_output")
         handler.execute(
-            [Assignment(agent_name="a1", task="task"),
-             Assignment(agent_name="a2", task="task")],
-            {"a1": a1, "a2": a2}, None,
+            [Assignment(agent_name="a1", task="task"), Assignment(agent_name="a2", task="task")],
+            {"a1": a1, "a2": a2},
+            None,
         )
         # Stage 2 should have received stage 1's output.
         assert "stage1_output" in a2.calls[0]
 
     def test_always_advances(self):
         """Pipeline advances even when completion criteria are not met."""
-        pipeline = PipelineDefinition(stages=[
-            StageDefinition(
-                name="s1",
-                completion_criteria=CompletionCriteria(
-                    type="output_contains", check="code_block"
+        pipeline = PipelineDefinition(
+            stages=[
+                StageDefinition(
+                    name="s1",
+                    completion_criteria=CompletionCriteria(type="output_contains", check="code_block"),
                 ),
-            ),
-            StageDefinition(
-                name="s2",
-                completion_criteria=CompletionCriteria(
-                    type="output_contains", check="code_block"
+                StageDefinition(
+                    name="s2",
+                    completion_criteria=CompletionCriteria(type="output_contains", check="code_block"),
                 ),
-            ),
-            StageDefinition(
-                name="s3",
-                completion_criteria=CompletionCriteria(
-                    type="any", check="always"
+                StageDefinition(
+                    name="s3",
+                    completion_criteria=CompletionCriteria(type="any", check="always"),
                 ),
-            ),
-        ])
+            ]
+        )
         handler = StagedPipelineHandler({})
         handler._pipeline = pipeline
 
@@ -290,26 +297,31 @@ class TestHandlerIntegration:
             "c": _MockAgent("final"),
         }
         msgs = handler.execute(
-            [Assignment(agent_name="a", task="t"),
-             Assignment(agent_name="b", task="t"),
-             Assignment(agent_name="c", task="t")],
-            agents, None,
+            [
+                Assignment(agent_name="a", task="t"),
+                Assignment(agent_name="b", task="t"),
+                Assignment(agent_name="c", task="t"),
+            ],
+            agents,
+            None,
         )
         assert len(msgs) == 3  # all ran despite failures
 
     def test_missing_agent_still_advances(self):
         """Missing agent records error, pipeline continues."""
-        pipeline = PipelineDefinition(stages=[
-            StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
-            StageDefinition(name="s2", completion_criteria=CompletionCriteria(type="any", check="always")),
-        ])
+        pipeline = PipelineDefinition(
+            stages=[
+                StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
+                StageDefinition(name="s2", completion_criteria=CompletionCriteria(type="any", check="always")),
+            ]
+        )
         handler = StagedPipelineHandler({})
         handler._pipeline = pipeline
 
         msgs = handler.execute(
-            [Assignment(agent_name="missing", task="t"),
-             Assignment(agent_name="exists", task="t")],
-            {"exists": _MockAgent("ok")}, None,
+            [Assignment(agent_name="missing", task="t"), Assignment(agent_name="exists", task="t")],
+            {"exists": _MockAgent("ok")},
+            None,
         )
         assert len(msgs) == 2
         assert msgs[0].error is not None
@@ -317,6 +329,7 @@ class TestHandlerIntegration:
 
 
 # ---- Metrics integration ---------------------------------------------------
+
 
 class TestMetricsIntegration:
     def test_metrics_from_real_run(self):
@@ -328,15 +341,18 @@ class TestMetricsIntegration:
         agents = {
             "d": _MockAgent("plan"),
             "c": _MockAgent("no code here"),  # NOT MET
-            "e": _MockAgent("no tool"),        # NOT MET
-            "r": _MockAgent("FAILED"),         # MET
+            "e": _MockAgent("no tool"),  # NOT MET
+            "r": _MockAgent("FAILED"),  # MET
         }
         handler.execute(
-            [Assignment(agent_name="d", task="t"),
-             Assignment(agent_name="c", task="t"),
-             Assignment(agent_name="e", task="t"),
-             Assignment(agent_name="r", task="t")],
-            agents, None,
+            [
+                Assignment(agent_name="d", task="t"),
+                Assignment(agent_name="c", task="t"),
+                Assignment(agent_name="e", task="t"),
+                Assignment(agent_name="r", task="t"),
+            ],
+            agents,
+            None,
         )
 
         pm = compute_per_prompt_metrics(handler.last_stage_results)
@@ -349,41 +365,41 @@ class TestMetricsIntegration:
 
     def test_cross_prompt_metrics(self):
         """Cross-prompt aggregation from multiple runs."""
-        pipeline = PipelineDefinition(stages=[
-            StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
-            StageDefinition(name="s2", completion_criteria=CompletionCriteria(type="any", check="always")),
-        ])
+        pipeline = PipelineDefinition(
+            stages=[
+                StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
+                StageDefinition(name="s2", completion_criteria=CompletionCriteria(type="any", check="always")),
+            ]
+        )
         handler = StagedPipelineHandler({})
         handler._pipeline = pipeline
 
         # Run 1: all met.
         handler.execute(
-            [Assignment(agent_name="a", task="t1"),
-             Assignment(agent_name="b", task="t1")],
-            {"a": _MockAgent("ok"), "b": _MockAgent("ok")}, None,
+            [Assignment(agent_name="a", task="t1"), Assignment(agent_name="b", task="t1")],
+            {"a": _MockAgent("ok"), "b": _MockAgent("ok")},
+            None,
         )
         pm1 = compute_per_prompt_metrics(handler.last_stage_results)
 
         # Run 2: different results.
-        pipeline2 = PipelineDefinition(stages=[
-            StageDefinition(
-                name="s1",
-                completion_criteria=CompletionCriteria(
-                    type="output_contains", check="code_block"
+        pipeline2 = PipelineDefinition(
+            stages=[
+                StageDefinition(
+                    name="s1",
+                    completion_criteria=CompletionCriteria(type="output_contains", check="code_block"),
                 ),
-            ),
-            StageDefinition(
-                name="s2",
-                completion_criteria=CompletionCriteria(
-                    type="output_contains", check="code_block"
+                StageDefinition(
+                    name="s2",
+                    completion_criteria=CompletionCriteria(type="output_contains", check="code_block"),
                 ),
-            ),
-        ])
+            ]
+        )
         handler._pipeline = pipeline2
         handler.execute(
-            [Assignment(agent_name="a", task="t2"),
-             Assignment(agent_name="b", task="t2")],
-            {"a": _MockAgent("no code"), "b": _MockAgent("no code")}, None,
+            [Assignment(agent_name="a", task="t2"), Assignment(agent_name="b", task="t2")],
+            {"a": _MockAgent("no code"), "b": _MockAgent("no code")},
+            None,
         )
         pm2 = compute_per_prompt_metrics(handler.last_stage_results)
 
@@ -394,12 +410,15 @@ class TestMetricsIntegration:
 
 # ---- Coordinator wiring integration ----------------------------------------
 
+
 class TestCoordinatorWiring:
     def test_coordinator_with_staged_pipeline_handler(self):
         """Coordinator uses StagedPipelineHandler when configured."""
-        pipeline = PipelineDefinition(stages=[
-            StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
-        ])
+        pipeline = PipelineDefinition(
+            stages=[
+                StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
+            ]
+        )
         handler = StagedPipelineHandler({})
         handler._pipeline = pipeline
 
@@ -418,10 +437,12 @@ class TestCoordinatorWiring:
 
 # ---- Config loading integration --------------------------------------------
 
+
 class TestConfigLoading:
     def test_staged_pipeline_config_loads(self):
         """staged_pipeline.yaml loads without errors."""
         import yaml
+
         with open("config/staged_pipeline.yaml") as f:
             cfg = yaml.safe_load(f)
         sp = cfg["staged_pipeline"]
@@ -432,6 +453,7 @@ class TestConfigLoading:
     def test_handler_from_config(self):
         """StagedPipelineHandler initializes from config dict."""
         import yaml
+
         with open("config/staged_pipeline.yaml") as f:
             cfg = yaml.safe_load(f)
         handler = StagedPipelineHandler(cfg["staged_pipeline"])
@@ -441,14 +463,17 @@ class TestConfigLoading:
 
 # ---- Context mode integration tests ----------------------------------------
 
+
 class TestContextModeIntegration:
     def test_all_stages_mode_includes_all_history(self):
         """all_stages mode gives the final stage all previous outputs."""
-        pipeline = PipelineDefinition(stages=[
-            StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
-            StageDefinition(name="s2", completion_criteria=CompletionCriteria(type="any", check="always")),
-            StageDefinition(name="s3", completion_criteria=CompletionCriteria(type="any", check="always")),
-        ])
+        pipeline = PipelineDefinition(
+            stages=[
+                StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
+                StageDefinition(name="s2", completion_criteria=CompletionCriteria(type="any", check="always")),
+                StageDefinition(name="s3", completion_criteria=CompletionCriteria(type="any", check="always")),
+            ]
+        )
         handler = StagedPipelineHandler({"context_mode": "all_stages"})
         handler._pipeline = pipeline
 
@@ -456,10 +481,13 @@ class TestContextModeIntegration:
         a2 = _MockAgent("BETA")
         a3 = _MockAgent("GAMMA")
         handler.execute(
-            [Assignment(agent_name="a1", task="t"),
-             Assignment(agent_name="a2", task="t"),
-             Assignment(agent_name="a3", task="t")],
-            {"a1": a1, "a2": a2, "a3": a3}, None,
+            [
+                Assignment(agent_name="a1", task="t"),
+                Assignment(agent_name="a2", task="t"),
+                Assignment(agent_name="a3", task="t"),
+            ],
+            {"a1": a1, "a2": a2, "a3": a3},
+            None,
         )
         # Stage 3 should see both ALPHA and BETA.
         assert "ALPHA" in a3.calls[0]
@@ -467,6 +495,7 @@ class TestContextModeIntegration:
 
 
 # ---- Slow test (real LLM) -------------------------------------------------
+
 
 @pytest.mark.slow
 class TestStagedPipelineRealLLM:
@@ -485,39 +514,51 @@ class TestStagedPipelineRealLLM:
         tools = [EchoTool(), CalculatorTool()]
 
         # Create 2-stage pipeline: compute → review.
-        pipeline = PipelineDefinition(stages=[
-            StageDefinition(
-                name="compute",
-                completion_criteria=CompletionCriteria(
-                    type="output_contains", check="non_empty_output",
+        pipeline = PipelineDefinition(
+            stages=[
+                StageDefinition(
+                    name="compute",
+                    completion_criteria=CompletionCriteria(
+                        type="output_contains",
+                        check="non_empty_output",
+                    ),
+                    stage_prompt="Calculate the sum of 15 and 27 using the calculator tool.",
                 ),
-                stage_prompt="Calculate the sum of 15 and 27 using the calculator tool.",
-            ),
-            StageDefinition(
-                name="review",
-                completion_criteria=CompletionCriteria(
-                    type="output_contains", check="verdict_present",
+                StageDefinition(
+                    name="review",
+                    completion_criteria=CompletionCriteria(
+                        type="output_contains",
+                        check="verdict_present",
+                    ),
+                    stage_prompt="Review the previous result. If correct, say ACCEPTABLE. If wrong, say FAILED.",
                 ),
-                stage_prompt="Review the previous result. If correct, say ACCEPTABLE. If wrong, say FAILED.",
-            ),
-        ])
+            ]
+        )
 
         # Build agents for each stage.
         agent1 = ToolCallingAgent(
-            tools=tools, model=model,
-            name="compute_agent", add_base_tools=False, max_steps=5,
+            tools=tools,
+            model=model,
+            name="compute_agent",
+            add_base_tools=False,
+            max_steps=5,
         )
         agent2 = ToolCallingAgent(
-            tools=tools, model=model,
-            name="review_agent", add_base_tools=False, max_steps=5,
+            tools=tools,
+            model=model,
+            name="review_agent",
+            add_base_tools=False,
+            max_steps=5,
         )
 
         handler = StagedPipelineHandler({"termination_keyword": ""})
         handler._pipeline = pipeline
 
         msgs = handler.execute(
-            [Assignment(agent_name="compute_agent", task="Calculate the sum of 15 and 27"),
-             Assignment(agent_name="review_agent", task="Review the result")],
+            [
+                Assignment(agent_name="compute_agent", task="Calculate the sum of 15 and 27"),
+                Assignment(agent_name="review_agent", task="Review the result"),
+            ],
             {"compute_agent": agent1, "review_agent": agent2},
             logger=None,
         )

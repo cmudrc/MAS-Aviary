@@ -29,16 +29,19 @@ def clear_invocation_log() -> None:
 
 def _log_invocation(tool_name: str, inputs: dict, output, duration: float) -> None:
     """Append an invocation record to the global log."""
-    _invocation_log.append({
-        "tool_name": tool_name,
-        "inputs": inputs,
-        "output": str(output),
-        "timestamp": time.time(),
-        "duration_seconds": duration,
-    })
+    _invocation_log.append(
+        {
+            "tool_name": tool_name,
+            "inputs": inputs,
+            "output": str(output),
+            "timestamp": time.time(),
+            "duration_seconds": duration,
+        }
+    )
 
 
 # ---- Echo Tool ----------------------------------------------------------------
+
 
 class EchoTool(Tool):
     """Takes a string and returns it unchanged — for testing basic tool calling."""
@@ -114,6 +117,7 @@ class CalculatorTool(Tool):
 
 
 # ---- State Tool ---------------------------------------------------------------
+
 
 class StateTool(Tool):
     """Maintains an internal counter that increments on each call — for testing stateful tools."""

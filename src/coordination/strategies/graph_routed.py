@@ -35,8 +35,7 @@ class GraphRoutedStrategy(CoordinationStrategy):
         for name in all_mentioned:
             if name not in agents:
                 raise ValueError(
-                    f"Graph transition references unknown agent {name!r}. "
-                    f"Available: {list(agents.keys())}"
+                    f"Graph transition references unknown agent {name!r}. Available: {list(agents.keys())}"
                 )
 
         # Start agent is the first key in transitions
@@ -120,6 +119,7 @@ class GraphRoutedStrategy(CoordinationStrategy):
         )
         try:
             from smolagents.types import ChatMessage
+
             messages = [ChatMessage(role="user", content=prompt)]
             response = self._model.generate(messages)
             choice = response.content.strip().lower()

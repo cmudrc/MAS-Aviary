@@ -15,15 +15,14 @@ from src.coordination.similarity import (
 
 # ---- TF-IDF cosine similarity -----------------------------------------------
 
+
 class TestTfidfSimilarity:
     def test_identical_texts(self):
         sim = _tfidf_cosine_similarity("hello world foo", "hello world foo")
         assert sim == pytest.approx(1.0)
 
     def test_completely_different_texts(self):
-        sim = _tfidf_cosine_similarity(
-            "alpha beta gamma", "delta epsilon zeta"
-        )
+        sim = _tfidf_cosine_similarity("alpha beta gamma", "delta epsilon zeta")
         assert sim == pytest.approx(0.0, abs=0.01)
 
     def test_partially_similar_texts(self):
@@ -42,6 +41,7 @@ class TestTfidfSimilarity:
 
 
 # ---- Jaccard similarity -----------------------------------------------------
+
 
 class TestJaccardSimilarity:
     def test_identical_token_sets(self):
@@ -66,6 +66,7 @@ class TestJaccardSimilarity:
 
 
 # ---- compute_similarity dispatch --------------------------------------------
+
 
 class TestComputeSimilarity:
     def test_tfidf_method(self):
@@ -103,6 +104,7 @@ class TestComputeSimilarity:
 
 
 # ---- Similarity properties ---------------------------------------------------
+
 
 class TestSimilarityProperties:
     def test_similarity_is_between_0_and_1(self):

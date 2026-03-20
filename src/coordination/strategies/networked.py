@@ -73,7 +73,7 @@ class NetworkedStrategy(CoordinationStrategy):
         self._handler_is_staged_pipeline: bool = False
 
         # Graph-driven mode (optional, set when _graph_def is in config).
-        self._graph = None           # GraphDefinition or None
+        self._graph = None  # GraphDefinition or None
         self._graph_current_state: str | None = None
         self._graph_state_dict: dict = {}
         self._graph_complete: bool = False
@@ -109,9 +109,7 @@ class NetworkedStrategy(CoordinationStrategy):
         # Skip phase gating when staged_pipeline handler is active — the
         # handler's stage definitions already enforce ordering through
         # completion criteria.  The two mechanisms are redundant and conflict.
-        self._handler_is_staged_pipeline = (
-            config.get("execution_handler") == "staged_pipeline"
-        )
+        self._handler_is_staged_pipeline = config.get("execution_handler") == "staged_pipeline"
         self._workflow_phases = net_config.get("workflow_phases", [])
 
         # Load peer prompt templates from agent config.
@@ -251,9 +249,7 @@ class NetworkedStrategy(CoordinationStrategy):
             self._task = current_state["task"]
             # Write task to blackboard.
             if self._blackboard is not None:
-                self._blackboard.write(
-                    "task", self._task, "system", "status"
-                )
+                self._blackboard.write("task", self._task, "system", "status")
 
         # Auto-complete workflow phases based on tool calls from last turn.
         self._auto_complete_phases(history)
@@ -296,10 +292,7 @@ class NetworkedStrategy(CoordinationStrategy):
 
         # Update agent order to include any spawned agents.
         current_names = [n for n in self._agent_order if n in self._agents]
-        new_names = [
-            n for n in self._agents
-            if n not in current_names and n != "system"
-        ]
+        new_names = [n for n in self._agents if n not in current_names and n != "system"]
         self._agent_order = current_names + new_names
 
         # Placeholder rotation: simple round-robin.
@@ -320,7 +313,10 @@ class NetworkedStrategy(CoordinationStrategy):
 
         # Build input context.
         input_context = self._build_context(
-            agent_name, history, current_state, active_phase=active_phase,
+            agent_name,
+            history,
+            current_state,
+            active_phase=active_phase,
         )
 
         return CoordinationAction(
@@ -437,8 +433,7 @@ class NetworkedStrategy(CoordinationStrategy):
         if not open_phases:
             # All phases done — only keep peer tools + final_answer.
             agent.tools = {
-                name: tool for name, tool in agent.tools.items()
-                if name in PEER_TOOL_NAMES or name == "final_answer"
+                name: tool for name, tool in agent.tools.items() if name in PEER_TOOL_NAMES or name == "final_answer"
             }
             return "ALL_PHASES_COMPLETE"
 
@@ -453,7 +448,8 @@ class NetworkedStrategy(CoordinationStrategy):
         # Exclude mark_task_done until all phases are complete — prevents
         # premature termination mid-pipeline.
         agent.tools = {
-            name: tool for name, tool in agent.tools.items()
+            name: tool
+            for name, tool in agent.tools.items()
             if name in allowed_domain_tools
             or (name in PEER_TOOL_NAMES and name != "mark_task_done")
             or name == "final_answer"
@@ -564,7 +560,9 @@ class NetworkedStrategy(CoordinationStrategy):
     # -- Graph-driven mode ------------------------------------------------------
 
     def _graph_driven_next_step(
-        self, history: list, current_state: dict,
+        self,
+        history: list,
+        current_state: dict,
     ) -> CoordinationAction:
         """Execute one graph state per turn, strategy-driven.
 
@@ -578,8 +576,7 @@ class NetworkedStrategy(CoordinationStrategy):
             self._advance_graph_state(history)
 
         # Terminal check.
-        if (self._graph_current_state is None
-                or self._graph_current_state in self._graph.terminal_states):
+        if self._graph_current_state is None or self._graph_current_state in self._graph.terminal_states:
             self._graph_complete = True
             return CoordinationAction(
                 action_type="terminate",
@@ -617,9 +614,12 @@ class NetworkedStrategy(CoordinationStrategy):
         if agent_name not in self._agents:
             # Try fuzzy resolution (the aliases may have been registered).
             from src.coordination.graph_definition import resolve_agent_for_role
+
             try:
                 resolved = resolve_agent_for_role(
-                    agent_name, self._agents, self._graph_current_state,
+                    agent_name,
+                    self._agents,
+                    self._graph_current_state,
                 )
                 # Find the key in the agents dict for this resolved agent.
                 for key, val in self._agents.items():
@@ -628,8 +628,7 @@ class NetworkedStrategy(CoordinationStrategy):
                         break
             except ValueError:
                 # Fallback: round-robin among peers.
-                peer_names = [k for k in self._agent_order
-                              if k.startswith("agent_")]
+                peer_names = [k for k in self._agent_order if k.startswith("agent_")]
                 if peer_names:
                     idx = self._rotation_index % len(peer_names)
                     agent_name = peer_names[idx]
@@ -640,10 +639,7 @@ class NetworkedStrategy(CoordinationStrategy):
         if agent_obj is not None:
             full_tools = self._full_toolsets.get(agent_name)
             if full_tools:
-                agent_obj.tools = {
-                    name: tool for name, tool in full_tools.items()
-                    if name != "mark_task_done"
-                }
+                agent_obj.tools = {name: tool for name, tool in full_tools.items() if name != "mark_task_done"}
 
         # Build context: focused graph state prompt only — do NOT include
         # the full task description, as that causes agents to run the
@@ -659,8 +655,7 @@ class NetworkedStrategy(CoordinationStrategy):
             "ONE step of the workflow. Complete ONLY the step below, write "
             "your result to the blackboard, then stop. Do NOT call tools "
             "for other steps — your peers will handle those.",
-            f"GRAPH STATE: {self._graph_current_state}\n"
-            f"Role: {state_def.agent}\n\n{prompt}",
+            f"GRAPH STATE: {self._graph_current_state}\nRole: {state_def.agent}\n\n{prompt}",
         ]
 
         # Blackboard context.
@@ -671,21 +666,19 @@ class NetworkedStrategy(CoordinationStrategy):
                 "predictive_knowledge": self._predictive_knowledge,
             }
             bb_ctx = self._blackboard.to_context_string(
-                agent_name, toggle_config,
+                agent_name,
+                toggle_config,
             )
             parts.append(f"Current Blackboard State:\n{bb_ctx}")
 
         # Recent history.
         if history:
-            recent = history[-self._max_recent_messages:]
+            recent = history[-self._max_recent_messages :]
             lines = []
             for msg in recent:
                 if isinstance(msg, AgentMessage):
                     status = f" [ERROR: {msg.error}]" if msg.error else ""
-                    lines.append(
-                        f"[Turn {msg.turn_number}] {msg.agent_name}: "
-                        f"{msg.content[:500]}{status}"
-                    )
+                    lines.append(f"[Turn {msg.turn_number}] {msg.agent_name}: {msg.content[:500]}{status}")
             if lines:
                 parts.append("Recent History:\n" + "\n".join(lines))
 
@@ -717,9 +710,7 @@ class NetworkedStrategy(CoordinationStrategy):
         if complexity:
             meta["complexity"] = complexity
         visited = self._graph_state_dict.get("states_visited", [])
-        total_states = len([
-            s for s in self._graph.states.values() if s.agent is not None
-        ])
+        total_states = len([s for s in self._graph.states.values() if s.agent is not None])
         meta["passes_remaining"] = max(0, total_states - len(visited) - 1)
         meta["passes_max"] = total_states
 
@@ -766,7 +757,8 @@ class NetworkedStrategy(CoordinationStrategy):
         # Session ID extraction.
         session_match = re.search(
             r"(?:SESSION_ID|session_id)['\"\s:=]+([0-9a-f-]{36})",
-            content, re.IGNORECASE,
+            content,
+            re.IGNORECASE,
         )
         if session_match:
             self._graph_state_dict["session_id"] = session_match.group(1)
@@ -780,12 +772,11 @@ class NetworkedStrategy(CoordinationStrategy):
                     uuid_match = re.search(
                         r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}"
                         r"-[0-9a-f]{4}-[0-9a-f]{12}",
-                        output, re.IGNORECASE,
+                        output,
+                        re.IGNORECASE,
                     )
                     if uuid_match:
-                        self._graph_state_dict["session_id"] = (
-                            uuid_match.group(0)
-                        )
+                        self._graph_state_dict["session_id"] = uuid_match.group(0)
                         break
 
         # Convergence.
@@ -826,10 +817,12 @@ class NetworkedStrategy(CoordinationStrategy):
             ConditionParseError,
             evaluate_condition,
         )
+
         for trans in state_def.transitions:
             try:
                 result = evaluate_condition(
-                    trans.condition, self._graph_state_dict,
+                    trans.condition,
+                    self._graph_state_dict,
                 )
             except ConditionParseError:
                 continue
@@ -862,7 +855,7 @@ class NetworkedStrategy(CoordinationStrategy):
         elif active_phase and self._workflow_phases:
             phase_map = "\n".join(
                 f"  {'>> ' if p['name'] in active_phase else '   '}"
-                f"Phase {i+1} — {p['name']}: {', '.join(p.get('tools', []))}"
+                f"Phase {i + 1} — {p['name']}: {', '.join(p.get('tools', []))}"
                 f"{' [DONE]' if self._blackboard and self._blackboard.get(p['board_key']) else ''}"
                 for i, p in enumerate(self._workflow_phases)
             )
@@ -893,15 +886,12 @@ class NetworkedStrategy(CoordinationStrategy):
 
         # Recent history (truncated).
         if history:
-            recent = history[-self._max_recent_messages:]
+            recent = history[-self._max_recent_messages :]
             history_lines = []
             for msg in recent:
                 if isinstance(msg, AgentMessage):
                     status = f" [ERROR: {msg.error}]" if msg.error else ""
-                    history_lines.append(
-                        f"[Turn {msg.turn_number}] {msg.agent_name}: "
-                        f"{msg.content[:500]}{status}"
-                    )
+                    history_lines.append(f"[Turn {msg.turn_number}] {msg.agent_name}: {msg.content[:500]}{status}")
             if history_lines:
                 parts.append("Recent History:\n" + "\n".join(history_lines))
 

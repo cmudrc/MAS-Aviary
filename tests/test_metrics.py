@@ -13,12 +13,16 @@ from src.logging.metrics import compute_metrics
 
 def _msg(agent: str, content: str, turn: int, **kwargs) -> AgentMessage:
     return AgentMessage(
-        agent_name=agent, content=content, turn_number=turn,
-        timestamp=time.time(), **kwargs,
+        agent_name=agent,
+        content=content,
+        turn_number=turn,
+        timestamp=time.time(),
+        **kwargs,
     )
 
 
 # ---- compute_metrics ----------------------------------------------------------
+
 
 class TestComputeMetrics:
     def test_empty_history(self):
@@ -107,6 +111,7 @@ class TestComputeMetrics:
 
 # ---- InstrumentationLogger ----------------------------------------------------
 
+
 class TestInstrumentationLogger:
     def test_log_and_retrieve(self):
         logger = InstrumentationLogger()
@@ -130,6 +135,7 @@ class TestInstrumentationLogger:
 
 
 # ---- JSON Export ---------------------------------------------------------------
+
 
 class TestExporter:
     def test_export_creates_file(self, tmp_path):

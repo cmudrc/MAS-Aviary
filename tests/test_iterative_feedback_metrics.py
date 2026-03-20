@@ -17,6 +17,7 @@ from src.logging.iterative_feedback_metrics import (
 
 # ---- Helpers -----------------------------------------------------------------
 
+
 def _fb(
     attempt: int = 0,
     output: str = "",
@@ -27,9 +28,13 @@ def _fb(
     tool_calls = []
     if error_types:
         for et in error_types:
-            tool_calls.append(ToolCallOutcome(
-                tool_name="tool", success=not has_errors, error_type=et,
-            ))
+            tool_calls.append(
+                ToolCallOutcome(
+                    tool_name="tool",
+                    success=not has_errors,
+                    error_type=et,
+                )
+            )
     return AttemptFeedback(
         attempt_number=attempt,
         tool_calls=tool_calls,
@@ -41,6 +46,7 @@ def _fb(
 
 # ---- Ambidexterity -----------------------------------------------------------
 
+
 class TestAmbidexterity:
     def test_single_attempt_returns_none(self):
         result = compute_ambidexterity([_fb(output="hello")])
@@ -49,10 +55,7 @@ class TestAmbidexterity:
 
     def test_identical_outputs_high_similarity(self):
         """All similar outputs → exploitation, low variance."""
-        attempts = [
-            _fb(attempt=i, output="Setting aircraft parameters and running simulation")
-            for i in range(4)
-        ]
+        attempts = [_fb(attempt=i, output="Setting aircraft parameters and running simulation") for i in range(4)]
         result = compute_ambidexterity(attempts)
         assert result["mean_similarity"] > 0.8
         assert result["dominant_mode"] == "exploitation"
@@ -73,9 +76,9 @@ class TestAmbidexterity:
         """Alternating similar/different consecutive pairs → high ambidexterity."""
         attempts = [
             _fb(attempt=0, output="a b c d e"),
-            _fb(attempt=1, output="a b c d f"),        # (0,1): 4/6 overlap → ~0.67
-            _fb(attempt=2, output="x y z w v"),        # (1,2): 0/10 overlap → 0.0
-            _fb(attempt=3, output="x y z w u"),        # (2,3): 4/6 overlap → ~0.67
+            _fb(attempt=1, output="a b c d f"),  # (0,1): 4/6 overlap → ~0.67
+            _fb(attempt=2, output="x y z w v"),  # (1,2): 0/10 overlap → 0.0
+            _fb(attempt=3, output="x y z w u"),  # (2,3): 4/6 overlap → ~0.67
         ]
         result = compute_ambidexterity(attempts, similarity_method="jaccard")
         # Similarities: [~0.67, 0.0, ~0.67] → variance > 0
@@ -93,6 +96,7 @@ class TestAmbidexterity:
 
 # ---- Escalation of commitment ------------------------------------------------
 
+
 class TestEscalation:
     def test_no_escalation_with_single_attempt(self):
         result = compute_escalation([_fb()])
@@ -101,10 +105,7 @@ class TestEscalation:
 
     def test_consecutive_similar_failures(self):
         """4+ consecutive similar failures → escalation detected."""
-        attempts = [
-            _fb(attempt=i, output="error: the same error message repeating", has_errors=True)
-            for i in range(5)
-        ]
+        attempts = [_fb(attempt=i, output="error: the same error message repeating", has_errors=True) for i in range(5)]
         result = compute_escalation(attempts, min_length=4)
         assert result["escalation_length"] >= 4
         assert result["escalation_detected"] is True
@@ -132,16 +133,14 @@ class TestEscalation:
         assert result["escalation_detected"] is False
 
     def test_escalation_threshold_configurable(self):
-        attempts = [
-            _fb(attempt=i, output="same output", has_errors=True)
-            for i in range(3)
-        ]
+        attempts = [_fb(attempt=i, output="same output", has_errors=True) for i in range(3)]
         # min_length=2 → should detect with 3 attempts
         result = compute_escalation(attempts, min_length=2)
         assert result["escalation_detected"] is True
 
 
 # ---- Per-agent metrics -------------------------------------------------------
+
 
 class TestPerAgentMetrics:
     def test_empty_attempts(self):
@@ -169,25 +168,21 @@ class TestPerAgentMetrics:
         assert result["final_outcome"] == "success"
 
     def test_all_failures(self):
-        attempts = [
-            _fb(attempt=i, output=f"fail {i}", has_errors=True, error_types=["RuntimeError"])
-            for i in range(5)
-        ]
+        attempts = [_fb(attempt=i, output=f"fail {i}", has_errors=True, error_types=["RuntimeError"]) for i in range(5)]
         result = compute_per_agent_metrics(attempts)
         assert result["total_attempts"] == 5
         assert result["success_attempt"] is None
         assert result["final_outcome"] == "max_retries_exhausted"
 
     def test_summary_handoff(self):
-        attempts = [
-            _fb(attempt=i, output="fail", has_errors=True)
-            for i in range(19)
-        ]
-        attempts.append(_fb(
-            attempt=19,
-            output="Summary: tried X, Y, Z. All failed.",
-            has_errors=True,
-        ))
+        attempts = [_fb(attempt=i, output="fail", has_errors=True) for i in range(19)]
+        attempts.append(
+            _fb(
+                attempt=19,
+                output="Summary: tried X, Y, Z. All failed.",
+                has_errors=True,
+            )
+        )
         result = compute_per_agent_metrics(attempts)
         assert result["final_outcome"] == "summary_handoff"
 
@@ -203,6 +198,7 @@ class TestPerAgentMetrics:
 
 
 # ---- Per-prompt metrics ------------------------------------------------------
+
 
 class TestPerPromptMetrics:
     def test_empty_histories(self):
@@ -254,6 +250,7 @@ class TestPerPromptMetrics:
 
 
 # ---- Cross-prompt metrics ----------------------------------------------------
+
 
 class TestCrossPromptMetrics:
     def test_empty_list(self):

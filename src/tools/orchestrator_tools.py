@@ -50,10 +50,15 @@ class OrchestratorContext:
     result_signals: set = field(default_factory=set)
 
 
-ORCHESTRATOR_TOOL_NAMES = frozenset({
-    "list_available_tools", "list_graph_roles", "create_agent",
-    "assign_task", "final_answer",
-})
+ORCHESTRATOR_TOOL_NAMES = frozenset(
+    {
+        "list_available_tools",
+        "list_graph_roles",
+        "create_agent",
+        "assign_task",
+        "final_answer",
+    }
+)
 
 DELEGATION_COMPLETE = "DELEGATION_COMPLETE"
 
@@ -122,8 +127,7 @@ class GatedFinalAnswer(Tool):
         missing = _check_phase_coverage(ctx)
         if missing:
             phase_detail = "; ".join(
-                f"'{phase}' (needs one of: {', '.join(tools)})"
-                for phase, tools in missing.items()
+                f"'{phase}' (needs one of: {', '.join(tools)})" for phase, tools in missing.items()
             )
             raise ValueError(
                 f"Workflow phases not covered: {phase_detail}. "
@@ -173,22 +177,21 @@ class ListAvailableTools(Tool):
             info = {
                 "name": tool.name,
                 "description": tool.description,
-                "input_schema": {
-                    k: v.get("type", "string")
-                    for k, v in (tool.inputs or {}).items()
-                },
+                "input_schema": {k: v.get("type", "string") for k, v in (tool.inputs or {}).items()},
             }
             tools_info.append(info)
 
-        return json.dumps({
-            "note": (
-                "These are WORKER tools. You CANNOT call them directly. "
-                "Use create_agent to build a specialist, assign these tools "
-                "to it, then use assign_task to give it work."
-            ),
-            "tools": tools_info,
-            "total_count": len(tools_info),
-        })
+        return json.dumps(
+            {
+                "note": (
+                    "These are WORKER tools. You CANNOT call them directly. "
+                    "Use create_agent to build a specialist, assign these tools "
+                    "to it, then use assign_task to give it work."
+                ),
+                "tools": tools_info,
+                "total_count": len(tools_info),
+            }
+        )
 
 
 class ListGraphRoles(Tool):
@@ -217,18 +220,22 @@ class ListGraphRoles(Tool):
 
     def forward(self) -> str:
         if not self._roles:
-            return json.dumps({
-                "roles": [],
-                "note": "No graph roles configured. Name your agents freely.",
-            })
-        return json.dumps({
-            "roles": self._roles,
-            "note": (
-                "Create agents with these EXACT names so the graph router "
-                "can assign work to them. Each role corresponds to a state "
-                "in the execution graph."
-            ),
-        })
+            return json.dumps(
+                {
+                    "roles": [],
+                    "note": "No graph roles configured. Name your agents freely.",
+                }
+            )
+        return json.dumps(
+            {
+                "roles": self._roles,
+                "note": (
+                    "Create agents with these EXACT names so the graph router "
+                    "can assign work to them. Each role corresponds to a state "
+                    "in the execution graph."
+                ),
+            }
+        )
 
 
 class CreateAgent(Tool):
@@ -255,8 +262,7 @@ class CreateAgent(Tool):
         "tools": {
             "type": "any",
             "description": (
-                "List of tool names to assign to this agent. "
-                "Must be names from list_available_tools output."
+                "List of tool names to assign to this agent. Must be names from list_available_tools output."
             ),
         },
     }
@@ -277,12 +283,14 @@ class CreateAgent(Tool):
         # success so the orchestrator can proceed to assign_task without
         # wasting a step on an error.
         if name in ctx.agents:
-            return json.dumps({
-                "success": True,
-                "agent_name": name,
-                "note": f"Agent '{name}' already exists and is ready for task assignment.",
-                "error": None,
-            })
+            return json.dumps(
+                {
+                    "success": True,
+                    "agent_name": name,
+                    "note": f"Agent '{name}' already exists and is ready for task assignment.",
+                    "error": None,
+                }
+            )
 
         # Validate max agents.
         if len(ctx.created_agents) >= ctx.max_agents:
@@ -323,13 +331,15 @@ class CreateAgent(Tool):
         if ctx.on_delegation_change:
             ctx.on_delegation_change()
 
-        return json.dumps({
-            "success": True,
-            "agent_name": name,
-            "persona": persona,
-            "tools_assigned": tool_names,
-            "error": None,
-        })
+        return json.dumps(
+            {
+                "success": True,
+                "agent_name": name,
+                "persona": persona,
+                "tools_assigned": tool_names,
+                "error": None,
+            }
+        )
 
 
 class AssignTask(Tool):
@@ -382,15 +392,18 @@ class AssignTask(Tool):
         if ctx.on_delegation_change:
             ctx.on_delegation_change()
 
-        return json.dumps({
-            "success": True,
-            "agent_name": agent_name,
-            "task": task,
-            "queue_position": len(ctx.assignments),
-        })
+        return json.dumps(
+            {
+                "success": True,
+                "agent_name": agent_name,
+                "task": task,
+                "queue_position": len(ctx.assignments),
+            }
+        )
 
 
 # --- Helpers ------------------------------------------------------------------
+
 
 def _parse_tool_names(tools) -> list[str]:
     """Normalize tool names from various input formats."""
@@ -459,8 +472,10 @@ def _check_result_signals(ctx: OrchestratorContext) -> list[str]:
 
 def _error(agent_name: str, message: str) -> str:
     """Return a JSON error response."""
-    return json.dumps({
-        "success": False,
-        "agent_name": agent_name,
-        "error": message,
-    })
+    return json.dumps(
+        {
+            "success": False,
+            "agent_name": agent_name,
+            "error": message,
+        }
+    )

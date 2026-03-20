@@ -90,19 +90,13 @@ def compute_networked_metrics(
 
     # Duplicate work rate: subtasks worked on by >1 agent / total subtasks.
     total_subtasks = len(subtask_agents)
-    duplicate_subtasks = sum(
-        1 for agents in subtask_agents.values() if len(agents) > 1
-    )
-    duplicate_work_rate = (
-        duplicate_subtasks / total_subtasks if total_subtasks > 0 else 0.0
-    )
+    duplicate_subtasks = sum(1 for agents in subtask_agents.values() if len(agents) > 1)
+    duplicate_work_rate = duplicate_subtasks / total_subtasks if total_subtasks > 0 else 0.0
 
     # Self-selection diversity: unique subtasks chosen / total agent turns.
     sum(len(subs) for subs in agent_subtasks.values())
     unique_subtasks = len(subtask_agents)
-    self_selection_diversity = (
-        unique_subtasks / total_turns if total_turns > 0 else 0.0
-    )
+    self_selection_diversity = unique_subtasks / total_turns if total_turns > 0 else 0.0
 
     # Prediction accuracy.
     prediction_accuracy = 0.0
@@ -166,9 +160,7 @@ def compute_cross_prompt_metrics(
 
         # Commission: bad output that wasn't flagged (eval < threshold
         # but no error messages in history).
-        has_errors = any(
-            m.error for m in messages if isinstance(m, AgentMessage)
-        )
+        has_errors = any(m.error for m in messages if isinstance(m, AgentMessage))
         if eval_score < eval_threshold and not has_errors:
             commission_errors += 1
 
@@ -199,8 +191,7 @@ def compute_cross_prompt_metrics(
     # Escalation of commitment: consecutive prompts with similar failures.
     escalation_count = 0
     for i in range(1, len(prev_failure_signatures)):
-        if (prev_failure_signatures[i] is not None
-                and prev_failure_signatures[i - 1] is not None):
+        if prev_failure_signatures[i] is not None and prev_failure_signatures[i - 1] is not None:
             overlap = _signature_overlap(
                 prev_failure_signatures[i],
                 prev_failure_signatures[i - 1],
@@ -209,21 +200,13 @@ def compute_cross_prompt_metrics(
                 escalation_count += 1
 
     # Ambidexterity proxy: variance of redundancy rates.
-    mean_red = (
-        sum(redundancy_rates) / len(redundancy_rates) if redundancy_rates else 0.0
-    )
+    mean_red = sum(redundancy_rates) / len(redundancy_rates) if redundancy_rates else 0.0
     variance_red = (
-        sum((r - mean_red) ** 2 for r in redundancy_rates) / len(redundancy_rates)
-        if redundancy_rates
-        else 0.0
+        sum((r - mean_red) ** 2 for r in redundancy_rates) / len(redundancy_rates) if redundancy_rates else 0.0
     )
 
     # Mean joint myopia score.
-    mean_convergence = (
-        sum(convergence_scores) / len(convergence_scores)
-        if convergence_scores
-        else 0.0
-    )
+    mean_convergence = sum(convergence_scores) / len(convergence_scores) if convergence_scores else 0.0
 
     return {
         "omission_errors": omission_errors,
@@ -236,9 +219,7 @@ def compute_cross_prompt_metrics(
     }
 
 
-def compute_prediction_accuracy(
-    prediction_text: str, actual_text: str
-) -> float:
+def compute_prediction_accuracy(prediction_text: str, actual_text: str) -> float:
     """Compute accuracy between a prediction and actual action.
 
     Uses keyword overlap: |intersection| / |union| of tokenized words.
@@ -261,6 +242,7 @@ def compute_prediction_accuracy(
 
 
 # -- Internal helpers ----------------------------------------------------------
+
 
 def _compute_convergence(messages: list[AgentMessage]) -> float:
     """Compute mean pairwise keyword overlap of agent reasoning traces.
@@ -322,7 +304,7 @@ def _signature_overlap(sig_a: set[str], sig_b: set[str]) -> float:
 
 def _tokenize(text: str) -> list[str]:
     """Simple whitespace + punctuation tokenization, lowercased."""
-    return [w.lower() for w in re.findall(r'\w+', text) if len(w) > 1]
+    return [w.lower() for w in re.findall(r"\w+", text) if len(w) > 1]
 
 
 def _empty_networked_metrics() -> dict:

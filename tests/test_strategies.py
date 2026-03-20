@@ -17,22 +17,27 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 def _msg(agent: str, content: str, turn: int) -> AgentMessage:
     return AgentMessage(
-        agent_name=agent, content=content, turn_number=turn, timestamp=time.time(),
+        agent_name=agent,
+        content=content,
+        turn_number=turn,
+        timestamp=time.time(),
     )
 
 
 class _DummyModel(Model):
     """Minimal model stub for strategy tests."""
+
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.models import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
 # ---- CoordinationAction structure ---------------------------------------------
+
 
 class TestCoordinationAction:
     def test_invoke_action(self):
@@ -55,6 +60,7 @@ class TestCoordinationAction:
 
 
 # ---- SequentialStrategy -------------------------------------------------------
+
 
 class TestSequentialStrategy:
     """Tests for the template-based sequential pipeline strategy."""
@@ -173,6 +179,7 @@ class TestSequentialStrategy:
 
 
 # ---- GraphRoutedStrategy ------------------------------------------------------
+
 
 class TestGraphRoutedStrategy:
     @pytest.fixture

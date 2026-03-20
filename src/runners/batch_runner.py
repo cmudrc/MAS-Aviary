@@ -54,13 +54,14 @@ _STRATEGY_CONFIGS: dict[str, tuple[str, str]] = {
 # Combination definition
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CombinationConfig:
     """Configuration for one OS x handler combination."""
 
     name: str
-    org_structure: str           # "orchestrated" | "networked" | "sequential"
-    handler: str                 # "placeholder" | "iterative_feedback" | "graph_routed" | "staged_pipeline"
+    org_structure: str  # "orchestrated" | "networked" | "sequential"
+    handler: str  # "placeholder" | "iterative_feedback" | "graph_routed" | "staged_pipeline"
     strategy_config: dict = field(default_factory=dict)
     handler_config: dict = field(default_factory=dict)
 
@@ -81,15 +82,21 @@ _AVIARY_STAGED_HANDLER_CONFIG: dict = {
 ALL_COMBINATIONS: list[CombinationConfig] = [
     # Sequential x 3 handlers.
     CombinationConfig(
-        "aviary_sequential_placeholder", "sequential", "placeholder",
+        "aviary_sequential_placeholder",
+        "sequential",
+        "placeholder",
         strategy_config={"pipeline_template": "aviary"},
     ),
     CombinationConfig(
-        "aviary_sequential_iterative_feedback", "sequential", "iterative_feedback",
+        "aviary_sequential_iterative_feedback",
+        "sequential",
+        "iterative_feedback",
         strategy_config={"pipeline_template": "aviary"},
     ),
     CombinationConfig(
-        "aviary_sequential_staged_pipeline", "sequential", "staged_pipeline",
+        "aviary_sequential_staged_pipeline",
+        "sequential",
+        "staged_pipeline",
         strategy_config={"pipeline_template": "aviary"},
         handler_config=_AVIARY_STAGED_HANDLER_CONFIG,
     ),
@@ -97,30 +104,40 @@ ALL_COMBINATIONS: list[CombinationConfig] = [
     CombinationConfig("aviary_orchestrated_placeholder", "orchestrated", "placeholder"),
     CombinationConfig("aviary_orchestrated_iterative_feedback", "orchestrated", "iterative_feedback"),
     CombinationConfig(
-        "aviary_orchestrated_staged_pipeline", "orchestrated", "staged_pipeline",
+        "aviary_orchestrated_staged_pipeline",
+        "orchestrated",
+        "staged_pipeline",
         handler_config=_AVIARY_STAGED_HANDLER_CONFIG,
     ),
     # Graph-routed: sequential + graph_routed with aviary graph.
     CombinationConfig(
-        "aviary_sequential_graph_routed", "sequential", "graph_routed",
+        "aviary_sequential_graph_routed",
+        "sequential",
+        "graph_routed",
         strategy_config={"pipeline_template": "aviary"},
         handler_config={"predefined_graph": "aviary"},
     ),
     # Orchestrated + graph_routed with aviary graph.
     CombinationConfig(
-        "aviary_orchestrated_graph_routed", "orchestrated", "graph_routed",
+        "aviary_orchestrated_graph_routed",
+        "orchestrated",
+        "graph_routed",
         handler_config={"predefined_graph": "aviary"},
     ),
     # Networked x 4 handlers.
     CombinationConfig("aviary_networked_placeholder", "networked", "placeholder"),
     CombinationConfig("aviary_networked_iterative_feedback", "networked", "iterative_feedback"),
     CombinationConfig(
-        "aviary_networked_staged_pipeline", "networked", "staged_pipeline",
+        "aviary_networked_staged_pipeline",
+        "networked",
+        "staged_pipeline",
         handler_config=_AVIARY_STAGED_HANDLER_CONFIG,
     ),
     # Networked + graph_routed: disable workflow_phases (graph manages workflow).
     CombinationConfig(
-        "aviary_networked_graph_routed", "networked", "graph_routed",
+        "aviary_networked_graph_routed",
+        "networked",
+        "graph_routed",
         strategy_config={"networked": {"workflow_phases": []}},
         handler_config={"predefined_graph": "aviary"},
     ),
@@ -131,6 +148,7 @@ ALL_COMBINATIONS: list[CombinationConfig] = [
 # Per-combination result
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CombinationResult:
     """Result of running one OS x handler combination."""
@@ -138,7 +156,7 @@ class CombinationResult:
     name: str
     org_structure: str
     handler: str
-    status: str = "pending"           # "success" | "error" | "eval_skipped"
+    status: str = "pending"  # "success" | "error" | "eval_skipped"
     error_message: str = ""
     duration_seconds: float = 0.0
     total_turns: int = 0
@@ -157,6 +175,7 @@ class CombinationResult:
 # ---------------------------------------------------------------------------
 # Serialization helpers
 # ---------------------------------------------------------------------------
+
 
 def _msg_to_dict(msg: AgentMessage) -> dict:
     """Convert AgentMessage to JSON-serializable dict."""
@@ -201,10 +220,12 @@ def _safe_dict(obj: Any) -> Any:
 # GPU memory management (Fix 2)
 # ---------------------------------------------------------------------------
 
+
 def _gpu_memory_mb() -> float:
     """Return current GPU memory allocated in MB, or 0 if CUDA unavailable."""
     try:
         import torch
+
         if torch.cuda.is_available():
             return torch.cuda.memory_allocated() / (1024 * 1024)
     except ImportError:
@@ -221,6 +242,7 @@ def _gpu_cleanup() -> None:
     gc.collect()
     try:
         import torch
+
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
             torch.cuda.reset_peak_memory_stats()
@@ -232,6 +254,7 @@ def _gpu_cleanup() -> None:
 # ---------------------------------------------------------------------------
 # Agent trace extraction (smolagents step-by-step traces)
 # ---------------------------------------------------------------------------
+
 
 def _serialize_chat_message(msg) -> dict:
     """Serialize a ChatMessage (object or dict) to JSON-safe format."""
@@ -313,17 +336,21 @@ def _serialize_step(step: dict) -> dict:
     for tc in raw_calls:
         if isinstance(tc, dict):
             func = tc.get("function", tc)
-            calls.append({
-                "name": func.get("name", tc.get("name", "unknown")),
-                "arguments": func.get("arguments", tc.get("arguments", {})),
-                "id": tc.get("id", ""),
-            })
+            calls.append(
+                {
+                    "name": func.get("name", tc.get("name", "unknown")),
+                    "arguments": func.get("arguments", tc.get("arguments", {})),
+                    "id": tc.get("id", ""),
+                }
+            )
         elif hasattr(tc, "name"):
-            calls.append({
-                "name": tc.name,
-                "arguments": tc.arguments if hasattr(tc, "arguments") else {},
-                "id": tc.id if hasattr(tc, "id") else "",
-            })
+            calls.append(
+                {
+                    "name": tc.name,
+                    "arguments": tc.arguments if hasattr(tc, "arguments") else {},
+                    "id": tc.id if hasattr(tc, "id") else "",
+                }
+            )
     out["tool_calls"] = calls
 
     # Observations (tool results).
@@ -455,9 +482,12 @@ def _install_trace_capture(coordinator) -> None:
                     accumulator[agent_name]["system_prompt"] = _get_system_prompt(agent_ref)
                 except Exception as exc:
                     _log.warning(
-                        "Trace capture failed for agent %r: %s", agent_name, exc,
+                        "Trace capture failed for agent %r: %s",
+                        agent_name,
+                        exc,
                     )
                 return result
+
             return traced_run
 
         agent.run = _make_traced_run(name, original_run, agent)
@@ -476,35 +506,42 @@ def _install_trace_capture(coordinator) -> None:
 
 # Regex patterns for Aviary output metrics.
 _FUEL_RE = re.compile(
-    r"fuel[_ ]burned[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE,
+    r"fuel[_ ]burned[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
 )
 _GTOW_RE = re.compile(
-    r"(?:gtow|gross[_ ]mass)[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE,
+    r"(?:gtow|gross[_ ]mass)[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
 )
 _WING_MASS_RE = re.compile(
-    r"wing[_ ]mass[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE,
+    r"wing[_ ]mass[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
 )
 _RESERVE_FUEL_RE = re.compile(
-    r"reserve[_ ]fuel[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE,
+    r"reserve[_ ]fuel[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
 )
 _ZFW_RE = re.compile(
-    r"zero[_ ]fuel[_ ]weight[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE,
+    r"zero[_ ]fuel[_ ]weight[_ ]kg['\":\s=]+([0-9]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
 )
 _CONVERGED_RE = re.compile(
-    r"(?:converged|exit[_ ]code)['\":\s=]+(true|false|0|1)", re.IGNORECASE,
+    r"(?:converged|exit[_ ]code)['\":\s=]+(true|false|0|1)",
+    re.IGNORECASE,
 )
 _OPT_GAP_RE = re.compile(
-    r"optimality[_ ]gap[_ ]pct['\":\s=]+['\"]?([0-9]+(?:\.[0-9]+)?)", re.IGNORECASE,
+    r"optimality[_ ]gap[_ ]pct['\":\s=]+['\"]?([0-9]+(?:\.[0-9]+)?)",
+    re.IGNORECASE,
 )
 _VERDICT_RE = re.compile(
-    r"VERDICT['\"\s:=]+['\"]?(COMPLETE|CONTINUE|RETRY|FAILED)", re.IGNORECASE,
+    r"VERDICT['\"\s:=]+['\"]?(COMPLETE|CONTINUE|RETRY|FAILED)",
+    re.IGNORECASE,
 )
 
 
 _METRIC_TOOL_NAMES = frozenset(("get_results", "run_simulation", "validate_parameters"))
 
-_METRIC_KEYS = ("fuel_burned_kg", "gtow_kg", "wing_mass_kg",
-                "reserve_fuel_kg", "zero_fuel_weight_kg")
+_METRIC_KEYS = ("fuel_burned_kg", "gtow_kg", "wing_mass_kg", "reserve_fuel_kg", "zero_fuel_weight_kg")
 
 
 def _try_parse_json(raw: str) -> dict | None:
@@ -589,7 +626,8 @@ def _extract_from_tool_outputs(messages: list[AgentMessage]) -> dict | None:
 
 
 def _regex_extract_metric(
-    pattern: re.Pattern, messages: list[AgentMessage],
+    pattern: re.Pattern,
+    messages: list[AgentMessage],
 ) -> float | None:
     """Scan agent message content for a metric using a regex."""
     for msg in reversed(messages):
@@ -672,6 +710,7 @@ def _extract_aviary_eval_from_messages(messages: list[AgentMessage]) -> dict | N
 # Config helpers
 # ---------------------------------------------------------------------------
 
+
 def _deep_merge(base: dict, override: dict) -> None:
     """Recursively merge *override* into *base* in-place.
 
@@ -687,6 +726,7 @@ def _deep_merge(base: dict, override: dict) -> None:
 # ---------------------------------------------------------------------------
 # Networked + graph_routed role aliasing
 # ---------------------------------------------------------------------------
+
 
 def _register_networked_graph_aliases(agents: dict, roles: list[str]) -> None:
     """Map graph role names to networked peer agents.
@@ -740,6 +780,7 @@ def _register_networked_graph_aliases(agents: dict, roles: list[str]) -> None:
 # Core runner
 # ---------------------------------------------------------------------------
 
+
 def run_combination(
     combo: CombinationConfig,
     task: str,
@@ -782,7 +823,8 @@ def run_combination(
 
         # Compute cross-strategy metrics.
         cs_metrics = compute_cross_strategy_metrics(
-            messages, similarity_method="jaccard",
+            messages,
+            similarity_method="jaccard",
         )
         result.cross_strategy_metrics = cs_metrics
 
@@ -802,9 +844,7 @@ def run_combination(
         # Compute org theory metrics.
         ot_config: dict = dict(combo.handler_config)
         ot_config["pipeline_template"] = combo.strategy_config.get("pipeline_template")
-        ot_config["_eval_success"] = (
-            classification.result == "success" if classification else None
-        )
+        ot_config["_eval_success"] = classification.result == "success" if classification else None
 
         # Inject stage allowed_tools for sequential modularity metrics.
         if combo.org_structure == "sequential":
@@ -879,21 +919,21 @@ def _execute_combination(
                 # roles and wire them into the strategy so it can register
                 # role aliases after the creation phase.  Also inject the
                 # ListGraphRoles tool so the orchestrator can discover roles.
-                if (combo.org_structure == "orchestrated"
-                        and combo.handler == "graph_routed"):
+                if combo.org_structure == "orchestrated" and combo.handler == "graph_routed":
                     try:
                         graph = handler._load_graph({})
-                        roles = sorted(
-                            {s.agent for s in graph.states.values() if s.agent}
-                        )
+                        roles = sorted({s.agent for s in graph.states.values() if s.agent})
                         if roles:
                             # Set in config dict so initialize() picks it up
                             # (strategy.initialize() reads config["_graph_roles"]).
                             coordinator.config["_graph_roles"] = roles
                             # Inject ListGraphRoles tool into orchestrator.
                             from src.tools.orchestrator_tools import ListGraphRoles
+
                             orch_name = getattr(
-                                coordinator.strategy, "_orchestrator_name", "orchestrator",
+                                coordinator.strategy,
+                                "_orchestrator_name",
+                                "orchestrator",
                             )
                             orch = coordinator.agents.get(orch_name)
                             if orch is not None:
@@ -905,13 +945,10 @@ def _execute_combination(
                 # When combining networked + graph_routed, store graph
                 # roles so they can be aliased after strategy.initialize()
                 # creates the peer agents (inside coordinator.run()).
-                if (combo.org_structure == "networked"
-                        and combo.handler == "graph_routed"):
+                if combo.org_structure == "networked" and combo.handler == "graph_routed":
                     try:
                         graph = handler._load_graph({})
-                        roles = sorted(
-                            {s.agent for s in graph.states.values() if s.agent}
-                        )
+                        roles = sorted({s.agent for s in graph.states.values() if s.agent})
                         if roles:
                             coordinator.config["_graph_roles"] = roles
                         # Pass graph definition to strategy so it can drive
@@ -933,6 +970,7 @@ def _execute_combination(
 
         class _AutoWrapDict(dict):
             """Dict that auto-wraps new agents for trace capture."""
+
             def __setitem__(self, key, value):
                 super().__setitem__(key, value)
                 try:
@@ -989,14 +1027,17 @@ def _build_handler(handler_name: str, handler_config: dict):
     """Build an execution handler by name."""
     if handler_name == "iterative_feedback":
         from src.coordination.iterative_feedback_handler import IterativeFeedbackHandler
+
         return IterativeFeedbackHandler(handler_config)
 
     if handler_name == "graph_routed":
         from src.coordination.graph_routed_handler import GraphRoutedHandler
+
         return GraphRoutedHandler(handler_config)
 
     if handler_name == "staged_pipeline":
         from src.coordination.staged_pipeline_handler import StagedPipelineHandler
+
         return StagedPipelineHandler(handler_config)
 
     return None
@@ -1048,6 +1089,7 @@ def _inject_stage_allowed_tools(ot_config: dict) -> None:
 # ---------------------------------------------------------------------------
 # Batch execution
 # ---------------------------------------------------------------------------
+
 
 def run_batch(
     task: str,
@@ -1191,19 +1233,28 @@ _DEFAULT_AVIARY_TASK = (
 def main():
     parser = argparse.ArgumentParser(description="Aviary batch runner")
     parser.add_argument(
-        "--task", type=str, default=None,
+        "--task",
+        type=str,
+        default=None,
         help="Custom task string (overrides default aviary task)",
     )
     parser.add_argument(
-        "--config", type=str, default=None,
+        "--config",
+        type=str,
+        default=None,
         help="Path to AppConfig YAML (default: config/aviary_run.yaml)",
     )
     parser.add_argument(
-        "--output-dir", type=str, default=None,
+        "--output-dir",
+        type=str,
+        default=None,
         help="Output directory for results",
     )
     parser.add_argument(
-        "--combinations", type=str, nargs="*", default=None,
+        "--combinations",
+        type=str,
+        nargs="*",
+        default=None,
         help="Specific combination names to run (default: all)",
     )
     args = parser.parse_args()
@@ -1211,6 +1262,7 @@ def main():
     config_path = args.config or "config/aviary_run.yaml"
 
     from src.config.loader import load_config
+
     config = load_config(config_path)
 
     task = args.task or _DEFAULT_AVIARY_TASK

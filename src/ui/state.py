@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 @dataclass
 class RunState:
     """Snapshot of a coordination run for display."""
+
     history: list[dict] = field(default_factory=list)
     metrics: dict = field(default_factory=dict)
     is_running: bool = False

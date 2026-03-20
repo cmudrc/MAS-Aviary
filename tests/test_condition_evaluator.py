@@ -10,6 +10,7 @@ from src.coordination.condition_evaluator import (
 
 # ---- Equality tests --------------------------------------------------------
 
+
 class TestEquality:
     def test_string_equality_match(self):
         result = evaluate_condition("complexity == 'simple'", {"complexity": "simple"})
@@ -41,6 +42,7 @@ class TestEquality:
 
 
 # ---- Numeric inequality tests ----------------------------------------------
+
 
 class TestInequality:
     def test_greater_than_match(self):
@@ -82,6 +84,7 @@ class TestInequality:
 
 # ---- Membership tests ------------------------------------------------------
 
+
 class TestMembership:
     def test_in_list_match(self):
         result = evaluate_condition(
@@ -118,39 +121,31 @@ class TestMembership:
 
 # ---- Boolean tests ---------------------------------------------------------
 
+
 class TestBoolean:
     def test_boolean_true(self):
-        result = evaluate_condition(
-            "execution_success == true", {"execution_success": True}
-        )
+        result = evaluate_condition("execution_success == true", {"execution_success": True})
         assert result.matched is True
 
     def test_boolean_false(self):
-        result = evaluate_condition(
-            "execution_success == false", {"execution_success": False}
-        )
+        result = evaluate_condition("execution_success == false", {"execution_success": False})
         assert result.matched is True
 
     def test_boolean_mismatch(self):
-        result = evaluate_condition(
-            "execution_success == true", {"execution_success": False}
-        )
+        result = evaluate_condition("execution_success == true", {"execution_success": False})
         assert result.matched is False
 
     def test_review_passed_true(self):
-        result = evaluate_condition(
-            "review_passed == true", {"review_passed": True}
-        )
+        result = evaluate_condition("review_passed == true", {"review_passed": True})
         assert result.matched is True
 
     def test_review_passed_false(self):
-        result = evaluate_condition(
-            "review_passed == false", {"review_passed": False}
-        )
+        result = evaluate_condition("review_passed == false", {"review_passed": False})
         assert result.matched is True
 
 
 # ---- Compound expressions --------------------------------------------------
+
 
 class TestCompound:
     def test_and_both_true(self):
@@ -213,6 +208,7 @@ class TestCompound:
 
 # ---- Always ----------------------------------------------------------------
 
+
 class TestAlways:
     def test_always_matches(self):
         result = evaluate_condition("always", {})
@@ -224,6 +220,7 @@ class TestAlways:
 
 
 # ---- Missing keys ----------------------------------------------------------
+
 
 class TestMissingKeys:
     def test_missing_key_no_match(self):
@@ -250,6 +247,7 @@ class TestMissingKeys:
 
 # ---- Invalid expressions ---------------------------------------------------
 
+
 class TestInvalidExpressions:
     def test_empty_string(self):
         with pytest.raises(ConditionParseError):
@@ -274,6 +272,7 @@ class TestInvalidExpressions:
 
 # ---- Edge cases ------------------------------------------------------------
 
+
 class TestEdgeCases:
     def test_float_comparison(self):
         result = evaluate_condition("score > 0.5", {"score": 0.8})
@@ -284,25 +283,20 @@ class TestEdgeCases:
         assert result.matched is True
 
     def test_string_with_underscore(self):
-        result = evaluate_condition(
-            "error_type == 'OCP_Error'", {"error_type": "OCP_Error"}
-        )
+        result = evaluate_condition("error_type == 'OCP_Error'", {"error_type": "OCP_Error"})
         assert result.matched is True
 
     def test_review_verdict_passed(self):
-        result = evaluate_condition(
-            "review_verdict == 'passed'", {"review_verdict": "passed"}
-        )
+        result = evaluate_condition("review_verdict == 'passed'", {"review_verdict": "passed"})
         assert result.matched is True
 
     def test_review_verdict_minor_issues(self):
-        result = evaluate_condition(
-            "review_verdict == 'minor_issues'", {"review_verdict": "minor_issues"}
-        )
+        result = evaluate_condition("review_verdict == 'minor_issues'", {"review_verdict": "minor_issues"})
         assert result.matched is True
 
 
 # ---- Variable references on the right side ---------------------------------
+
 
 class TestVarRef:
     def test_var_ref_equality(self):

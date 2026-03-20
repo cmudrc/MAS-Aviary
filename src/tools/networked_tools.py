@@ -54,8 +54,7 @@ class ReadBlackboard(Tool):
         "entry_type": {
             "type": "string",
             "description": (
-                'Filter entries by type: "status", "claim", "result", '
-                '"gap", "prediction", or "all" (default "all").'
+                'Filter entries by type: "status", "claim", "result", "gap", "prediction", or "all" (default "all").'
             ),
             "nullable": True,
         },
@@ -94,14 +93,16 @@ class ReadBlackboard(Tool):
             if not peer_monitoring:
                 display_value = _strip_metrics(display_value)
 
-            filtered.append({
-                "key": e.key,
-                "value": display_value,
-                "author": e.author,
-                "entry_type": e.entry_type,
-                "timestamp": e.timestamp,
-                "version": e.version,
-            })
+            filtered.append(
+                {
+                    "key": e.key,
+                    "value": display_value,
+                    "author": e.author,
+                    "entry_type": e.entry_type,
+                    "timestamp": e.timestamp,
+                    "version": e.version,
+                }
+            )
 
         # Summary info.
         claims = bb.get_claims()
@@ -109,12 +110,14 @@ class ReadBlackboard(Tool):
         gaps = bb.read_by_type("gap")
         identified_gaps = [g.key for g in gaps]
 
-        return json.dumps({
-            "entries": filtered,
-            "total_entries": len(filtered),
-            "active_claims": active_claims,
-            "identified_gaps": identified_gaps,
-        })
+        return json.dumps(
+            {
+                "entries": filtered,
+                "total_entries": len(filtered),
+                "active_claims": active_claims,
+                "identified_gaps": identified_gaps,
+            }
+        )
 
 
 class WriteBlackboard(Tool):
@@ -130,10 +133,7 @@ class WriteBlackboard(Tool):
     inputs = {
         "key": {
             "type": "string",
-            "description": (
-                "Unique identifier for this entry "
-                '(e.g., "geometry_planning", "agent_2_status").'
-            ),
+            "description": ('Unique identifier for this entry (e.g., "geometry_planning", "agent_2_status").'),
         },
         "value": {
             "type": "string",
@@ -141,9 +141,7 @@ class WriteBlackboard(Tool):
         },
         "entry_type": {
             "type": "string",
-            "description": (
-                'One of: "status", "claim", "result", "gap", "prediction".'
-            ),
+            "description": ('One of: "status", "claim", "result", "gap", "prediction".'),
         },
     }
     output_type = "string"
@@ -159,20 +157,24 @@ class WriteBlackboard(Tool):
 
         if entry is None:
             # Hard claim rejection.
-            return json.dumps({
-                "success": False,
-                "key": key,
-                "entry_type": entry_type,
-                "error": warning,
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "key": key,
+                    "entry_type": entry_type,
+                    "error": warning,
+                }
+            )
 
-        return json.dumps({
-            "success": True,
-            "key": entry.key,
-            "entry_type": entry.entry_type,
-            "version": entry.version,
-            "warning": warning,
-        })
+        return json.dumps(
+            {
+                "success": True,
+                "key": entry.key,
+                "entry_type": entry.entry_type,
+                "version": entry.version,
+                "warning": warning,
+            }
+        )
 
 
 class SpawnPeer(Tool):
@@ -187,10 +189,7 @@ class SpawnPeer(Tool):
     inputs = {
         "reason": {
             "type": "string",
-            "description": (
-                "Why this new agent is needed "
-                '(e.g., "No agent is handling fillet operations").'
-            ),
+            "description": ('Why this new agent is needed (e.g., "No agent is handling fillet operations").'),
         },
     }
     output_type = "string"
@@ -206,13 +205,15 @@ class SpawnPeer(Tool):
         # Check agent limit.
         total_agents = len(ctx.agents)
         if total_agents >= ctx.max_agents:
-            return json.dumps({
-                "success": False,
-                "new_agent_name": None,
-                "reason": reason,
-                "total_agents": total_agents,
-                "error": f"Maximum agent limit ({ctx.max_agents}) reached",
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "new_agent_name": None,
+                    "reason": reason,
+                    "total_agents": total_agents,
+                    "error": f"Maximum agent limit ({ctx.max_agents}) reached",
+                }
+            )
 
         # Generate name.
         ctx.agent_counter += 1
@@ -245,13 +246,15 @@ class SpawnPeer(Tool):
             entry_type="gap",
         )
 
-        return json.dumps({
-            "success": True,
-            "new_agent_name": new_name,
-            "reason": reason,
-            "total_agents": len(ctx.agents),
-            "error": None,
-        })
+        return json.dumps(
+            {
+                "success": True,
+                "new_agent_name": new_name,
+                "reason": reason,
+                "total_agents": len(ctx.agents),
+                "error": None,
+            }
+        )
 
 
 class MarkTaskDone(Tool):
@@ -277,8 +280,7 @@ class MarkTaskDone(Tool):
         "summary": {
             "type": "string",
             "description": (
-                "Brief summary of what was accomplished "
-                '(e.g., "STL generated and evaluated: PCD=0.035, eval=success").'
+                'Brief summary of what was accomplished (e.g., "STL generated and evaluated: PCD=0.035, eval=success").'
             ),
         },
     }
@@ -293,8 +295,10 @@ class MarkTaskDone(Tool):
         bb = self._context.blackboard
         value = f"DONE: {summary}"
         entry, _ = bb.write("task_complete", value, self._agent_name, "status")
-        return json.dumps({
-            "success": entry is not None,
-            "key": "task_complete",
-            "summary": summary,
-        })
+        return json.dumps(
+            {
+                "success": entry is not None,
+                "key": "task_complete",
+                "summary": summary,
+            }
+        )

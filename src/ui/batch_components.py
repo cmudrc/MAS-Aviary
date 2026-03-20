@@ -18,6 +18,7 @@ import streamlit as st
 
 try:
     import altair as alt
+
     HAS_ALTAIR = True
 except ImportError:
     HAS_ALTAIR = False
@@ -26,6 +27,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Data loading
 # ---------------------------------------------------------------------------
+
 
 def list_batch_dirs(base: str = "logs/batch_results/") -> list[str]:
     """List batch result directories, newest first."""
@@ -118,34 +120,61 @@ def render_comparison_table(data: dict) -> None:
 # Maps (os_name, concept_name) -> list of metric keys in org_theory_metrics
 _OS_CONCEPT_GROUPS: dict[str, list[tuple[str, list[str]]]] = {
     "orchestrated": [
-        ("Span of Control", [
-            "agents_spawned", "orchestrator_turns", "worker_turns",
-            "orchestrator_overhead_ratio", "cost_per_agent",
-            "reasoning_iterations", "orchestrator_token_growth",
-        ]),
+        (
+            "Span of Control",
+            [
+                "agents_spawned",
+                "orchestrator_turns",
+                "worker_turns",
+                "orchestrator_overhead_ratio",
+                "cost_per_agent",
+                "reasoning_iterations",
+                "orchestrator_token_growth",
+            ],
+        ),
         ("Oversight", ["authority_holder", "authority_transfers"]),
         ("Information Asymmetry", ["information_ratio"]),
     ],
     "networked": [
-        ("Common Ground", [
-            "blackboard_utilization", "blackboard_size_final",
-            "blackboard_reads_total", "blackboard_writes_total",
-        ]),
+        (
+            "Common Ground",
+            [
+                "blackboard_utilization",
+                "blackboard_size_final",
+                "blackboard_reads_total",
+                "blackboard_writes_total",
+            ],
+        ),
         ("Peer Monitoring", ["claim_conflicts"]),
         ("Joint Myopia", ["convergence_score", "convergence_classification"]),
         ("Predictive Knowledge", ["prediction_count", "prediction_accuracy_mean"]),
-        ("Self-Organization", [
-            "agents_spawned", "self_selection_diversity", "duplicate_work_rate",
-        ]),
+        (
+            "Self-Organization",
+            [
+                "agents_spawned",
+                "self_selection_diversity",
+                "duplicate_work_rate",
+            ],
+        ),
     ],
     "sequential": [
-        ("Decomposition", [
-            "stage_count", "per_stage_duration", "per_stage_tokens", "stage_bottleneck",
-        ]),
-        ("Modularity", [
-            "tool_utilization_per_stage", "stage_independence_score",
-            "tool_restriction_violations",
-        ]),
+        (
+            "Decomposition",
+            [
+                "stage_count",
+                "per_stage_duration",
+                "per_stage_tokens",
+                "stage_bottleneck",
+            ],
+        ),
+        (
+            "Modularity",
+            [
+                "tool_utilization_per_stage",
+                "stage_independence_score",
+                "tool_restriction_violations",
+            ],
+        ),
         ("Viscosity", ["propagation_time", "per_stage_propagation"]),
         ("Mirroring Hypothesis", ["template_used"]),
     ],
@@ -153,33 +182,60 @@ _OS_CONCEPT_GROUPS: dict[str, list[tuple[str, list[str]]]] = {
 
 _HANDLER_CONCEPT_GROUPS: dict[str, list[tuple[str, list[str]]]] = {
     "iterative_feedback": [
-        ("Aspiration Levels", [
-            "aspiration_mode", "mean_attempts_to_success", "max_attempts_used",
-        ]),
+        (
+            "Aspiration Levels",
+            [
+                "aspiration_mode",
+                "mean_attempts_to_success",
+                "max_attempts_used",
+            ],
+        ),
         ("Ambidexterity", ["ambidexterity_score"]),
         ("Escalation of Commitment", ["escalation_length", "escalation_detected"]),
         ("False Negative Avoidance", ["early_stopping_count"]),
     ],
     "graph_routed": [
-        ("Structural Distribution of Attention", [
-            "initial_complexity", "final_complexity", "resource_utilization",
-            "context_utilization", "complexity_escalations",
-        ]),
-        ("Omission vs Commission", [
-            "total_transitions", "misroute_rate", "missed_routes", "routing_accuracy",
-        ]),
+        (
+            "Structural Distribution of Attention",
+            [
+                "initial_complexity",
+                "final_complexity",
+                "resource_utilization",
+                "context_utilization",
+                "complexity_escalations",
+            ],
+        ),
+        (
+            "Omission vs Commission",
+            [
+                "total_transitions",
+                "misroute_rate",
+                "missed_routes",
+                "routing_accuracy",
+            ],
+        ),
         ("Coupled Search", ["complexity_budget", "budget_constrained"]),
         ("Internal Representations", ["mental_model_enabled"]),
     ],
     "staged_pipeline": [
         ("Decomposition", ["stage_count", "per_stage_duration", "per_stage_tokens"]),
-        ("Aspiration Levels (Completion Gates)", [
-            "completion_rate", "per_stage_completion",
-        ]),
-        ("Error Propagation", [
-            "propagation_rate", "recovery_rate", "propagation_depth",
-            "first_failure_stage", "error_propagation_count",
-        ]),
+        (
+            "Aspiration Levels (Completion Gates)",
+            [
+                "completion_rate",
+                "per_stage_completion",
+            ],
+        ),
+        (
+            "Error Propagation",
+            [
+                "propagation_rate",
+                "recovery_rate",
+                "propagation_depth",
+                "first_failure_stage",
+                "error_propagation_count",
+            ],
+        ),
     ],
     "placeholder": [],
 }
@@ -191,10 +247,7 @@ def _render_org_theory_metrics(ot: dict, os_name: str, handler_name: str) -> Non
         st.caption("No org theory metrics computed.")
         return
 
-    all_groups = (
-        _OS_CONCEPT_GROUPS.get(os_name, [])
-        + _HANDLER_CONCEPT_GROUPS.get(handler_name, [])
-    )
+    all_groups = _OS_CONCEPT_GROUPS.get(os_name, []) + _HANDLER_CONCEPT_GROUPS.get(handler_name, [])
 
     for concept, keys in all_groups:
         st.markdown(f"**{concept}**")
@@ -229,6 +282,7 @@ def _render_org_theory_metrics(ot: dict, os_name: str, handler_name: str) -> Non
 # ---------------------------------------------------------------------------
 # Panel B: Strategy-Specific Metrics (expandable)
 # ---------------------------------------------------------------------------
+
 
 def render_strategy_metrics(data: dict) -> None:
     """Render Panel B: Expandable strategy-specific metrics per combination."""
@@ -313,6 +367,7 @@ def render_strategy_metrics(data: dict) -> None:
 # Panel C: Cross-Strategy Comparison Charts
 # ---------------------------------------------------------------------------
 
+
 def render_comparison_charts(data: dict) -> None:
     """Render Panel C: Charts comparing combinations."""
     st.subheader("Cross-Strategy Comparison")
@@ -333,22 +388,29 @@ def render_comparison_charts(data: dict) -> None:
     for r in results:
         cs = r.get("cross_strategy_metrics", {})
         for metric in ["coordination_overhead", "redundancy_rate", "coordination_efficiency", "error_amplification"]:
-            chart_rows.append({
-                "Combination": r.get("name", ""),
-                "OS": r.get("org_structure", ""),
-                "Handler": r.get("handler", ""),
-                "Metric": metric.replace("_", " ").title(),
-                "Value": float(cs.get(metric, 0)),
-            })
+            chart_rows.append(
+                {
+                    "Combination": r.get("name", ""),
+                    "OS": r.get("org_structure", ""),
+                    "Handler": r.get("handler", ""),
+                    "Metric": metric.replace("_", " ").title(),
+                    "Value": float(cs.get(metric, 0)),
+                }
+            )
 
     if chart_rows:
         df_chart = pd.DataFrame(chart_rows)
-        chart = alt.Chart(df_chart).mark_bar().encode(
-            x=alt.X("Combination:N", sort=None, axis=alt.Axis(labelAngle=-45)),
-            y="Value:Q",
-            color="Handler:N",
-            column="Metric:N",
-        ).properties(width=200, height=200)
+        chart = (
+            alt.Chart(df_chart)
+            .mark_bar()
+            .encode(
+                x=alt.X("Combination:N", sort=None, axis=alt.Axis(labelAngle=-45)),
+                y="Value:Q",
+                color="Handler:N",
+                column="Metric:N",
+            )
+            .properties(width=200, height=200)
+        )
         st.altair_chart(chart)
 
     # Chart 2: Eval metrics by combination.
@@ -366,20 +428,27 @@ def render_comparison_charts(data: dict) -> None:
         ec = r.get("eval_classification", {})
         if ec.get("result") not in ("eval_skipped", None):
             for metric, key in aviary_metrics:
-                eval_rows.append({
-                    "Combination": r.get("name", ""),
-                    "Metric": metric,
-                    "Value": float(ec.get(key, 0)),
-                })
+                eval_rows.append(
+                    {
+                        "Combination": r.get("name", ""),
+                        "Metric": metric,
+                        "Value": float(ec.get(key, 0)),
+                    }
+                )
 
     if eval_rows:
         df_eval = pd.DataFrame(eval_rows)
-        chart2 = alt.Chart(df_eval).mark_bar().encode(
-            x=alt.X("Combination:N", sort=None, axis=alt.Axis(labelAngle=-45)),
-            y="Value:Q",
-            color="Metric:N",
-            column="Metric:N",
-        ).properties(width=200, height=200)
+        chart2 = (
+            alt.Chart(df_eval)
+            .mark_bar()
+            .encode(
+                x=alt.X("Combination:N", sort=None, axis=alt.Axis(labelAngle=-45)),
+                y="Value:Q",
+                color="Metric:N",
+                column="Metric:N",
+            )
+            .properties(width=200, height=200)
+        )
         st.altair_chart(chart2)
     else:
         st.caption("No eval metrics available (eval may have been skipped).")
@@ -388,37 +457,55 @@ def render_comparison_charts(data: dict) -> None:
     st.markdown("#### Eval Result Heatmap (OS × Handler)")
     heatmap_rows = []
     result_to_num = {
-        "success": 3, "omission": 2, "commission": 1,
-        "compile_fail": 0, "sim_fail": 0,
-        "eval_skipped": -1, "error": -1,
+        "success": 3,
+        "omission": 2,
+        "commission": 1,
+        "compile_fail": 0,
+        "sim_fail": 0,
+        "eval_skipped": -1,
+        "error": -1,
     }
     for r in results:
         ec = r.get("eval_classification", {})
         eval_result = ec.get("result", r.get("status", "unknown"))
-        heatmap_rows.append({
-            "OS": r.get("org_structure", ""),
-            "Handler": r.get("handler", ""),
-            "Result": eval_result,
-            "Score": result_to_num.get(eval_result, -1),
-        })
+        heatmap_rows.append(
+            {
+                "OS": r.get("org_structure", ""),
+                "Handler": r.get("handler", ""),
+                "Result": eval_result,
+                "Score": result_to_num.get(eval_result, -1),
+            }
+        )
 
     if heatmap_rows:
         df_hm = pd.DataFrame(heatmap_rows)
-        heatmap = alt.Chart(df_hm).mark_rect().encode(
-            x="Handler:N",
-            y="OS:N",
-            color=alt.Color("Score:Q", scale=alt.Scale(
-                domain=[-1, 0, 1, 2, 3],
-                range=["#95a5a6", "#e74c3c", "#f39c12", "#f39c12", "#2ecc71"],
-            )),
-            tooltip=["OS", "Handler", "Result"],
-        ).properties(width=400, height=200)
+        heatmap = (
+            alt.Chart(df_hm)
+            .mark_rect()
+            .encode(
+                x="Handler:N",
+                y="OS:N",
+                color=alt.Color(
+                    "Score:Q",
+                    scale=alt.Scale(
+                        domain=[-1, 0, 1, 2, 3],
+                        range=["#95a5a6", "#e74c3c", "#f39c12", "#f39c12", "#2ecc71"],
+                    ),
+                ),
+                tooltip=["OS", "Handler", "Result"],
+            )
+            .properties(width=400, height=200)
+        )
 
         # Overlay text.
-        text = alt.Chart(df_hm).mark_text(color="white", fontWeight="bold").encode(
-            x="Handler:N",
-            y="OS:N",
-            text="Result:N",
+        text = (
+            alt.Chart(df_hm)
+            .mark_text(color="white", fontWeight="bold")
+            .encode(
+                x="Handler:N",
+                y="OS:N",
+                text="Result:N",
+            )
         )
         st.altair_chart(heatmap + text, use_container_width=True)
 
@@ -429,13 +516,15 @@ def _render_charts_fallback(results: list[dict]) -> None:
     rows = []
     for r in results:
         cs = r.get("cross_strategy_metrics", {})
-        rows.append({
-            "Name": r.get("name", ""),
-            "Overhead": round(cs.get("coordination_overhead", 0), 1),
-            "Redundancy": round(cs.get("redundancy_rate", 0), 3),
-            "Efficiency": round(cs.get("coordination_efficiency", 0), 3),
-            "Error Amp.": cs.get("error_amplification", 0),
-        })
+        rows.append(
+            {
+                "Name": r.get("name", ""),
+                "Overhead": round(cs.get("coordination_overhead", 0), 1),
+                "Redundancy": round(cs.get("redundancy_rate", 0), 3),
+                "Efficiency": round(cs.get("coordination_efficiency", 0), 3),
+                "Error Amp.": cs.get("error_amplification", 0),
+            }
+        )
     st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
 
@@ -522,21 +611,20 @@ def render_concept_coverage(data: dict) -> None:
                 return str(v)[:80]
             return str(v)
 
-        values_str = ", ".join(
-            f"{m}={_fmt(values[m])}" if m in values else f"{m}=N/A"
-            for m in metrics
-        )
+        values_str = ", ".join(f"{m}={_fmt(values[m])}" if m in values else f"{m}=N/A" for m in metrics)
         # Simple "computed?" flag
         computed_count = sum(1 for m in metrics if m in values)
         coverage = f"{computed_count}/{len(metrics)}"
 
-        rows.append({
-            "Concept": concept,
-            "Strategy/Handler": strategy,
-            "Coverage": coverage,
-            "Metrics": ", ".join(metrics),
-            "Values": values_str,
-        })
+        rows.append(
+            {
+                "Concept": concept,
+                "Strategy/Handler": strategy,
+                "Coverage": coverage,
+                "Metrics": ", ".join(metrics),
+                "Values": values_str,
+            }
+        )
 
     df = pd.DataFrame(rows)
     st.dataframe(df, use_container_width=True, hide_index=True)
@@ -545,6 +633,7 @@ def render_concept_coverage(data: dict) -> None:
 # ---------------------------------------------------------------------------
 # Main batch results renderer
 # ---------------------------------------------------------------------------
+
 
 def render_batch_results() -> None:
     """Top-level renderer for the Batch Results tab."""

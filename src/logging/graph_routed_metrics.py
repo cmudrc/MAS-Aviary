@@ -15,6 +15,7 @@ from src.coordination.graph_routed_handler import TransitionRecord
 # Per-prompt aggregate metrics
 # ---------------------------------------------------------------------------
 
+
 def compute_per_prompt_metrics(
     transitions: list[TransitionRecord],
     initial_complexity: str | None = None,
@@ -58,10 +59,7 @@ def compute_per_prompt_metrics(
     cycle_count = transitions[-1].cycle_count
 
     # Escalation count: transitions TO an escalation-like state.
-    escalations = sum(
-        1 for t in transitions
-        if "ESCALAT" in t.to_state.upper()
-    )
+    escalations = sum(1 for t in transitions if "ESCALAT" in t.to_state.upper())
 
     # Resource utilization: passes_used / passes_max.
     # First transition has the max passes_remaining, last has the min.
@@ -95,10 +93,7 @@ def compute_per_prompt_metrics(
     error_dist = dict(Counter(error_types))
 
     # Code review cycles: count transitions TO CODE_REVIEWED-like states.
-    code_reviews = sum(
-        1 for t in transitions
-        if "REVIEW" in t.to_state.upper() and "OUTPUT" not in t.to_state.upper()
-    )
+    code_reviews = sum(1 for t in transitions if "REVIEW" in t.to_state.upper() and "OUTPUT" not in t.to_state.upper())
 
     return {
         "total_transitions": total,
@@ -119,6 +114,7 @@ def compute_per_prompt_metrics(
 # ---------------------------------------------------------------------------
 # Routing quality metrics
 # ---------------------------------------------------------------------------
+
 
 def compute_routing_quality(
     transitions: list[TransitionRecord],
@@ -168,9 +164,7 @@ def compute_routing_quality(
     misroute_rate = misroutes / total if total > 0 else 0.0
 
     # Missed routes: transitions where "always" fallback was used / total.
-    always_fallbacks = sum(
-        1 for t in transitions if t.condition_matched == "always"
-    )
+    always_fallbacks = sum(1 for t in transitions if t.condition_matched == "always")
     missed_routes = always_fallbacks / total if total > 0 else 0.0
 
     return {
@@ -184,6 +178,7 @@ def compute_routing_quality(
 # ---------------------------------------------------------------------------
 # Cross-prompt metrics
 # ---------------------------------------------------------------------------
+
 
 def compute_cross_prompt_metrics(
     prompt_metrics_list: list[dict],
@@ -212,17 +207,11 @@ def compute_cross_prompt_metrics(
 
     # Omission: prompts with cycle_count > 0 and no terminal reached
     # (heuristic: high cycle count suggests missed good outcomes).
-    omissions = sum(
-        1 for m in prompt_metrics_list
-        if m.get("cycle_count", 0) > 3
-    )
+    omissions = sum(1 for m in prompt_metrics_list if m.get("cycle_count", 0) > 3)
 
     # Commission: prompts where path_efficiency is very low
     # (lots of cycles relative to transitions).
-    commissions = sum(
-        1 for m in prompt_metrics_list
-        if m.get("path_efficiency", 1.0) < 0.5
-    )
+    commissions = sum(1 for m in prompt_metrics_list if m.get("path_efficiency", 1.0) < 0.5)
 
     # Mean path length.
     path_lengths = [m.get("total_transitions", 0) for m in prompt_metrics_list]
@@ -237,10 +226,7 @@ def compute_cross_prompt_metrics(
     mean_util = sum(utils) / total if total > 0 else 0.0
 
     # Escalation rate.
-    escalated = sum(
-        1 for m in prompt_metrics_list
-        if m.get("escalations_triggered", 0) > 0
-    )
+    escalated = sum(1 for m in prompt_metrics_list if m.get("escalations_triggered", 0) > 0)
     escalation_rate = escalated / total if total > 0 else 0.0
 
     # Mean path length per complexity.
@@ -248,12 +234,8 @@ def compute_cross_prompt_metrics(
     for m in prompt_metrics_list:
         c = m.get("initial_complexity")
         if c:
-            per_complexity.setdefault(c, []).append(
-                m.get("total_transitions", 0)
-            )
-    mean_per_complexity = {
-        c: sum(v) / len(v) for c, v in per_complexity.items()
-    }
+            per_complexity.setdefault(c, []).append(m.get("total_transitions", 0))
+    mean_per_complexity = {c: sum(v) / len(v) for c, v in per_complexity.items()}
 
     return {
         "total_prompts": total,

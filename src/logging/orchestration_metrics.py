@@ -45,9 +45,7 @@ def compute_orchestration_metrics(
     agents_spawned = len({m.agent_name for m in worker_msgs})
 
     # Orchestrator token growth — token counts per orchestrator turn.
-    orch_token_growth = [
-        m.token_count for m in orch_msgs if m.token_count is not None
-    ]
+    orch_token_growth = [m.token_count for m in orch_msgs if m.token_count is not None]
 
     # Tool distribution — which tools each agent used.
     tool_distribution: dict[str, set[str]] = {}
@@ -55,9 +53,7 @@ def compute_orchestration_metrics(
         for tc in m.tool_calls:
             tool_distribution.setdefault(m.agent_name, set()).add(tc.tool_name)
     # Convert sets to sorted lists for JSON serialization.
-    tool_dist_serializable = {
-        name: sorted(tools) for name, tools in tool_distribution.items()
-    }
+    tool_dist_serializable = {name: sorted(tools) for name, tools in tool_distribution.items()}
 
     # Information ratio — mean orchestrator context tokens / mean worker context tokens.
     orch_tokens = [m.token_count for m in orch_msgs if m.token_count is not None]
@@ -137,20 +133,10 @@ def compute_cross_prompt_metrics(
         total_turns = stats["total_turns"]
         total_prompts = stats["prompts_participated"]
 
-        tool_error_rate = (
-            stats["failed_tool_calls"] / total_tc if total_tc > 0 else 0.0
-        )
+        tool_error_rate = stats["failed_tool_calls"] / total_tc if total_tc > 0 else 0.0
         retry_rate = stats["retries"] / total_turns if total_turns > 0 else 0.0
-        completion_rate = (
-            1.0 - (stats["prompts_with_errors"] / total_prompts)
-            if total_prompts > 0
-            else 0.0
-        )
-        score = (
-            (1 - tool_error_rate) * 0.5
-            + (1 - retry_rate) * 0.3
-            + completion_rate * 0.2
-        )
+        completion_rate = 1.0 - (stats["prompts_with_errors"] / total_prompts) if total_prompts > 0 else 0.0
+        score = (1 - tool_error_rate) * 0.5 + (1 - retry_rate) * 0.3 + completion_rate * 0.2
 
         per_agent[name] = {
             "tool_error_rate": round(tool_error_rate, 4),

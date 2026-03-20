@@ -20,6 +20,7 @@ from src.logging.networked_metrics import (
 
 # ---- Helpers -----------------------------------------------------------------
 
+
 def _msg(agent, content, turn, tool_calls=None, error=None):
     return AgentMessage(
         agent_name=agent,
@@ -43,6 +44,7 @@ def _tc(name, inputs=None, output="ok", duration=0.1, error=None):
 
 # ---- Per-prompt metrics tests ------------------------------------------------
 
+
 class TestComputeNetworkedMetrics:
     def test_empty_messages(self):
         result = compute_networked_metrics([])
@@ -51,18 +53,31 @@ class TestComputeNetworkedMetrics:
 
     def test_basic_metrics(self):
         messages = [
-            _msg("agent_1", "did work", 1, [
-                _tc("read_blackboard"),
-                _tc("write_blackboard", {"key": "task_a", "entry_type": "claim"}),
-            ]),
-            _msg("agent_2", "also worked", 2, [
-                _tc("read_blackboard"),
-                _tc("write_blackboard", {"key": "task_b", "entry_type": "result"}),
-            ]),
+            _msg(
+                "agent_1",
+                "did work",
+                1,
+                [
+                    _tc("read_blackboard"),
+                    _tc("write_blackboard", {"key": "task_a", "entry_type": "claim"}),
+                ],
+            ),
+            _msg(
+                "agent_2",
+                "also worked",
+                2,
+                [
+                    _tc("read_blackboard"),
+                    _tc("write_blackboard", {"key": "task_b", "entry_type": "result"}),
+                ],
+            ),
         ]
         result = compute_networked_metrics(
-            messages, blackboard_size=4, claim_conflicts=0,
-            initial_agents=2, spawned_agents=0,
+            messages,
+            blackboard_size=4,
+            claim_conflicts=0,
+            initial_agents=2,
+            spawned_agents=0,
         )
         assert result["total_agents"] == 2
         assert result["blackboard_size"] == 4
@@ -81,15 +96,30 @@ class TestComputeNetworkedMetrics:
     def test_duplicate_work_rate(self):
         """Two agents working on same subtask."""
         messages = [
-            _msg("agent_1", "work", 1, [
-                _tc("write_blackboard", {"key": "subtask_A", "entry_type": "claim"}),
-            ]),
-            _msg("agent_2", "work", 2, [
-                _tc("write_blackboard", {"key": "subtask_A", "entry_type": "result"}),
-            ]),
-            _msg("agent_3", "work", 3, [
-                _tc("write_blackboard", {"key": "subtask_B", "entry_type": "result"}),
-            ]),
+            _msg(
+                "agent_1",
+                "work",
+                1,
+                [
+                    _tc("write_blackboard", {"key": "subtask_A", "entry_type": "claim"}),
+                ],
+            ),
+            _msg(
+                "agent_2",
+                "work",
+                2,
+                [
+                    _tc("write_blackboard", {"key": "subtask_A", "entry_type": "result"}),
+                ],
+            ),
+            _msg(
+                "agent_3",
+                "work",
+                3,
+                [
+                    _tc("write_blackboard", {"key": "subtask_B", "entry_type": "result"}),
+                ],
+            ),
         ]
         result = compute_networked_metrics(messages, initial_agents=3)
         # subtask_A has 2 agents, subtask_B has 1 → 1/2 = 0.5
@@ -97,27 +127,52 @@ class TestComputeNetworkedMetrics:
 
     def test_no_duplicate_work(self):
         messages = [
-            _msg("agent_1", "work", 1, [
-                _tc("write_blackboard", {"key": "task_a", "entry_type": "claim"}),
-            ]),
-            _msg("agent_2", "work", 2, [
-                _tc("write_blackboard", {"key": "task_b", "entry_type": "claim"}),
-            ]),
+            _msg(
+                "agent_1",
+                "work",
+                1,
+                [
+                    _tc("write_blackboard", {"key": "task_a", "entry_type": "claim"}),
+                ],
+            ),
+            _msg(
+                "agent_2",
+                "work",
+                2,
+                [
+                    _tc("write_blackboard", {"key": "task_b", "entry_type": "claim"}),
+                ],
+            ),
         ]
         result = compute_networked_metrics(messages, initial_agents=2)
         assert result["duplicate_work_rate"] == 0.0
 
     def test_self_selection_diversity(self):
         messages = [
-            _msg("agent_1", "work", 1, [
-                _tc("write_blackboard", {"key": "task_a", "entry_type": "claim"}),
-            ]),
-            _msg("agent_2", "work", 2, [
-                _tc("write_blackboard", {"key": "task_b", "entry_type": "claim"}),
-            ]),
-            _msg("agent_3", "work", 3, [
-                _tc("write_blackboard", {"key": "task_c", "entry_type": "result"}),
-            ]),
+            _msg(
+                "agent_1",
+                "work",
+                1,
+                [
+                    _tc("write_blackboard", {"key": "task_a", "entry_type": "claim"}),
+                ],
+            ),
+            _msg(
+                "agent_2",
+                "work",
+                2,
+                [
+                    _tc("write_blackboard", {"key": "task_b", "entry_type": "claim"}),
+                ],
+            ),
+            _msg(
+                "agent_3",
+                "work",
+                3,
+                [
+                    _tc("write_blackboard", {"key": "task_c", "entry_type": "result"}),
+                ],
+            ),
         ]
         result = compute_networked_metrics(messages, initial_agents=3)
         # 3 unique subtasks / 3 total turns = 1.0
@@ -152,6 +207,7 @@ class TestComputeNetworkedMetrics:
 
 
 # ---- Cross-prompt metrics tests ---------------------------------------------
+
 
 class TestComputeCrossPromptMetrics:
     def test_empty_data(self):
@@ -238,6 +294,7 @@ class TestComputeCrossPromptMetrics:
 
 # ---- Prediction accuracy tests -----------------------------------------------
 
+
 class TestPredictionAccuracy:
     def test_identical_text(self):
         score = compute_prediction_accuracy("agent will calculate sum", "agent will calculate sum")
@@ -267,6 +324,7 @@ class TestPredictionAccuracy:
 
 # ---- Convergence / Joint Myopia tests ----------------------------------------
 
+
 class TestConvergence:
     def test_identical_content(self):
         messages = [
@@ -294,6 +352,7 @@ class TestConvergence:
 
 
 # ---- Failure signature helpers -----------------------------------------------
+
 
 class TestSignatureHelpers:
     def test_failure_signature_from_error(self):

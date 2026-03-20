@@ -14,9 +14,7 @@ def compute_metrics(messages: list[AgentMessage]) -> dict:
 
     # Total tool calls
     total_tool_calls = sum(len(m.tool_calls) for m in messages)
-    failed_tool_calls = sum(
-        1 for m in messages for tc in m.tool_calls if tc.error is not None
-    )
+    failed_tool_calls = sum(1 for m in messages for tc in m.tool_calls if tc.error is not None)
 
     # Retry tracking
     retry_count = sum(1 for m in messages if m.is_retry)

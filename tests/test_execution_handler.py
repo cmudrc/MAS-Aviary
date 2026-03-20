@@ -14,6 +14,7 @@ from src.logging.logger import InstrumentationLogger
 
 # ---- Mock Agent --------------------------------------------------------------
 
+
 class MockAgent:
     """Minimal agent stub that returns a fixed response from .run()."""
 
@@ -39,6 +40,7 @@ class ErrorAgent:
 
 
 # ---- PlaceholderExecutor tests -----------------------------------------------
+
 
 class TestPlaceholderExecutor:
     def test_executes_agents_in_order(self):
@@ -111,9 +113,7 @@ class TestPlaceholderExecutor:
 
     def test_stops_on_max_turns(self):
         agents = {f"a{i}": MockAgent(f"a{i}", f"r{i}") for i in range(10)}
-        assignments = [
-            Assignment(agent_name=f"a{i}", task=f"T{i}") for i in range(10)
-        ]
+        assignments = [Assignment(agent_name=f"a{i}", task=f"T{i}") for i in range(10)]
         executor = PlaceholderExecutor(max_turns=3)
         messages = executor.execute(assignments, agents, logger=None)
         assert len(messages) == 3
@@ -123,7 +123,10 @@ class TestPlaceholderExecutor:
         assignments = [Assignment(agent_name="a1", task="Task")]
         executor = PlaceholderExecutor()
         messages = executor.execute(
-            assignments, agents, logger=None, turn_offset=5,
+            assignments,
+            agents,
+            logger=None,
+            turn_offset=5,
         )
         assert messages[0].turn_number == 6
 
@@ -175,6 +178,7 @@ class TestPlaceholderExecutor:
 
 
 # ---- ExecutionHandler ABC tests ----------------------------------------------
+
 
 class TestExecutionHandlerABC:
     def test_cannot_instantiate_abc(self):

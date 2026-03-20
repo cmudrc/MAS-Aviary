@@ -3,13 +3,13 @@
 No GPU needed. Uses mock agents that return controlled responses.
 """
 
-
 from src.coordination.execution_handler import Assignment
 from src.coordination.feedback_extraction import AttemptFeedback
 from src.coordination.iterative_feedback_handler import IterativeFeedbackHandler
 from src.logging.logger import InstrumentationLogger
 
 # ---- Mock Agents -------------------------------------------------------------
+
 
 class MockAgent:
     """Agent that returns a fixed response."""
@@ -43,8 +43,7 @@ class SequenceAgent:
 class ErrorThenSuccessAgent:
     """Agent that raises on first N calls, then succeeds."""
 
-    def __init__(self, fail_count: int = 1, success_response: str = "ok",
-                 tools: dict | None = None):
+    def __init__(self, fail_count: int = 1, success_response: str = "ok", tools: dict | None = None):
         self.tools = tools or {"my_tool": True}
         self._fail_count = fail_count
         self._success = success_response
@@ -74,6 +73,7 @@ class ToollessAgent:
 
 # ---- Helpers -----------------------------------------------------------------
 
+
 def _cfg(**overrides) -> dict:
     """Build a config dict with defaults."""
     base = {
@@ -89,6 +89,7 @@ def _cfg(**overrides) -> dict:
 
 
 # ---- Basic execution ---------------------------------------------------------
+
 
 class TestBasicExecution:
     def test_agent_succeeds_first_try(self):
@@ -156,6 +157,7 @@ class TestBasicExecution:
 
 
 # ---- Retry behaviour ---------------------------------------------------------
+
 
 class TestRetryBehaviour:
     def test_agent_fails_then_succeeds(self):
@@ -254,6 +256,7 @@ class TestRetryBehaviour:
 
 # ---- Aspiration modes --------------------------------------------------------
 
+
 class TestAspirationModes:
     def test_tool_success_moves_on(self):
         """Agent with no tool errors → aspiration met, no retry."""
@@ -279,9 +282,12 @@ class TestAspirationModes:
         assert len(msgs) == 1
 
     def test_any_output_retries_on_empty(self):
-        handler = IterativeFeedbackHandler(_cfg(
-            aspiration_mode="any_output", max_retries=3,
-        ))
+        handler = IterativeFeedbackHandler(
+            _cfg(
+                aspiration_mode="any_output",
+                max_retries=3,
+            )
+        )
         agent = SequenceAgent(["", "", "finally"])
         agents = {"a1": agent}
         msgs = handler.execute(
@@ -293,9 +299,12 @@ class TestAspirationModes:
         assert msgs[-1].content == "finally"
 
     def test_no_tool_errors_or_max(self):
-        handler = IterativeFeedbackHandler(_cfg(
-            aspiration_mode="no_tool_errors_or_max", max_retries=3,
-        ))
+        handler = IterativeFeedbackHandler(
+            _cfg(
+                aspiration_mode="no_tool_errors_or_max",
+                max_retries=3,
+            )
+        )
         agent = MockAgent("output")
         agents = {"a1": agent}
         msgs = handler.execute(
@@ -309,11 +318,13 @@ class TestAspirationModes:
         def custom_check(fb: AttemptFeedback) -> bool:
             return "PASS" in fb.output_content
 
-        handler = IterativeFeedbackHandler(_cfg(
-            aspiration_mode="custom",
-            aspiration_threshold=custom_check,
-            max_retries=5,
-        ))
+        handler = IterativeFeedbackHandler(
+            _cfg(
+                aspiration_mode="custom",
+                aspiration_threshold=custom_check,
+                max_retries=5,
+            )
+        )
         agent = SequenceAgent(["nope", "nope", "PASS"])
         agents = {"a1": agent}
         msgs = handler.execute(
@@ -326,6 +337,7 @@ class TestAspirationModes:
 
 
 # ---- Toolless agents ---------------------------------------------------------
+
 
 class TestToollessAgents:
     def test_toolless_no_retry_default(self):
@@ -341,11 +353,13 @@ class TestToollessAgents:
         assert len(agent.calls) == 1
 
     def test_toolless_with_retry_enabled(self):
-        handler = IterativeFeedbackHandler(_cfg(
-            retry_toolless_agents=True,
-            aspiration_mode="any_output",
-            max_retries=3,
-        ))
+        handler = IterativeFeedbackHandler(
+            _cfg(
+                retry_toolless_agents=True,
+                aspiration_mode="any_output",
+                max_retries=3,
+            )
+        )
         agent = SequenceAgent(["", "", "got it"], tools={})
         agents = {"a1": agent}
         msgs = handler.execute(
@@ -357,6 +371,7 @@ class TestToollessAgents:
 
 
 # ---- Termination keyword -----------------------------------------------------
+
 
 class TestTermination:
     def test_task_complete_stops_processing(self):
@@ -375,6 +390,7 @@ class TestTermination:
 
 
 # ---- Human feedback modes ----------------------------------------------------
+
 
 class TestHumanFeedback:
     def test_none_mode_no_callback(self):
@@ -430,10 +446,12 @@ class TestHumanFeedback:
         assert len(msgs) == 1
 
     def test_between_prompt_guidance_injected(self):
-        handler = IterativeFeedbackHandler(_cfg(
-            human_feedback_mode="between_prompt",
-            human_guidance="Use simple geometry only",
-        ))
+        handler = IterativeFeedbackHandler(
+            _cfg(
+                human_feedback_mode="between_prompt",
+                human_guidance="Use simple geometry only",
+            )
+        )
         agent = MockAgent("done")
         agents = {"a1": agent}
         handler.execute(
@@ -446,11 +464,15 @@ class TestHumanFeedback:
 
 # ---- Feedback window ---------------------------------------------------------
 
+
 class TestFeedbackWindow:
     def test_only_recent_feedback_in_context(self):
-        handler = IterativeFeedbackHandler(_cfg(
-            max_retries=6, feedback_window=2,
-        ))
+        handler = IterativeFeedbackHandler(
+            _cfg(
+                max_retries=6,
+                feedback_window=2,
+            )
+        )
         agent = ErrorThenSuccessAgent(fail_count=4)
         agents = {"a1": agent}
         handler.execute(
@@ -466,6 +488,7 @@ class TestFeedbackWindow:
 
 
 # ---- Turn numbering ----------------------------------------------------------
+
 
 class TestTurnNumbering:
     def test_turn_numbers_increment(self):

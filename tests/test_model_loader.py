@@ -24,6 +24,7 @@ def test_load_model_returns_thinking_model():
     from smolagents import TransformersModel
 
     from src.llm.thinking_model import ThinkingModel
+
     assert isinstance(model, ThinkingModel)
     assert isinstance(model, TransformersModel)  # still a TransformersModel subclass
 
@@ -78,6 +79,7 @@ def test_load_model_default_backend_is_transformers():
     assert config.backend == "transformers"
     model = load_model(config)
     from src.llm.thinking_model import ThinkingModel
+
     assert isinstance(model, ThinkingModel)
 
 
@@ -95,4 +97,5 @@ def test_load_gpt_oss_20b():
     )
     model = load_model(config)
     from smolagents import TransformersModel
+
     assert isinstance(model, TransformersModel)

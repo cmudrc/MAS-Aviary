@@ -31,34 +31,34 @@ COMBO_LABELS = {
 
 # Professional color palette (colorblind-friendly, muted tones)
 ROLE_COLORS = {
-    "orchestrator":          "#5B7FA5",  # steel blue
-    "mission_architect":     "#6AAB9C",  # sage green
-    "aerodynamics_analyst":  "#E8A87C",  # warm peach
-    "weights_analyst":       "#D4A5A5",  # dusty rose
-    "propulsion_analyst":    "#9B8EC0",  # soft purple
-    "simulation_executor":   "#7DB8D6",  # sky blue
-    "mdo_integrator":        "#C9B458",  # muted gold
+    "orchestrator": "#5B7FA5",  # steel blue
+    "mission_architect": "#6AAB9C",  # sage green
+    "aerodynamics_analyst": "#E8A87C",  # warm peach
+    "weights_analyst": "#D4A5A5",  # dusty rose
+    "propulsion_analyst": "#9B8EC0",  # soft purple
+    "simulation_executor": "#7DB8D6",  # sky blue
+    "mdo_integrator": "#C9B458",  # muted gold
 }
-ROLE_COLORS["idle (echo)"] = "#D0D0D0"   # light gray for wasted turns
+ROLE_COLORS["idle (echo)"] = "#D0D0D0"  # light gray for wasted turns
 DEFAULT_COLOR = "#A0A0A0"
 
 TOOL_MARKERS = {
-    "create_session":          "s",   # square
-    "configure_mission":       "D",   # diamond
-    "get_design_space":        "^",   # triangle up
-    "set_aircraft_parameters": "o",   # circle
-    "validate_parameters":     "P",   # plus (filled)
-    "run_simulation":          "*",   # star
-    "get_results":             "X",   # x (filled)
-    "check_constraints":       "h",   # hexagon
-    "write_blackboard":        "v",   # triangle down
-    "read_blackboard":         "<",   # triangle left
-    "mark_task_done":          ">",   # triangle right
-    "list_available_tools":    "p",   # pentagon
-    "create_agent":            "+",   # plus
-    "assign_task":             "1",   # tri_down
-    "list_graph_roles":        "2",   # tri_up
-    "final_answer":            "d",   # thin diamond
+    "create_session": "s",  # square
+    "configure_mission": "D",  # diamond
+    "get_design_space": "^",  # triangle up
+    "set_aircraft_parameters": "o",  # circle
+    "validate_parameters": "P",  # plus (filled)
+    "run_simulation": "*",  # star
+    "get_results": "X",  # x (filled)
+    "check_constraints": "h",  # hexagon
+    "write_blackboard": "v",  # triangle down
+    "read_blackboard": "<",  # triangle left
+    "mark_task_done": ">",  # triangle right
+    "list_available_tools": "p",  # pentagon
+    "create_agent": "+",  # plus
+    "assign_task": "1",  # tri_down
+    "list_graph_roles": "2",  # tri_up
+    "final_answer": "d",  # thin diamond
 }
 
 
@@ -99,13 +99,11 @@ def resolve_role(msg):
     #   simulation_executor:  run_simulation, get_results
     #   mdo_integrator:       check_constraints, get_results, mark_task_done
     #   orchestrator:         list_available_tools, create_agent, assign_task, list_graph_roles
-    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", [])
-                  if tc["tool_name"] != "final_answer"}
+    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"}
     if not tools_used:
         return "idle (echo)"
 
-    ORCHESTRATOR_TOOLS = {"list_available_tools", "create_agent", "assign_task",
-                          "list_graph_roles"}
+    ORCHESTRATOR_TOOLS = {"list_available_tools", "create_agent", "assign_task", "list_graph_roles"}
     if tools_used & ORCHESTRATOR_TOOLS:
         return "orchestrator"
     if "check_constraints" in tools_used or "mark_task_done" in tools_used:
@@ -121,8 +119,9 @@ def resolve_role(msg):
             if tc["tool_name"] == "set_aircraft_parameters":
                 params = tc.get("inputs", {}).get("parameters", {})
                 param_keys = " ".join(params.keys()) if params else ""
-                if ("Engine" in param_keys or "SCALE_FACTOR" in param_keys) \
-                        and not any(w in param_keys for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")):
+                if ("Engine" in param_keys or "SCALE_FACTOR" in param_keys) and not any(
+                    w in param_keys for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")
+                ):
                     return "propulsion_analyst"
                 return "aerodynamics_analyst"
     if "validate_parameters" in tools_used or "get_design_space" in tools_used:
@@ -153,8 +152,8 @@ def build_timeline_data(result):
     # Find global time origin
     t0 = messages[0]["timestamp"] - messages[0].get("duration_seconds", 0)
 
-    bars = []      # (role, start_s, end_s, turn_number)
-    events = []    # (role, time_s, tool_name)
+    bars = []  # (role, start_s, end_s, turn_number)
+    events = []  # (role, time_s, tool_name)
 
     for msg in messages:
         role = resolve_role(msg)
@@ -166,8 +165,7 @@ def build_timeline_data(result):
 
         # Extract individual tool call timestamps
         # Tools don't have individual timestamps, so distribute them evenly
-        tool_calls = [tc for tc in msg.get("tool_calls", [])
-                      if tc["tool_name"] != "final_answer"]
+        tool_calls = [tc for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"]
         if tool_calls:
             n = len(tool_calls)
             for i, tc in enumerate(tool_calls):
@@ -209,19 +207,33 @@ def plot_timeline(key, result, output_dir):
         y = seen[role]
         color = get_color(role)
         is_idle = role == "idle (echo)"
-        ax.barh(y, end - start, left=start, height=bar_height,
-                color=color, alpha=0.45 if is_idle else 0.85,
-                edgecolor="#999" if is_idle else "white",
-                linewidth=0.8 if is_idle else 0.5,
-                hatch="///" if is_idle else None,
-                zorder=2)
+        ax.barh(
+            y,
+            end - start,
+            left=start,
+            height=bar_height,
+            color=color,
+            alpha=0.45 if is_idle else 0.85,
+            edgecolor="#999" if is_idle else "white",
+            linewidth=0.8 if is_idle else 0.5,
+            hatch="///" if is_idle else None,
+            zorder=2,
+        )
         # Turn number label inside bar
         mid = (start + end) / 2
         bar_width = end - start
         if bar_width > duration * 0.04:  # Only label if bar is wide enough
-            ax.text(mid, y, f"T{turn}", ha="center", va="center",
-                    fontsize=6, fontweight="bold",
-                    color="#666" if is_idle else "white", zorder=3)
+            ax.text(
+                mid,
+                y,
+                f"T{turn}",
+                ha="center",
+                va="center",
+                fontsize=6,
+                fontweight="bold",
+                color="#666" if is_idle else "white",
+                zorder=3,
+            )
 
     # Plot tool events as markers
     tool_legend = {}
@@ -230,8 +242,16 @@ def plot_timeline(key, result, output_dir):
         marker = TOOL_MARKERS.get(tool_name, ".")
         color = get_color(role)
         # Darker version for markers
-        ax.plot(t, y + bar_height / 2 + 0.08, marker=marker, color="black",
-                markersize=5, markeredgewidth=0.5, zorder=4, alpha=0.7)
+        ax.plot(
+            t,
+            y + bar_height / 2 + 0.08,
+            marker=marker,
+            color="black",
+            markersize=5,
+            markeredgewidth=0.5,
+            zorder=4,
+            alpha=0.7,
+        )
         if tool_name not in tool_legend:
             tool_legend[tool_name] = marker
 
@@ -250,29 +270,45 @@ def plot_timeline(key, result, output_dir):
 
     # Title with metrics
     title = f"{label}"
-    subtitle = (f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
-                f"eval={eval_result}  |  {turns} turns  |  {duration:.0f}s")
-    ax.set_title(f"{title}\n{subtitle}", fontsize=10, fontweight="bold",
-                 pad=10, loc="left")
+    subtitle = f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  eval={eval_result}  |  {turns} turns  |  {duration:.0f}s"
+    ax.set_title(f"{title}\n{subtitle}", fontsize=10, fontweight="bold", pad=10, loc="left")
 
     # Legend for roles
-    role_patches = [mpatches.Patch(color=get_color(r), label=r, alpha=0.85)
-                    for r in roles]
-    leg1 = ax.legend(handles=role_patches, loc="upper right", fontsize=6,
-                     framealpha=0.9, title="Roles", title_fontsize=7,
-                     ncol=min(3, len(roles)))
+    role_patches = [mpatches.Patch(color=get_color(r), label=r, alpha=0.85) for r in roles]
+    leg1 = ax.legend(
+        handles=role_patches,
+        loc="upper right",
+        fontsize=6,
+        framealpha=0.9,
+        title="Roles",
+        title_fontsize=7,
+        ncol=min(3, len(roles)),
+    )
 
     # Tool marker legend (separate, below main legend)
     if tool_legend:
         tool_handles = []
         for tname, marker in sorted(tool_legend.items()):
-            h = plt.Line2D([0], [0], marker=marker, color="black",
-                           linestyle="None", markersize=4,
-                           label=tname.replace("_", " "), alpha=0.7)
+            h = plt.Line2D(
+                [0],
+                [0],
+                marker=marker,
+                color="black",
+                linestyle="None",
+                markersize=4,
+                label=tname.replace("_", " "),
+                alpha=0.7,
+            )
             tool_handles.append(h)
-        ax.legend(handles=tool_handles, loc="lower right", fontsize=5,
-                         framealpha=0.9, title="Tools", title_fontsize=6,
-                         ncol=min(3, len(tool_handles)))
+        ax.legend(
+            handles=tool_handles,
+            loc="lower right",
+            fontsize=5,
+            framealpha=0.9,
+            title="Tools",
+            title_fontsize=6,
+            ncol=min(3, len(tool_handles)),
+        )
         ax.add_artist(leg1)
 
     # Style
@@ -285,8 +321,7 @@ def plot_timeline(key, result, output_dir):
 
     # Save
     out_path = os.path.join(output_dir, f"{key}_timeline.png")
-    fig.savefig(out_path, dpi=600, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
+    fig.savefig(out_path, dpi=600, bbox_inches="tight", facecolor="white", edgecolor="none")
     plt.close(fig)
     print(f"  Saved: {out_path}")
 

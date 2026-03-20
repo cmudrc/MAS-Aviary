@@ -34,6 +34,7 @@ from src.logging.logger import InstrumentationLogger
 # smolagents extraction helpers (Fix 6 + Fix 7)
 # ---------------------------------------------------------------------------
 
+
 def _extract_tool_calls(agent: Any) -> list[ToolCallRecord]:
     """Extract ToolCallRecords from a smolagents agent after agent.run()."""
     tool_calls: list[ToolCallRecord] = []
@@ -49,12 +50,14 @@ def _extract_tool_calls(agent: Any) -> list[ToolCallRecord]:
         for tc in step_calls:
             name = getattr(tc, "name", "") or getattr(tc, "tool_name", "")
             args = getattr(tc, "arguments", {}) or {}
-            tool_calls.append(ToolCallRecord(
-                tool_name=name,
-                inputs=args if isinstance(args, dict) else {},
-                output=str(obs)[:2000] if obs else "",
-                duration_seconds=0.0,
-            ))
+            tool_calls.append(
+                ToolCallRecord(
+                    tool_name=name,
+                    inputs=args if isinstance(args, dict) else {},
+                    output=str(obs)[:2000] if obs else "",
+                    duration_seconds=0.0,
+                )
+            )
     return tool_calls
 
 
@@ -82,6 +85,7 @@ def _extract_token_count(agent: Any, content: str) -> int | None:
     if content:
         return max(1, len(content) // 4)
     return None
+
 
 # Absolute hard cap for max_retries (PRD §4).
 _MAX_RETRIES_CAP = 20
@@ -154,7 +158,10 @@ class IterativeFeedbackHandler(ExecutionHandler):
     )
 
     def _detect_upstream_error(
-        self, agent_name: str, content: str, tool_calls: list[ToolCallRecord],
+        self,
+        agent_name: str,
+        content: str,
+        tool_calls: list[ToolCallRecord],
     ) -> None:
         """If agent output signals a simulation or setup failure, record it.
 
@@ -242,9 +249,11 @@ class IterativeFeedbackHandler(ExecutionHandler):
         # successfully for the same agent, return the cached result instead
         # of re-invoking.  This guards against the coordinator loop
         # accidentally re-calling the handler after task completion.
-        if (self._last_successful_output is not None
-                and assignments
-                and assignments[0].agent_name == self._last_successful_agent):
+        if (
+            self._last_successful_output is not None
+            and assignments
+            and assignments[0].agent_name == self._last_successful_agent
+        ):
             turn_offset += 1
             msg = AgentMessage(
                 agent_name=assignments[0].agent_name,
@@ -464,9 +473,7 @@ class IterativeFeedbackHandler(ExecutionHandler):
 
         # Human guidance (between_prompt mode — static for entire run).
         if self._human_guidance and self._human_mode == "between_prompt":
-            parts.append(
-                f"Human guidance for this run:\n\"{self._human_guidance}\""
-            )
+            parts.append(f'Human guidance for this run:\n"{self._human_guidance}"')
 
         # Cross-stage upstream errors (persists across all stages).
         upstream = self._format_upstream_errors()
@@ -475,23 +482,19 @@ class IterativeFeedbackHandler(ExecutionHandler):
 
         # Task + previous agent context.
         if previous_output:
-            parts.append(
-                f"{task}\n\nContext from previous agent:\n{previous_output}"
-            )
+            parts.append(f"{task}\n\nContext from previous agent:\n{previous_output}")
         else:
             parts.append(task)
 
         # Feedback from previous attempts (windowed).
         if feedback_history:
-            window = feedback_history[-self._feedback_window:]
+            window = feedback_history[-self._feedback_window :]
             for fb in window:
                 parts.append(format_feedback_for_retry(fb, max_retries))
 
         # Human feedback from real_time mode.
         if human_feedback and human_feedback != self._human_skip_keyword:
-            parts.append(
-                f"Human feedback after attempt {attempt}:\n\"{human_feedback}\""
-            )
+            parts.append(f'Human feedback after attempt {attempt}:\n"{human_feedback}"')
 
         # Penultimate attempt warning.
         if attempt == max_retries - 2 and max_retries > 2:

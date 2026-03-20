@@ -10,6 +10,7 @@ from src.llm.thinking_model import ThinkingModel, _find_tool_call_json, strip_th
 # strip_think_blocks
 # ---------------------------------------------------------------------------
 
+
 class TestStripThinkBlocks:
     def test_removes_single_block(self):
         text = "<think>reasoning here</think>answer"
@@ -38,8 +39,7 @@ class TestStripThinkBlocks:
     def test_think_with_json_inside(self):
         """Braces inside think blocks must not leak to the parser."""
         text = (
-            '<think>{"name": "wrong", "arguments": {}}</think>\n'
-            '{"name": "final_answer", "arguments": {"answer": "42"}}'
+            '<think>{"name": "wrong", "arguments": {}}</think>\n{"name": "final_answer", "arguments": {"answer": "42"}}'
         )
         cleaned = strip_think_blocks(text)
         assert "<think>" not in cleaned
@@ -50,6 +50,7 @@ class TestStripThinkBlocks:
 # ---------------------------------------------------------------------------
 # _find_tool_call_json — robust parser
 # ---------------------------------------------------------------------------
+
 
 class TestFindToolCallJson:
     def test_clean_json(self):
@@ -71,8 +72,7 @@ class TestFindToolCallJson:
     def test_preamble_with_braces(self):
         """Braces in analysis text before the tool call should not confuse the parser."""
         text = (
-            'The expression {x: 1} is interesting.\n'
-            '{"name": "calculator_tool", "arguments": {"expression": "2*3*7"}}'
+            'The expression {x: 1} is interesting.\n{"name": "calculator_tool", "arguments": {"expression": "2*3*7"}}'
         )
         result = _find_tool_call_json(text)
         assert result["name"] == "calculator_tool"
@@ -86,11 +86,7 @@ class TestFindToolCallJson:
 
     def test_multiple_json_objects_picks_tool_call(self):
         """When multiple JSON objects exist, pick the one with name+arguments."""
-        text = (
-            '{"status": "thinking"}\n'
-            '{"name": "echo_tool", "arguments": {"message": "done"}}\n'
-            '{"extra": true}'
-        )
+        text = '{"status": "thinking"}\n{"name": "echo_tool", "arguments": {"message": "done"}}\n{"extra": true}'
         result = _find_tool_call_json(text)
         assert result["name"] == "echo_tool"
         assert result["arguments"]["message"] == "done"
@@ -148,16 +144,19 @@ class TestFindToolCallJson:
 # ThinkingModel.parse_tool_calls (integration with ChatMessage)
 # ---------------------------------------------------------------------------
 
+
 class TestParseToolCalls:
     """Test the override via a minimal ThinkingModel (no real GPU needed)."""
 
     @pytest.fixture()
     def _chat_message_cls(self):
         from smolagents.models import ChatMessage, MessageRole
+
         return ChatMessage, MessageRole
 
     def _make_message(self, content: str):
         from smolagents.models import ChatMessage, MessageRole
+
         return ChatMessage(role=MessageRole.USER, content=content)
 
     def _make_model(self):
@@ -191,10 +190,7 @@ class TestParseToolCalls:
 
     def test_preamble_braces_dont_break_parse(self):
         model = self._make_model()
-        text = (
-            'Analysis: the set {2, 3, 7} are primes.\n'
-            '{"name": "final_answer", "arguments": {"answer": "2, 3, 7"}}'
-        )
+        text = 'Analysis: the set {2, 3, 7} are primes.\n{"name": "final_answer", "arguments": {"answer": "2, 3, 7"}}'
         msg = self._make_message(text)
         result = model.parse_tool_calls(msg)
         assert result.tool_calls[0].function.name == "final_answer"
@@ -204,6 +200,7 @@ class TestParseToolCalls:
         msg = self._make_message('{"name": "echo_tool", "arguments": {"message": "x"}}')
         result = model.parse_tool_calls(msg)
         from smolagents.models import MessageRole
+
         assert result.role == MessageRole.ASSISTANT
 
     def test_existing_tool_calls_preserved(self):
@@ -224,6 +221,7 @@ class TestParseToolCalls:
     def test_no_content_raises(self):
         model = self._make_model()
         from smolagents.models import ChatMessage, MessageRole
+
         msg = ChatMessage(role=MessageRole.USER, content=None)
         with pytest.raises(AssertionError, match="no content and no tool calls"):
             model.parse_tool_calls(msg)

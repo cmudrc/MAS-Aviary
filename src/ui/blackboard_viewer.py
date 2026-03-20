@@ -88,6 +88,7 @@ _BB_ENTRY_RE = re.compile(
 # Data model
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Event:
     """A single tool-call event extracted from a trace."""
@@ -217,25 +218,28 @@ def _infer_success(result: dict | None, tool_name: str) -> bool | None:
 # Blackboard snapshot extraction (from model_input_messages)
 # ---------------------------------------------------------------------------
 
+
 def _parse_blackboard_section(text: str) -> list[dict]:
     """Parse the 'Current Blackboard State:' block from a context string."""
     marker = "Current Blackboard State:"
     bb_start = text.find(marker)
     if bb_start == -1:
         return []
-    bb_text = text[bb_start + len(marker):]
+    bb_text = text[bb_start + len(marker) :]
     history_idx = bb_text.find("\nRecent History:")
     if history_idx != -1:
         bb_text = bb_text[:history_idx]
     entries = []
     for m in _BB_ENTRY_RE.finditer(bb_text):
-        entries.append({
-            "entry_type": m.group(1).lower(),
-            "key": m.group(2),
-            "author": m.group(3),
-            "version": int(m.group(4)),
-            "value": m.group(5).strip(),
-        })
+        entries.append(
+            {
+                "entry_type": m.group(1).lower(),
+                "key": m.group(2),
+                "author": m.group(3),
+                "version": int(m.group(4)),
+                "value": m.group(5).strip(),
+            }
+        )
     return entries
 
 
@@ -254,11 +258,13 @@ def extract_blackboard_snapshots(trace_data: dict) -> list[BlackboardSnapshot]:
             entries = _parse_blackboard_section(content)
             if not entries:
                 continue
-            snapshots.append(BlackboardSnapshot(
-                agent_name=agent_name,
-                timestamp=step.get("start_time", 0) - 0.5,
-                entries=entries,
-            ))
+            snapshots.append(
+                BlackboardSnapshot(
+                    agent_name=agent_name,
+                    timestamp=step.get("start_time", 0) - 0.5,
+                    entries=entries,
+                )
+            )
     snapshots.sort(key=lambda s: s.timestamp)
     return snapshots
 
@@ -266,6 +272,7 @@ def extract_blackboard_snapshots(trace_data: dict) -> list[BlackboardSnapshot]:
 # ---------------------------------------------------------------------------
 # Data extraction
 # ---------------------------------------------------------------------------
+
 
 def extract_events(trace_data: dict) -> list[Event]:
     """Extract all tool-call events from trace data, sorted by time."""
@@ -290,19 +297,21 @@ def extract_events(trace_data: dict) -> list[Event]:
                     arguments = {"answer": arguments}
                 category = _categorize(tool_name)
                 success = _infer_success(result, tool_name)
-                events.append(Event(
-                    timestamp=timestamp,
-                    agent_name=agent_name,
-                    step_number=step_num,
-                    tool_name=tool_name,
-                    arguments=arguments,
-                    result=result,
-                    result_raw=observations,
-                    duration=duration,
-                    success=success,
-                    model_output=model_output,
-                    event_category=category,
-                ))
+                events.append(
+                    Event(
+                        timestamp=timestamp,
+                        agent_name=agent_name,
+                        step_number=step_num,
+                        tool_name=tool_name,
+                        arguments=arguments,
+                        result=result,
+                        result_raw=observations,
+                        duration=duration,
+                        success=success,
+                        model_output=model_output,
+                        event_category=category,
+                    )
+                )
 
     events.sort(key=lambda e: (e.timestamp, e.step_number))
     return events
@@ -311,6 +320,7 @@ def extract_events(trace_data: dict) -> list[Event]:
 # ---------------------------------------------------------------------------
 # Blackboard state reconstruction
 # ---------------------------------------------------------------------------
+
 
 def reconstruct_blackboard_state(
     events: list[Event],
@@ -329,8 +339,12 @@ def reconstruct_blackboard_state(
             e.timestamp = timestamp
         else:
             entries[key] = ReconstructedEntry(
-                key=key, value=value, author=author,
-                entry_type=entry_type, version=1, timestamp=timestamp,
+                key=key,
+                value=value,
+                author=author,
+                entry_type=entry_type,
+                version=1,
+                timestamp=timestamp,
             )
 
     if snapshots:
@@ -360,6 +374,7 @@ def reconstruct_blackboard_state(
 # Conversation tab — build ordered items
 # ---------------------------------------------------------------------------
 
+
 def _build_conversation(
     events: list[Event],
     snapshots: list[BlackboardSnapshot],
@@ -379,10 +394,7 @@ def _build_conversation(
 
     for i, snap in enumerate(snapshots):
         t_snap = snap.timestamp + 0.5  # actual start time
-        t_next = (
-            (snapshots[i + 1].timestamp + 0.5) if i + 1 < len(snapshots)
-            else float("inf")
-        )
+        t_next = (snapshots[i + 1].timestamp + 0.5) if i + 1 < len(snapshots) else float("inf")
 
         # Board entries that are NEW at this snapshot vs the previous one.
         curr_keys = {e["key"] for e in snap.entries}
@@ -393,46 +405,47 @@ def _build_conversation(
         # (written by Python's next_step() after the previous agent finished).
         if new_entries:
             prev_agent = snapshots[i - 1].agent_name if i > 0 else "system"
-            items.append({
-                "type": "bb_auto_write",
-                "prev_agent": prev_agent,
-                "timestamp": t_snap - 0.1,
-                "entries": new_entries,
-                "all_entries": snap.entries,
-            })
+            items.append(
+                {
+                    "type": "bb_auto_write",
+                    "prev_agent": prev_agent,
+                    "timestamp": t_snap - 0.1,
+                    "entries": new_entries,
+                    "all_entries": snap.entries,
+                }
+            )
 
         # Gather this agent's tool-call events within this turn's time window.
-        turn_events = [
-            e for e in events
-            if t_snap <= e.timestamp < t_next
-        ]
+        turn_events = [e for e in events if t_snap <= e.timestamp < t_next]
 
-        prior_turns = sum(
-            1 for j in range(i) if snapshots[j].agent_name == snap.agent_name
+        prior_turns = sum(1 for j in range(i) if snapshots[j].agent_name == snap.agent_name)
+
+        items.append(
+            {
+                "type": "agent_turn",
+                "agent": snap.agent_name,
+                "timestamp": t_snap,
+                "snapshot": snap,
+                "new_keys": new_keys,
+                "events": turn_events,
+                "turn_index": i + 1,
+                "is_repeat": prior_turns > 0,
+            }
         )
-
-        items.append({
-            "type": "agent_turn",
-            "agent": snap.agent_name,
-            "timestamp": t_snap,
-            "snapshot": snap,
-            "new_keys": new_keys,
-            "events": turn_events,
-            "turn_index": i + 1,
-            "is_repeat": prior_turns > 0,
-        })
 
         prev_keys = curr_keys
 
     # mark_task_done appears as a special completion item at the end.
     for ev in events:
         if ev.event_category == "mark_done":
-            items.append({
-                "type": "task_complete",
-                "agent": ev.agent_name,
-                "timestamp": ev.timestamp + 0.05,
-                "event": ev,
-            })
+            items.append(
+                {
+                    "type": "task_complete",
+                    "agent": ev.agent_name,
+                    "timestamp": ev.timestamp + 0.05,
+                    "event": ev,
+                }
+            )
 
     items.sort(key=lambda x: x["timestamp"])
     return items
@@ -441,6 +454,7 @@ def _build_conversation(
 # ---------------------------------------------------------------------------
 # Conversation tab — rendering
 # ---------------------------------------------------------------------------
+
 
 def _render_conversation_tab(
     events: list[Event],
@@ -456,10 +470,7 @@ def _render_conversation_tab(
         )
         return
 
-    base_time = (
-        snapshots[0].timestamp + 0.5 if snapshots
-        else (events[0].timestamp if events else 0)
-    )
+    base_time = snapshots[0].timestamp + 0.5 if snapshots else (events[0].timestamp if events else 0)
 
     if not snapshots:
         st.warning("No blackboard snapshots found — showing raw events only.")
@@ -531,19 +542,14 @@ def _render_conversation_tab(
             # Detect if agent skipped redundant work.
             mcp_calls = [e for e in turn_events if e.event_category == "mcp_tool"]
             fa_only = (
-                len(turn_events) > 0
-                and not mcp_calls
-                and any(e.event_category == "final_answer" for e in turn_events)
+                len(turn_events) > 0 and not mcp_calls and any(e.event_category == "final_answer" for e in turn_events)
             )
 
             with st.chat_message(agent, avatar=icon):
                 # ── Turn header ──
                 repeat_txt = " *(2nd visit)*" if is_repeat else ""
                 smart_txt = " — **skipped duplicate work ✓**" if fa_only else ""
-                st.markdown(
-                    f"**{agent}** &nbsp; Turn {turn_num}{repeat_txt}"
-                    f" &nbsp; `{t}`{smart_txt}"
-                )
+                st.markdown(f"**{agent}** &nbsp; Turn {turn_num}{repeat_txt} &nbsp; `{t}`{smart_txt}")
 
                 # ── What the agent saw on the board (read receipt) ──
                 pills = []
@@ -560,7 +566,7 @@ def _render_conversation_tab(
                 pills_html = " &nbsp; ".join(pills) or "<em style='color:#666'>empty</em>"
                 st.markdown(
                     f"<span style='color:#888;font-size:0.85em'>📖 read board "
-                    f"({len(snap.entries)} entr{'y' if len(snap.entries)==1 else 'ies'})"
+                    f"({len(snap.entries)} entr{'y' if len(snap.entries) == 1 else 'ies'})"
                     f":</span><br>{pills_html}",
                     unsafe_allow_html=True,
                 )
@@ -605,9 +611,7 @@ def _render_conversation_tab(
 
                     else:
                         badge = "✅" if ok is True else ("❌" if ok is False else "")
-                        st.markdown(
-                            f"{t_icon} **{ev.tool_name}** {badge} `{ev_t}`"
-                        )
+                        st.markdown(f"{t_icon} **{ev.tool_name}** {badge} `{ev_t}`")
 
         # ── Task complete banner ───────────────────────────────────────────
         elif item["type"] == "task_complete":
@@ -626,13 +630,12 @@ def _render_conversation_tab(
 # Blackboard State tab
 # ---------------------------------------------------------------------------
 
+
 def _render_blackboard_state_tab(
     events: list[Event],
     snapshots: list[BlackboardSnapshot],
 ) -> None:
-    has_tool_writes = any(
-        e.event_category in ("blackboard_write", "mark_done") for e in events
-    )
+    has_tool_writes = any(e.event_category in ("blackboard_write", "mark_done") for e in events)
     has_snapshots = bool(snapshots)
 
     if not has_tool_writes and not has_snapshots:
@@ -644,10 +647,7 @@ def _render_blackboard_state_tab(
         return
 
     entries = reconstruct_blackboard_state(events, snapshots)
-    base_time = (
-        snapshots[0].timestamp + 0.5 if snapshots
-        else (events[0].timestamp if events else 0)
-    )
+    base_time = snapshots[0].timestamp + 0.5 if snapshots else (events[0].timestamp if events else 0)
 
     sources = []
     if has_snapshots:
@@ -722,6 +722,7 @@ def _render_blackboard_state_tab(
 # ---------------------------------------------------------------------------
 # All Tool Calls tab (old Chat Room)
 # ---------------------------------------------------------------------------
+
 
 def _render_all_tool_calls_tab(
     events: list[Event],
@@ -870,9 +871,7 @@ def _render_event_card(ev: Event, base_time: float, show_reasoning: bool) -> Non
             elif ev.result.get("files_created"):
                 st.caption(f"Files: {', '.join(ev.result['files_created'])}")
             if ev.tool_name == "get_results":
-                metrics = {k: ev.result[k] for k in
-                           ("fuel_burn", "gtow", "wing_mass", "converged")
-                           if k in ev.result}
+                metrics = {k: ev.result[k] for k in ("fuel_burn", "gtow", "wing_mass", "converged") if k in ev.result}
                 if metrics:
                     cols = st.columns(len(metrics))
                     for col, (k, v) in zip(cols, metrics.items()):
@@ -888,6 +887,7 @@ def _render_event_card(ev: Event, base_time: float, show_reasoning: bool) -> Non
 # ---------------------------------------------------------------------------
 # Agent Activity tab
 # ---------------------------------------------------------------------------
+
 
 def _render_activity_tab(events: list[Event], trace_data: dict) -> None:
     if not events:
@@ -924,9 +924,7 @@ def _render_activity_tab(events: list[Event], trace_data: dict) -> None:
     for ev in events:
         if ev.agent_name not in agent_tools:
             agent_tools[ev.agent_name] = {}
-        agent_tools[ev.agent_name][ev.tool_name] = (
-            agent_tools[ev.agent_name].get(ev.tool_name, 0) + 1
-        )
+        agent_tools[ev.agent_name][ev.tool_name] = agent_tools[ev.agent_name].get(ev.tool_name, 0) + 1
 
     for name in agent_names:
         tools = agent_tools.get(name, {})
@@ -934,9 +932,7 @@ def _render_activity_tab(events: list[Event], trace_data: dict) -> None:
             continue
         color = _agent_color(name)
         icon = _agent_icon(name)
-        tool_str = ", ".join(
-            f"{_tool_icon(t)} {t}: {c}" for t, c in sorted(tools.items())
-        )
+        tool_str = ", ".join(f"{_tool_icon(t)} {t}: {c}" for t, c in sorted(tools.items()))
         st.markdown(
             f"{icon} <span style='color:{color}'>{name}</span>: {tool_str}",
             unsafe_allow_html=True,
@@ -963,8 +959,7 @@ def _render_activity_tab(events: list[Event], trace_data: dict) -> None:
         if unknown:
             parts.append(f"<span style='color:#888'>{unknown} N/A</span>")
         st.markdown(
-            f"{icon} <span style='color:{color}'>{name}</span> ({total} events): "
-            + " | ".join(parts),
+            f"{icon} <span style='color:{color}'>{name}</span> ({total} events): " + " | ".join(parts),
             unsafe_allow_html=True,
         )
 
@@ -995,9 +990,7 @@ def _render_activity_tab(events: list[Event], trace_data: dict) -> None:
         st.markdown(
             f"{icon} **{name}** ({first_t} — {last_t})"
             f"<div style='position:relative;background:#333;border-radius:4px;"
-            f"height:16px;margin:2px 0 8px 0;overflow:hidden'>"
-            + "".join(markers)
-            + "</div>",
+            f"height:16px;margin:2px 0 8px 0;overflow:hidden'>" + "".join(markers) + "</div>",
             unsafe_allow_html=True,
         )
 
@@ -1005,6 +998,7 @@ def _render_activity_tab(events: list[Event], trace_data: dict) -> None:
 # ---------------------------------------------------------------------------
 # Main app
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     st.set_page_config(
@@ -1106,19 +1100,17 @@ def main() -> None:
         )
 
     # Filter events for tool-calls tab.
-    filtered = [
-        e for e in all_events
-        if e.event_category in selected_categories
-        and e.agent_name in selected_agents
-    ]
+    filtered = [e for e in all_events if e.event_category in selected_categories and e.agent_name in selected_agents]
 
     # --- Tabs ---
-    tab_convo, tab_state, tab_activity, tab_calls = st.tabs([
-        "💬 Conversation",
-        "📋 Blackboard State",
-        "📊 Agent Activity",
-        "🔧 All Tool Calls",
-    ])
+    tab_convo, tab_state, tab_activity, tab_calls = st.tabs(
+        [
+            "💬 Conversation",
+            "📋 Blackboard State",
+            "📊 Agent Activity",
+            "🔧 All Tool Calls",
+        ]
+    )
 
     with tab_convo:
         _render_conversation_tab(all_events, all_snapshots, trace_data)
@@ -1128,8 +1120,11 @@ def main() -> None:
         _render_activity_tab(all_events, trace_data)
     with tab_calls:
         _render_all_tool_calls_tab(
-            filtered, all_snapshots, selected_agents,
-            show_reasoning, show_snapshots,
+            filtered,
+            all_snapshots,
+            selected_agents,
+            show_reasoning,
+            show_snapshots,
         )
 
 

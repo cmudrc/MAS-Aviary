@@ -53,6 +53,7 @@ def _tc(
 
 # ---- Successful tool calls ---------------------------------------------------
 
+
 class TestSuccessfulToolCalls:
     def test_single_successful_tool_call(self):
         msg = _msg(
@@ -92,6 +93,7 @@ class TestSuccessfulToolCalls:
 
 # ---- Failed tool calls -------------------------------------------------------
 
+
 class TestFailedToolCalls:
     def test_tool_call_with_error_field(self):
         msg = _msg(
@@ -107,11 +109,17 @@ class TestFailedToolCalls:
     def test_tool_call_with_success_false(self):
         msg = _msg(
             content="",
-            tool_calls=[_tc(output=json.dumps({
-                "success": False,
-                "return_code": 1,
-                "stderr": "Traceback: ValueError: bad input",
-            }))],
+            tool_calls=[
+                _tc(
+                    output=json.dumps(
+                        {
+                            "success": False,
+                            "return_code": 1,
+                            "stderr": "Traceback: ValueError: bad input",
+                        }
+                    )
+                )
+            ],
         )
         fb = extract_feedback(msg)
         assert fb.has_tool_errors
@@ -145,6 +153,7 @@ class TestFailedToolCalls:
 
 # ---- No tool calls -----------------------------------------------------------
 
+
 class TestNoToolCalls:
     def test_message_with_no_tool_calls(self):
         msg = _msg(content="Just reasoning text")
@@ -168,31 +177,38 @@ class TestNoToolCalls:
 
 # ---- Error type extraction ---------------------------------------------------
 
+
 class TestErrorTypeExtraction:
-    @pytest.mark.parametrize("text,expected", [
-        ("AttributeError: 'Workplane' has no attribute 'exportStl'", "AttributeError"),
-        ("TimeoutError: connection timed out", "TimeoutError"),
-        ("ValueError: invalid literal", "ValueError"),
-        ("RuntimeError: CUDA out of memory", "RuntimeError"),
-        ("KeyError: 'missing_key'", "KeyError"),
-        ("ModuleNotFoundError: No module named 'foo'", "ModuleNotFoundError"),
-        ("no error here", None),
-        ("", None),
-    ])
+    @pytest.mark.parametrize(
+        "text,expected",
+        [
+            ("AttributeError: 'Workplane' has no attribute 'exportStl'", "AttributeError"),
+            ("TimeoutError: connection timed out", "TimeoutError"),
+            ("ValueError: invalid literal", "ValueError"),
+            ("RuntimeError: CUDA out of memory", "RuntimeError"),
+            ("KeyError: 'missing_key'", "KeyError"),
+            ("ModuleNotFoundError: No module named 'foo'", "ModuleNotFoundError"),
+            ("no error here", None),
+            ("", None),
+        ],
+    )
     def test_extract_error_type(self, text, expected):
         assert _extract_error_type(text) == expected
 
 
 # ---- Stdout / Stderr extraction -----------------------------------------------
 
+
 class TestStdoutStderr:
     def test_extracts_stdout_and_stderr(self):
-        output = json.dumps({
-            "success": True,
-            "stdout": "Created results.json",
-            "stderr": "Warning: deprecated API",
-            "return_code": 0,
-        })
+        output = json.dumps(
+            {
+                "success": True,
+                "stdout": "Created results.json",
+                "stderr": "Warning: deprecated API",
+                "return_code": 0,
+            }
+        )
         msg = _msg(content="done", tool_calls=[_tc(output=output)])
         fb = extract_feedback(msg)
         assert fb.stdout == "Created results.json"
@@ -209,6 +225,7 @@ class TestStdoutStderr:
 
 # ---- Execution time ----------------------------------------------------------
 
+
 class TestExecutionTime:
     def test_records_execution_time(self):
         msg = _msg(
@@ -221,14 +238,19 @@ class TestExecutionTime:
 
 # ---- Format for retry --------------------------------------------------------
 
+
 class TestFormatFeedbackForRetry:
     def test_formats_successful_feedback(self):
         fb = AttemptFeedback(
             attempt_number=0,
-            tool_calls=[ToolCallOutcome(
-                tool_name="calculator", success=True,
-                return_code=0, stdout="42",
-            )],
+            tool_calls=[
+                ToolCallOutcome(
+                    tool_name="calculator",
+                    success=True,
+                    return_code=0,
+                    stdout="42",
+                )
+            ],
             has_tool_errors=False,
             output_content="42",
         )
@@ -240,13 +262,15 @@ class TestFormatFeedbackForRetry:
     def test_formats_failed_feedback(self):
         fb = AttemptFeedback(
             attempt_number=2,
-            tool_calls=[ToolCallOutcome(
-                tool_name="run_simulation",
-                success=False,
-                return_code=1,
-                stderr="AttributeError: no attr",
-                error_type="AttributeError",
-            )],
+            tool_calls=[
+                ToolCallOutcome(
+                    tool_name="run_simulation",
+                    success=False,
+                    return_code=1,
+                    stderr="AttributeError: no attr",
+                    error_type="AttributeError",
+                )
+            ],
             has_tool_errors=True,
             error_messages=["AttributeError: no attr"],
             return_codes=[1],
@@ -271,19 +295,24 @@ class TestFormatFeedbackForRetry:
 
 # ---- Graceful handling of missing fields --------------------------------------
 
+
 class TestGracefulHandling:
     def test_handles_object_without_tool_calls(self):
         """Message-like object without tool_calls attribute."""
+
         class BareMessage:
             content = "hello"
+
         fb = extract_feedback(BareMessage())
         assert fb.output_content == "hello"
         assert not fb.has_tool_errors
 
     def test_handles_object_without_error(self):
         """Message-like object without error attribute."""
+
         class BareMessage:
             content = "hello"
             tool_calls = []
+
         fb = extract_feedback(BareMessage())
         assert fb.error_messages == []

@@ -18,10 +18,13 @@ def _msg(agent: str, content: str, turn: int, **kwargs) -> AgentMessage:
 
 # ---- ToolCallRecord ----------------------------------------------------------
 
+
 class TestToolCallRecord:
     def test_basic_fields(self):
         rec = ToolCallRecord(
-            tool_name="calc", inputs={"expr": "1+1"}, output="2",
+            tool_name="calc",
+            inputs={"expr": "1+1"},
+            output="2",
             duration_seconds=0.01,
         )
         assert rec.tool_name == "calc"
@@ -29,13 +32,17 @@ class TestToolCallRecord:
 
     def test_with_error(self):
         rec = ToolCallRecord(
-            tool_name="calc", inputs={}, output="",
-            duration_seconds=0.0, error="division by zero",
+            tool_name="calc",
+            inputs={},
+            output="",
+            duration_seconds=0.0,
+            error="division by zero",
         )
         assert rec.error == "division by zero"
 
 
 # ---- AgentMessage -------------------------------------------------------------
+
 
 class TestAgentMessage:
     def test_defaults(self):
@@ -58,6 +65,7 @@ class TestAgentMessage:
 
 
 # ---- SharedHistory ------------------------------------------------------------
+
 
 class TestSharedHistory:
     def test_empty(self):

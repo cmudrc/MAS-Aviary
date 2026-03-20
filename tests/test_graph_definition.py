@@ -15,6 +15,7 @@ from src.coordination.graph_definition import (
 
 # ---- Helpers ---------------------------------------------------------------
 
+
 def _minimal_graph_data() -> dict:
     """Return a minimal valid graph dict."""
     return {
@@ -159,6 +160,7 @@ def _sample_graph_data() -> dict:
 
 # ---- Loading tests ---------------------------------------------------------
 
+
 class TestLoadGraph:
     def test_load_minimal_graph(self):
         data = _minimal_graph_data()
@@ -239,6 +241,7 @@ class TestLoadGraph:
 
 # ---- Validation tests ------------------------------------------------------
 
+
 class TestValidateGraph:
     def test_valid_minimal_graph(self):
         data = _minimal_graph_data()
@@ -293,15 +296,21 @@ class TestValidateGraph:
             terminal_states=["C"],
             states={
                 "A": GraphState(
-                    name="A", agent=None, description="start",
+                    name="A",
+                    agent=None,
+                    description="start",
                     transitions=[GraphTransition("always", "B")],
                 ),
                 "B": GraphState(
-                    name="B", agent=None, description="dead end",
+                    name="B",
+                    agent=None,
+                    description="dead end",
                     transitions=[GraphTransition("always", "A")],
                 ),
                 "C": GraphState(
-                    name="C", agent=None, description="terminal",
+                    name="C",
+                    agent=None,
+                    description="terminal",
                     transitions=[],
                 ),
             },
@@ -324,14 +333,18 @@ class TestValidateGraph:
 
 # ---- Role resolution tests -------------------------------------------------
 
+
 class _MockAgent:
     """Mock agent with name and optional description."""
+
     def __init__(self, name, description=""):
         self.name = name
         self.description = description
 
+
 # Backward compat alias used by existing exact/attribute tests.
 _MockAgentWithName = _MockAgent
+
 
 class TestResolveAgentForRole:
     def test_exact_key_match(self):

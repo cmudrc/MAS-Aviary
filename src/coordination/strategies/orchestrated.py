@@ -116,8 +116,7 @@ class OrchestratedStrategy(CoordinationStrategy):
         self._orchestrator_name = orch_config.get("orchestrator_agent", "orchestrator")
         if self._orchestrator_name not in agents:
             raise ValueError(
-                f"Orchestrator agent '{self._orchestrator_name}' not found in agents. "
-                f"Available: {list(agents.keys())}"
+                f"Orchestrator agent '{self._orchestrator_name}' not found in agents. Available: {list(agents.keys())}"
             )
 
         orchestrator_agent = agents[self._orchestrator_name]
@@ -237,7 +236,7 @@ class OrchestratedStrategy(CoordinationStrategy):
         if not self._context or not self._context.required_result_signals:
             return
 
-        for msg in history[self._signals_scanned_up_to:]:
+        for msg in history[self._signals_scanned_up_to :]:
             if not isinstance(msg, AgentMessage):
                 continue
             for tc in msg.tool_calls:
@@ -245,8 +244,7 @@ class OrchestratedStrategy(CoordinationStrategy):
                     self._context.result_signals.add("simulation_attempted")
                     if tc.output and not tc.error:
                         out = tc.output
-                        if ('"success": true' in out or '"success":true' in out
-                                or "'success': True" in out):
+                        if '"success": true' in out or '"success":true' in out or "'success': True" in out:
                             self._context.result_signals.add("simulation_succeeded")
         self._signals_scanned_up_to = len(history)
 
@@ -271,9 +269,7 @@ class OrchestratedStrategy(CoordinationStrategy):
         # for CreateAgent/AssignTask), ON for workers (benefit from
         # reasoning before parameter decisions).
         if hasattr(self._model, "thinking_enabled"):
-            is_orchestrator = (
-                action.agent_name == self._orchestrator_name
-            )
+            is_orchestrator = action.agent_name == self._orchestrator_name
             self._model.thinking_enabled = not is_orchestrator
 
         return action
@@ -436,8 +432,7 @@ class OrchestratedStrategy(CoordinationStrategy):
             if self._orchestrator_turns_used > 0 and self._context:
                 cur_created = len(self._context.created_agents)
                 cur_assigned = len(self._context.assignments)
-                if (cur_created == self._prev_created_count
-                        and cur_assigned == self._prev_assignment_count):
+                if cur_created == self._prev_created_count and cur_assigned == self._prev_assignment_count:
                     self._stall_turns += 1
                 else:
                     self._stall_turns = 0
@@ -467,9 +462,7 @@ class OrchestratedStrategy(CoordinationStrategy):
         # calls during those turns, transition to execution instead of
         # risking another error that would trigger the termination
         # checker's max_consecutive_errors threshold.
-        if (self._context and self._context.assignments
-                and self._orchestrator_turns_used >= 2
-                and len(history) >= 2):
+        if self._context and self._context.assignments and self._orchestrator_turns_used >= 2 and len(history) >= 2:
             recent = history[-2:]
             if all(isinstance(m, AgentMessage) and m.error for m in recent):
                 return self._transition_to_execution(history, current_state)
@@ -562,8 +555,7 @@ class OrchestratedStrategy(CoordinationStrategy):
             "Re-assign parameter agents (aerodynamics_analyst, "
             "propulsion_analyst) with corrected instructions. They should "
             "call validate_parameters and fix any issues before handing "
-            "off to simulation_executor again.\n\n"
-            + self._format_context_for_orchestrator(history)
+            "off to simulation_executor again.\n\n" + self._format_context_for_orchestrator(history)
         )
         self._orchestrator_turns_used += 1
 
@@ -589,10 +581,12 @@ class OrchestratedStrategy(CoordinationStrategy):
         # Early signal check: if simulation was attempted but failed,
         # don't waste time on remaining assignments (e.g. mdo_integrator).
         # Route back to the orchestrator immediately for parameter retry.
-        if (self._execution_index > 0
-                and self._execution_index < len(assignments)
-                and self._context
-                and "simulation_attempted" in self._context.result_signals):
+        if (
+            self._execution_index > 0
+            and self._execution_index < len(assignments)
+            and self._context
+            and "simulation_attempted" in self._context.result_signals
+        ):
             missing = _check_result_signals(self._context)
             if missing:
                 return self._retry_via_orchestrator(history)
@@ -625,11 +619,7 @@ class OrchestratedStrategy(CoordinationStrategy):
             session_id = self._session_id or self._extract_session_id_from_history(history)
             session_line = f"SESSION_ID: {session_id}\n\n" if session_id else ""
 
-            input_context = (
-                f"{session_line}"
-                f"{assignment['task']}\n\n"
-                f"Context from previous agent:\n{prev}"
-            )
+            input_context = f"{session_line}{assignment['task']}\n\nContext from previous agent:\n{prev}"
         else:
             input_context = assignment["task"]
 
@@ -655,10 +645,12 @@ class OrchestratedStrategy(CoordinationStrategy):
         # Early signal check: if simulation was attempted but failed,
         # don't waste time on remaining assignments.  Route back to
         # the orchestrator immediately for parameter retry.
-        if (self._execution_index > 0
-                and self._execution_index < len(assignments)
-                and self._context
-                and "simulation_attempted" in self._context.result_signals):
+        if (
+            self._execution_index > 0
+            and self._execution_index < len(assignments)
+            and self._context
+            and "simulation_attempted" in self._context.result_signals
+        ):
             missing = _check_result_signals(self._context)
             if missing:
                 return self._retry_via_orchestrator(history)
@@ -710,11 +702,7 @@ class OrchestratedStrategy(CoordinationStrategy):
             session_id = self._session_id or self._extract_session_id_from_history(history)
             session_line = f"SESSION_ID: {session_id}\n\n" if session_id else ""
 
-            input_context = (
-                f"{session_line}"
-                f"{assignment['task']}\n\n"
-                f"Context from previous agent:\n{prev}"
-            )
+            input_context = f"{session_line}{assignment['task']}\n\nContext from previous agent:\n{prev}"
         else:
             input_context = assignment["task"]
 
@@ -803,11 +791,7 @@ class OrchestratedStrategy(CoordinationStrategy):
             total = stats["total_turns"]
             if total == 0:
                 continue
-            tool_err = (
-                stats["failed_tool_calls"] / stats["total_tool_calls"]
-                if stats["total_tool_calls"] > 0
-                else 0.0
-            )
+            tool_err = stats["failed_tool_calls"] / stats["total_tool_calls"] if stats["total_tool_calls"] > 0 else 0.0
             retry_rate = stats["retries"] / total
             completion_rate = 1.0 - (stats["errors"] / total)
             score = (1 - tool_err) * 0.5 + (1 - retry_rate) * 0.3 + completion_rate * 0.2
@@ -833,7 +817,8 @@ class OrchestratedStrategy(CoordinationStrategy):
 
         # Find best worker (exclude current authority).
         worker_scores = {
-            name: score for name, score in scores.items()
+            name: score
+            for name, score in scores.items()
             if name != current_auth and name in (self._context.created_agents if self._context else [])
         }
         if not worker_scores:

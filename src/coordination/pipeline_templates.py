@@ -42,19 +42,13 @@ class PipelineTemplate:
 _LINEAR_STAGES = [
     PipelineStage(
         name="planner",
-        role=(
-            "Analyze the task and produce a detailed plan with steps, "
-            "constraints, and expected outputs."
-        ),
+        role=("Analyze the task and produce a detailed plan with steps, constraints, and expected outputs."),
         allowed_tools=[],
         interface_output="A structured plan",
     ),
     PipelineStage(
         name="executor",
-        role=(
-            "Execute the plan using your available tools. "
-            "Follow the plan exactly."
-        ),
+        role=("Execute the plan using your available tools. Follow the plan exactly."),
         allowed_tools=["*"],
         interface_output="Execution results and any generated files",
     ),
@@ -191,6 +185,7 @@ TEMPLATE_NAMES = frozenset(_BUILTIN_TEMPLATES.keys())
 
 # -- Loading and validation ----------------------------------------------------
 
+
 def load_template(
     template_name: str,
     custom_stages: list[dict] | None = None,
@@ -214,9 +209,7 @@ def load_template(
     """
     if template_name == "custom":
         if not custom_stages:
-            raise ValueError(
-                "pipeline_template is 'custom' but no custom_stages provided."
-            )
+            raise ValueError("pipeline_template is 'custom' but no custom_stages provided.")
         stages = _parse_stages(custom_stages)
         template = PipelineTemplate(name="custom", stages=stages)
         _validate_template(template)
@@ -231,13 +224,13 @@ def load_template(
         raw = templates_config[template_name]
         raw_stages = raw.get("stages", [])
         if not raw_stages:
-            raise ValueError(
-                f"Template '{template_name}' in config has empty stages."
-            )
+            raise ValueError(f"Template '{template_name}' in config has empty stages.")
         stages = _parse_stages(raw_stages)
         shared_keys = raw.get("shared_state_keys", [])
         template = PipelineTemplate(
-            name=template_name, stages=stages, shared_state_keys=shared_keys,
+            name=template_name,
+            stages=stages,
+            shared_state_keys=shared_keys,
         )
         _validate_template(template)
         return template
@@ -245,10 +238,7 @@ def load_template(
     available = sorted(set(_BUILTIN_TEMPLATES.keys()) | {"custom"})
     if templates_config:
         available += sorted(templates_config.keys())
-    raise ValueError(
-        f"Unknown pipeline template {template_name!r}. "
-        f"Available: {available}"
-    )
+    raise ValueError(f"Unknown pipeline template {template_name!r}. Available: {available}")
 
 
 def resolve_tools(
@@ -277,15 +267,13 @@ def resolve_tools(
     resolved = []
     for name in allowed_tools:
         if name not in all_domain_tools:
-            raise ValueError(
-                f"Tool '{name}' not found in domain tools. "
-                f"Available: {sorted(all_domain_tools.keys())}"
-            )
+            raise ValueError(f"Tool '{name}' not found in domain tools. Available: {sorted(all_domain_tools.keys())}")
         resolved.append(all_domain_tools[name])
     return resolved
 
 
 # -- Internal helpers ----------------------------------------------------------
+
 
 def _parse_stages(raw_stages: list[dict]) -> list[PipelineStage]:
     """Parse a list of stage dicts into PipelineStage objects."""
@@ -308,20 +296,13 @@ def _validate_template(template: PipelineTemplate) -> None:
         ValueError: If stages are empty or have duplicate names.
     """
     if not template.stages:
-        raise ValueError(
-            f"Pipeline template '{template.name}' has no stages."
-        )
+        raise ValueError(f"Pipeline template '{template.name}' has no stages.")
 
     names = [s.name for s in template.stages]
     if len(names) != len(set(names)):
         dupes = [n for n in names if names.count(n) > 1]
-        raise ValueError(
-            f"Pipeline template '{template.name}' has duplicate stage names: "
-            f"{sorted(set(dupes))}"
-        )
+        raise ValueError(f"Pipeline template '{template.name}' has duplicate stage names: {sorted(set(dupes))}")
 
     for stage in template.stages:
         if not stage.name:
-            raise ValueError(
-                f"Pipeline template '{template.name}' has a stage with empty name."
-            )
+            raise ValueError(f"Pipeline template '{template.name}' has a stage with empty name.")

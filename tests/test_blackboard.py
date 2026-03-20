@@ -4,7 +4,6 @@ No GPU needed. Tests all claiming modes, context filtering, and
 CRUD operations.
 """
 
-
 import pytest
 
 from src.coordination.blackboard import (
@@ -15,6 +14,7 @@ from src.coordination.blackboard import (
 )
 
 # ---- Fixtures ----------------------------------------------------------------
+
 
 @pytest.fixture
 def bb_soft():
@@ -35,6 +35,7 @@ def bb_none():
 
 
 # ---- Write and Read ----------------------------------------------------------
+
 
 class TestWriteAndRead:
     def test_write_new_entry(self, bb_soft):
@@ -87,6 +88,7 @@ class TestWriteAndRead:
 
 # ---- Update ------------------------------------------------------------------
 
+
 class TestUpdate:
     def test_update_by_same_author(self, bb_soft):
         bb_soft.write("task", "v1", "agent_1", "status")
@@ -116,6 +118,7 @@ class TestUpdate:
 
 # ---- Delete ------------------------------------------------------------------
 
+
 class TestDelete:
     def test_delete_by_author(self, bb_soft):
         bb_soft.write("task", "val", "agent_1", "status")
@@ -132,6 +135,7 @@ class TestDelete:
 
 
 # ---- Soft Claiming -----------------------------------------------------------
+
 
 class TestSoftClaiming:
     def test_first_claim_succeeds(self, bb_soft):
@@ -177,6 +181,7 @@ class TestSoftClaiming:
 
 # ---- Hard Claiming -----------------------------------------------------------
 
+
 class TestHardClaiming:
     def test_first_claim_succeeds(self, bb_hard):
         entry, warning = bb_hard.write("subtask_1", "claimed", "agent_1", "claim")
@@ -203,6 +208,7 @@ class TestHardClaiming:
 
 # ---- No Claiming Mode --------------------------------------------------------
 
+
 class TestNoClaiming:
     def test_claim_type_no_enforcement(self, bb_none):
         bb_none.write("subtask_1", "claimed", "agent_1", "claim")
@@ -218,6 +224,7 @@ class TestNoClaiming:
 
 
 # ---- Concurrent Writes (same key, different authors) -------------------------
+
 
 class TestConcurrentWrites:
     def test_different_author_gets_modified_key(self, bb_soft):
@@ -237,6 +244,7 @@ class TestConcurrentWrites:
 
 
 # ---- Context String Rendering ------------------------------------------------
+
 
 class TestToContextString:
     def _default_config(self, **overrides):
@@ -333,6 +341,7 @@ class TestToContextString:
 
 # ---- Helper function tests ---------------------------------------------------
 
+
 class TestHelpers:
     def test_truncate_short_result(self):
         assert _truncate_result("short text") == "short text"
@@ -361,6 +370,7 @@ class TestHelpers:
 
 # ---- Constructor validation --------------------------------------------------
 
+
 class TestConstructor:
     def test_invalid_claiming_mode(self):
         with pytest.raises(ValueError, match="Invalid claiming_mode"):
@@ -373,6 +383,7 @@ class TestConstructor:
 
 
 # ---- Len and write count -----------------------------------------------------
+
 
 class TestCounters:
     def test_len(self, bb_soft):

@@ -112,6 +112,7 @@ def _format_args(args) -> str:
 # Rendering
 # ---------------------------------------------------------------------------
 
+
 def _render_tool_call(tc: dict, idx: int) -> None:
     """Render a single tool call as a styled expander."""
     name = tc.get("name", "unknown")
@@ -184,8 +185,7 @@ def _render_step(step: dict, agent_name: str) -> None:
         with cols[0]:
             final_tag = "  ✅ **Final Answer**" if is_final else ""
             st.markdown(
-                f"### {icon} <span style='color:{color}'>{agent_name}</span>"
-                f" — Step {step_num}{final_tag}",
+                f"### {icon} <span style='color:{color}'>{agent_name}</span> — Step {step_num}{final_tag}",
                 unsafe_allow_html=True,
             )
         with cols[1]:
@@ -227,8 +227,7 @@ def _render_step(step: dict, agent_name: str) -> None:
                     content = msg.get("content", "")
                     role_color = _ROLE_COLORS.get(role, "#999")
                     st.markdown(
-                        f"<span style='color:{role_color};font-weight:bold;font-size:0.85em'>"
-                        f"[{role.upper()}]</span>",
+                        f"<span style='color:{role_color};font-weight:bold;font-size:0.85em'>[{role.upper()}]</span>",
                         unsafe_allow_html=True,
                     )
                     if content:
@@ -255,6 +254,7 @@ def _render_system_prompt(agent_name: str, prompt: str) -> None:
 # ---------------------------------------------------------------------------
 # Main app
 # ---------------------------------------------------------------------------
+
 
 def main():
     st.set_page_config(

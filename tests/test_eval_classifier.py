@@ -3,7 +3,6 @@
 Tests Aviary metrics: fuel_burned_kg, gtow_kg, wing_mass_kg, etc.
 """
 
-
 from src.logging.eval_classifier import (
     DEFAULT_AVIARY_THRESHOLDS,
     AviaryEvalClassification,
@@ -225,10 +224,12 @@ class TestDetectAgentSignals:
         assert flagged is True
 
     def test_both_approved_and_flagged(self):
-        approved, flagged = detect_aviary_agent_signals([
-            "TASK_COMPLETE",
-            "RETRY needed later",
-        ])
+        approved, flagged = detect_aviary_agent_signals(
+            [
+                "TASK_COMPLETE",
+                "RETRY needed later",
+            ]
+        )
         assert approved is True
         assert flagged is True
 

@@ -36,7 +36,8 @@ class MCPConnector:
             "transport": server.transport,
         }
         collection_cm = ToolCollection.from_mcp(
-            mcp_config, trust_remote_code=True,
+            mcp_config,
+            trust_remote_code=True,
         )
         collection = collection_cm.__enter__()
         self._collections.append(collection_cm)

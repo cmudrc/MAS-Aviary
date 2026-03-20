@@ -27,6 +27,7 @@ VALID_CRITERIA_TYPES = {"output_contains", "tool_attempted", "any"}
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class StageDefinition:
     """A single stage in the pipeline."""
@@ -46,6 +47,7 @@ class PipelineDefinition:
 # ---------------------------------------------------------------------------
 # Loading
 # ---------------------------------------------------------------------------
+
 
 def load_stage(data: dict) -> StageDefinition:
     """Create a StageDefinition from a YAML-parsed dict."""
@@ -99,6 +101,7 @@ def load_pipeline_from_yaml(path: str | Path) -> PipelineDefinition:
 # Validation
 # ---------------------------------------------------------------------------
 
+
 def validate_pipeline(pipeline: PipelineDefinition) -> list[str]:
     """Validate a pipeline definition.
 
@@ -122,9 +125,7 @@ def validate_pipeline(pipeline: PipelineDefinition) -> list[str]:
     for stage in pipeline.stages:
         ctype = stage.completion_criteria.type
         if ctype not in VALID_CRITERIA_TYPES:
-            errors.append(
-                f"Stage {stage.name!r} has invalid criteria type: {ctype!r}"
-            )
+            errors.append(f"Stage {stage.name!r} has invalid criteria type: {ctype!r}")
 
     return errors
 
@@ -133,6 +134,4 @@ def validate_pipeline_strict(pipeline: PipelineDefinition) -> None:
     """Validate pipeline, raise ValueError if invalid."""
     errors = validate_pipeline(pipeline)
     if errors:
-        raise ValueError(
-            "Pipeline validation failed:\n" + "\n".join(f"  - {e}" for e in errors)
-        )
+        raise ValueError("Pipeline validation failed:\n" + "\n".join(f"  - {e}" for e in errors))

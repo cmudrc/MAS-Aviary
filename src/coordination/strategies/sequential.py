@@ -102,17 +102,20 @@ class SequentialStrategy(CoordinationStrategy):
 
         if self._decomposition_mode == "human":
             self._init_human_mode(
-                config, worker_tools_dict, model, templates_config,
+                config,
+                worker_tools_dict,
+                model,
+                templates_config,
             )
         elif self._decomposition_mode == "llm":
             self._init_llm_mode(
-                config, worker_tools_dict, model, templates_config,
+                config,
+                worker_tools_dict,
+                model,
+                templates_config,
             )
         else:
-            raise ValueError(
-                f"Unknown decomposition_mode: {self._decomposition_mode!r}. "
-                "Must be 'human' or 'llm'."
-            )
+            raise ValueError(f"Unknown decomposition_mode: {self._decomposition_mode!r}. Must be 'human' or 'llm'.")
 
         # Reset state.
         self._current_stage_index = 0
@@ -123,9 +126,7 @@ class SequentialStrategy(CoordinationStrategy):
         # Detect graph-routed handler: the graph handler runs the full
         # state machine in one execute() call, so the sequential pipeline
         # should emit a single action and then terminate.
-        self._graph_routed_mode = (
-            config.get("execution_handler") == "graph_routed"
-        )
+        self._graph_routed_mode = config.get("execution_handler") == "graph_routed"
         self._graph_routed_done = False
 
     def next_step(self, history: list, current_state: dict) -> CoordinationAction:
@@ -178,17 +179,17 @@ class SequentialStrategy(CoordinationStrategy):
 
         # Perform interface validation on previous stage's output.
         if self._validate_interfaces and history and self._current_stage_index > 0:
-            prev_stage = self._get_stage(
-                self._stage_order[self._current_stage_index - 1]
-            )
+            prev_stage = self._get_stage(self._stage_order[self._current_stage_index - 1])
             last_msg = history[-1]
             content = last_msg.content if isinstance(last_msg, AgentMessage) else str(last_msg)
             valid = _validate_interface(content, prev_stage.interface_output)
-            self._interface_results.append({
-                "stage": prev_stage.name,
-                "valid": valid,
-                "interface_output": prev_stage.interface_output,
-            })
+            self._interface_results.append(
+                {
+                    "stage": prev_stage.name,
+                    "valid": valid,
+                    "interface_output": prev_stage.interface_output,
+                }
+            )
 
         # Extract shared state (e.g. session_id) from previous stage output.
         # Scans both agent content and tool call outputs so state is captured
@@ -204,7 +205,9 @@ class SequentialStrategy(CoordinationStrategy):
 
         # Build input context.
         input_context = self._build_stage_context(
-            stage, history, current_state,
+            stage,
+            history,
+            current_state,
         )
 
         self._current_stage_index += 1
@@ -339,9 +342,7 @@ class SequentialStrategy(CoordinationStrategy):
             prompt_parts.append(self._base_instructions.strip())
         prompt_parts.append(f"Your role: {stage.role}")
         if stage.interface_output:
-            prompt_parts.append(
-                f"Your output should be: {stage.interface_output}"
-            )
+            prompt_parts.append(f"Your output should be: {stage.interface_output}")
         system_prompt = "\n\n".join(prompt_parts)
 
         from smolagents import ToolCallingAgent
@@ -389,7 +390,8 @@ class SequentialStrategy(CoordinationStrategy):
 
             # Primary: structured ``KEY: value`` line.
             pattern = re.compile(
-                rf"^\s*{re.escape(key)}\s*:\s*(.+)", re.MULTILINE,
+                rf"^\s*{re.escape(key)}\s*:\s*(.+)",
+                re.MULTILINE,
             )
             m = pattern.search(content)
             if m:
@@ -412,7 +414,10 @@ class SequentialStrategy(CoordinationStrategy):
     # -- Context building ------------------------------------------------------
 
     def _build_stage_context(
-        self, stage: PipelineStage, history: list, current_state: dict,
+        self,
+        stage: PipelineStage,
+        history: list,
+        current_state: dict,
     ) -> str:
         """Build input context for a stage agent."""
         # First stage gets the task.
@@ -431,9 +436,7 @@ class SequentialStrategy(CoordinationStrategy):
             parts.append(header)
 
         if self._current_stage_index > 0:
-            prev_stage = self._get_stage(
-                self._stage_order[self._current_stage_index - 1]
-            )
+            prev_stage = self._get_stage(self._stage_order[self._current_stage_index - 1])
             parts.append(
                 f"Previous stage ({prev_stage.name}) output — "
                 f"expected format: {prev_stage.interface_output}:\n"
@@ -474,6 +477,7 @@ class SequentialStrategy(CoordinationStrategy):
 
 # -- Helpers -------------------------------------------------------------------
 
+
 def _validate_interface(output: str, expected_description: str) -> bool:
     """Lightweight interface validation: non-empty + keyword overlap."""
     if not output or not output.strip():
@@ -482,8 +486,8 @@ def _validate_interface(output: str, expected_description: str) -> bool:
     # appears in the output.
     if not expected_description:
         return True
-    keywords = set(re.findall(r'\w+', expected_description.lower()))
-    output_words = set(re.findall(r'\w+', output.lower()))
+    keywords = set(re.findall(r"\w+", expected_description.lower()))
+    output_words = set(re.findall(r"\w+", output.lower()))
     overlap = keywords & output_words
     # Pass if at least one meaningful keyword overlaps.
     return len(overlap) > 0
@@ -498,7 +502,7 @@ def _parse_planner_output(raw_output: str) -> list[dict]:
     """
     # Try to find a JSON array in the output.
     # The LLM might output it wrapped in text or markdown.
-    json_match = re.search(r'\[[\s\S]*\]', raw_output)
+    json_match = re.search(r"\[[\s\S]*\]", raw_output)
     if json_match:
         try:
             data = json.loads(json_match.group())
@@ -506,25 +510,13 @@ def _parse_planner_output(raw_output: str) -> list[dict]:
                 # Validate required fields.
                 for i, stage in enumerate(data):
                     if not isinstance(stage, dict):
-                        raise ValueError(
-                            f"Stage {i} is not a dict: {stage!r}"
-                        )
+                        raise ValueError(f"Stage {i} is not a dict: {stage!r}")
                     if "stage_name" not in stage:
-                        raise ValueError(
-                            f"Stage {i} missing 'stage_name': {stage!r}"
-                        )
+                        raise ValueError(f"Stage {i} missing 'stage_name': {stage!r}")
                     if "role" not in stage:
-                        raise ValueError(
-                            f"Stage {i} missing 'role': {stage!r}"
-                        )
+                        raise ValueError(f"Stage {i} missing 'role': {stage!r}")
                 return data
         except json.JSONDecodeError as e:
-            raise ValueError(
-                f"LLM planner output contains invalid JSON: {e}\n"
-                f"Raw output:\n{raw_output}"
-            ) from e
+            raise ValueError(f"LLM planner output contains invalid JSON: {e}\nRaw output:\n{raw_output}") from e
 
-    raise ValueError(
-        f"LLM planner output could not be parsed as a JSON stage array.\n"
-        f"Raw output:\n{raw_output}"
-    )
+    raise ValueError(f"LLM planner output could not be parsed as a JSON stage array.\nRaw output:\n{raw_output}")

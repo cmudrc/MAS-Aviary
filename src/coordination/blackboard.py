@@ -43,10 +43,7 @@ class Blackboard:
 
     def __init__(self, claiming_mode: str = "soft"):
         if claiming_mode not in ("none", "soft", "hard"):
-            raise ValueError(
-                f"Invalid claiming_mode {claiming_mode!r}. "
-                "Must be 'none', 'soft', or 'hard'."
-            )
+            raise ValueError(f"Invalid claiming_mode {claiming_mode!r}. Must be 'none', 'soft', or 'hard'.")
         self._entries: dict[str, BlackboardEntry] = {}
         self._claiming_mode = claiming_mode
         # Track write events for metrics.
@@ -94,9 +91,7 @@ class Blackboard:
 
     # -- Write operations ------------------------------------------------------
 
-    def write(
-        self, key: str, value: str, author: str, entry_type: str
-    ) -> tuple[BlackboardEntry | None, str | None]:
+    def write(self, key: str, value: str, author: str, entry_type: str) -> tuple[BlackboardEntry | None, str | None]:
         """Write a new entry or update an existing one.
 
         Returns:
@@ -104,10 +99,7 @@ class Blackboard:
             warning is a string if a soft-claim conflict occurred.
         """
         if entry_type not in VALID_ENTRY_TYPES:
-            raise ValueError(
-                f"Invalid entry_type {entry_type!r}. "
-                f"Must be one of {sorted(VALID_ENTRY_TYPES)}."
-            )
+            raise ValueError(f"Invalid entry_type {entry_type!r}. Must be one of {sorted(VALID_ENTRY_TYPES)}.")
 
         self._write_count += 1
         warning = None
@@ -232,9 +224,7 @@ class Blackboard:
                 display_value = _strip_metrics(display_value)
 
             lines.append(
-                f"[{entry.entry_type.upper()}] {entry.key} "
-                f"(by {entry.author}, v{entry.version}): "
-                f"{display_value}"
+                f"[{entry.entry_type.upper()}] {entry.key} (by {entry.author}, v{entry.version}): {display_value}"
             )
 
         if not lines:
@@ -247,6 +237,7 @@ class Blackboard:
 
 
 # -- Helpers -------------------------------------------------------------------
+
 
 def _truncate_result(value: str, max_chars: int = 400) -> str:
     """Truncate a result value and strip reasoning indicators.
@@ -268,8 +259,7 @@ def _strip_reasoning(value: str) -> str:
     for line in lines:
         lower = line.lower().strip()
         # Skip lines that begin with reasoning indicators.
-        if lower.startswith(("reasoning:", "because:", "my reasoning:",
-                            "explanation:", "rationale:", "thinking:")):
+        if lower.startswith(("reasoning:", "because:", "my reasoning:", "explanation:", "rationale:", "thinking:")):
             skip = True
             continue
         # Resume after a blank line following a reasoning block.
@@ -287,10 +277,17 @@ def _strip_metrics(value: str) -> str:
     filtered = []
     for line in lines:
         lower = line.lower().strip()
-        if any(kw in lower for kw in (
-            "error_rate", "retry_count", "success_rate",
-            "tool_error", "performance:", "metric:",
-        )):
+        if any(
+            kw in lower
+            for kw in (
+                "error_rate",
+                "retry_count",
+                "success_rate",
+                "tool_error",
+                "performance:",
+                "metric:",
+            )
+        ):
             continue
         filtered.append(line)
     return "\n".join(filtered)

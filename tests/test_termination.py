@@ -10,23 +10,29 @@ from src.coordination.termination import TerminationChecker
 
 def _msg(agent: str, content: str, turn: int, error: str | None = None) -> AgentMessage:
     return AgentMessage(
-        agent_name=agent, content=content, turn_number=turn,
-        timestamp=time.time(), error=error,
+        agent_name=agent,
+        content=content,
+        turn_number=turn,
+        timestamp=time.time(),
+        error=error,
     )
 
 
 @pytest.fixture
 def default_checker():
-    return TerminationChecker({
-        "termination": {
-            "keyword": "TASK_COMPLETE",
-            "max_turns": 20,
-            "max_consecutive_errors": 3,
+    return TerminationChecker(
+        {
+            "termination": {
+                "keyword": "TASK_COMPLETE",
+                "max_turns": 20,
+                "max_consecutive_errors": 3,
+            }
         }
-    })
+    )
 
 
 # ---- Empty history (no termination) ------------------------------------------
+
 
 def test_empty_history(default_checker):
     h = SharedHistory()
@@ -35,6 +41,7 @@ def test_empty_history(default_checker):
 
 
 # ---- Keyword termination -----------------------------------------------------
+
 
 def test_keyword_found(default_checker):
     h = SharedHistory()
@@ -60,6 +67,7 @@ def test_custom_keyword():
 
 # ---- Max turns ----------------------------------------------------------------
 
+
 def test_max_turns_reached(default_checker):
     h = SharedHistory()
     for i in range(20):
@@ -77,6 +85,7 @@ def test_max_turns_not_reached(default_checker):
 
 
 # ---- Consecutive errors -------------------------------------------------------
+
 
 def test_consecutive_errors_trigger(default_checker):
     h = SharedHistory()
@@ -97,6 +106,7 @@ def test_consecutive_errors_broken_by_success(default_checker):
 
 
 # ---- Stuck detection ----------------------------------------------------------
+
 
 def test_stuck_same_agent_same_output(default_checker):
     h = SharedHistory()
@@ -121,6 +131,7 @@ def test_not_stuck_different_content(default_checker):
 
 
 # ---- Default config -----------------------------------------------------------
+
 
 def test_default_config_values():
     checker = TerminationChecker({})

@@ -63,6 +63,7 @@ def generate_random_params(seed: int) -> dict[str, float]:
 # Direct MCP HTTP client (no smolagents dependency)
 # ---------------------------------------------------------------------------
 
+
 class MCPClient:
     """Minimal MCP streamable-http client for tool calls."""
 
@@ -81,34 +82,51 @@ class MCPClient:
 
     def _initialize(self):
         """Perform MCP handshake."""
-        resp = requests.post(self.url, json={
-            "jsonrpc": "2.0", "id": self._next_id(),
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {"name": "param-validator", "version": "1.0"},
+        resp = requests.post(
+            self.url,
+            json={
+                "jsonrpc": "2.0",
+                "id": self._next_id(),
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "param-validator", "version": "1.0"},
+                },
             },
-        }, headers=self.headers, timeout=10)
+            headers=self.headers,
+            timeout=10,
+        )
         resp.raise_for_status()
         mcp_session = resp.headers.get("mcp-session-id", "")
         if mcp_session:
             self.headers["mcp-session-id"] = mcp_session
 
         # Send initialized notification
-        requests.post(self.url, json={
-            "jsonrpc": "2.0",
-            "method": "notifications/initialized",
-            "params": {},
-        }, headers=self.headers, timeout=10)
+        requests.post(
+            self.url,
+            json={
+                "jsonrpc": "2.0",
+                "method": "notifications/initialized",
+                "params": {},
+            },
+            headers=self.headers,
+            timeout=10,
+        )
 
     def call_tool(self, name: str, arguments: dict, timeout: int = 60) -> dict:
         """Call an MCP tool and return parsed result."""
-        resp = requests.post(self.url, json={
-            "jsonrpc": "2.0", "id": self._next_id(),
-            "method": "tools/call",
-            "params": {"name": name, "arguments": arguments},
-        }, headers=self.headers, timeout=timeout)
+        resp = requests.post(
+            self.url,
+            json={
+                "jsonrpc": "2.0",
+                "id": self._next_id(),
+                "method": "tools/call",
+                "params": {"name": name, "arguments": arguments},
+            },
+            headers=self.headers,
+            timeout=timeout,
+        )
         resp.raise_for_status()
 
         # Parse SSE response — find the data: line with the result
@@ -142,9 +160,12 @@ def validate_params(
     settable = {k: v for k, v in params.items() if not k.startswith("_")}
 
     # 1. Create session with initial parameters
-    resp = client.call_tool("create_session", {
-        "initial_parameters": settable,
-    })
+    resp = client.call_tool(
+        "create_session",
+        {
+            "initial_parameters": settable,
+        },
+    )
     session_id = resp.get("session_id")
     if not session_id:
         m = re.search(
@@ -157,19 +178,26 @@ def validate_params(
             raise RuntimeError(f"create_session failed: {resp}")
 
     # 2. Configure mission
-    client.call_tool("configure_mission", {
-        "session_id": session_id,
-        "range_nmi": 1500,
-        "num_passengers": 162,
-        "cruise_mach": 0.785,
-        "cruise_altitude_ft": 35000,
-    })
+    client.call_tool(
+        "configure_mission",
+        {
+            "session_id": session_id,
+            "range_nmi": 1500,
+            "num_passengers": 162,
+            "cruise_mach": 0.785,
+            "cruise_altitude_ft": 35000,
+        },
+    )
 
     # 3. Validate
-    vresp = client.call_tool("validate_parameters", {
-        "session_id": session_id,
-        "timeout_seconds": timeout,
-    }, timeout=timeout + 10)
+    vresp = client.call_tool(
+        "validate_parameters",
+        {
+            "session_id": session_id,
+            "timeout_seconds": timeout,
+        },
+        timeout=timeout + 10,
+    )
 
     valid = vresp.get("valid", False)
     summary = vresp.get("summary", str(vresp)[:200])
@@ -182,27 +210,38 @@ def main():
         description="Generate pre-validated Aviary parameter sets",
     )
     parser.add_argument(
-        "--count", type=int, default=30,
+        "--count",
+        type=int,
+        default=30,
         help="Number of valid parameter sets to generate (default: 30)",
     )
     parser.add_argument(
-        "--output", type=str, default="config/valid_param_sets.json",
+        "--output",
+        type=str,
+        default="config/valid_param_sets.json",
         help="Output JSON file path",
     )
     parser.add_argument(
-        "--base-seed", type=int, default=42,
+        "--base-seed",
+        type=int,
+        default=42,
         help="Starting seed for random generation (default: 42)",
     )
     parser.add_argument(
-        "--max-attempts", type=int, default=500,
+        "--max-attempts",
+        type=int,
+        default=500,
         help="Max total attempts before giving up (default: 500)",
     )
     parser.add_argument(
-        "--mcp-url", type=str, default=MCP_URL,
+        "--mcp-url",
+        type=str,
+        default=MCP_URL,
         help=f"MCP server URL (default: {MCP_URL})",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print results but don't save",
     )
     args = parser.parse_args()
@@ -216,8 +255,7 @@ def main():
     attempt = 0
     start_time = time.time()
 
-    print(f"\nGenerating {args.count} valid parameter sets "
-          f"(max {args.max_attempts} attempts)...\n")
+    print(f"\nGenerating {args.count} valid parameter sets (max {args.max_attempts} attempts)...\n")
 
     while len(valid_sets) < args.count and attempt < args.max_attempts:
         seed = args.base_seed + attempt
@@ -246,10 +284,10 @@ def main():
     elapsed = time.time() - start_time
     hit_rate = len(valid_sets) / attempt * 100 if attempt > 0 else 0
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Results: {len(valid_sets)}/{args.count} valid sets found")
     print(f"Attempts: {attempt}, hit rate: {hit_rate:.1f}%")
-    print(f"Time: {elapsed:.1f}s ({elapsed/attempt:.1f}s per attempt)")
+    print(f"Time: {elapsed:.1f}s ({elapsed / attempt:.1f}s per attempt)")
     print(f"Seeds: {seeds_used}")
 
     if args.dry_run:

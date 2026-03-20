@@ -28,8 +28,7 @@ class _FinalAnswerModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         answer = f"{self._answer} [call {self._call_count}]"
         tc = ChatMessageToolCall(
@@ -49,8 +48,7 @@ class _ErrorModel(Model):
     def __init__(self):
         super().__init__(model_id="error-model")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         raise RuntimeError("model crashed")
 
 
@@ -86,6 +84,7 @@ def _make_config(model, pipeline_template="linear", max_turns=20, **overrides):
 
 
 # ---- Basic coordination loop ---------------------------------------------------
+
 
 class TestCoordinatorSequential:
     def test_runs_sequential_pipeline(self):
@@ -130,6 +129,7 @@ class TestCoordinatorSequential:
 
 # ---- Error handling -----------------------------------------------------------
 
+
 class TestCoordinatorErrors:
     def test_agent_exception_logged_in_message(self):
         model = _ErrorModel()
@@ -160,6 +160,7 @@ class TestCoordinatorErrors:
 
 
 # ---- Message structure ---------------------------------------------------------
+
 
 class TestCoordinatorMessages:
     def test_turn_numbers_sequential(self):

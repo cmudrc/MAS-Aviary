@@ -67,7 +67,9 @@ def _run_task(task: str, strategy: str, config_path: str):
         )
     except Exception as e:
         st.session_state.run_state = RunState(
-            error=str(e), task=task, strategy=strategy,
+            error=str(e),
+            task=task,
+            strategy=strategy,
         )
     finally:
         st.session_state.is_running = False
@@ -76,6 +78,7 @@ def _run_task(task: str, strategy: str, config_path: str):
 def _msg_to_dict(msg) -> dict:
     """Convert an AgentMessage to a plain dict for display."""
     import dataclasses
+
     if dataclasses.is_dataclass(msg):
         return dataclasses.asdict(msg)
     return dict(msg) if hasattr(msg, "__iter__") else {"content": str(msg)}
@@ -168,12 +171,14 @@ def main():
         )
 
     # Four-panel layout
-    tab_feed, tab_strategy, tab_metrics, tab_batch = st.tabs([
-        "Agent Activity Feed",
-        "Strategy Visualization",
-        "Metrics Dashboard",
-        "Batch Results",
-    ])
+    tab_feed, tab_strategy, tab_metrics, tab_batch = st.tabs(
+        [
+            "Agent Activity Feed",
+            "Strategy Visualization",
+            "Metrics Dashboard",
+            "Batch Results",
+        ]
+    )
 
     with tab_feed:
         if not state.history:

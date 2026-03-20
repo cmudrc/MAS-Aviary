@@ -26,6 +26,7 @@ from src.logging.org_theory_metrics import (
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _msg(
     agent_name: str,
     content: str = "",
@@ -52,6 +53,7 @@ def _msg(
 # _get helper
 # ---------------------------------------------------------------------------
 
+
 class TestGet:
     def test_get_from_dataclass(self):
         m = _msg("alice", content="hello")
@@ -75,6 +77,7 @@ class TestGet:
 # ---------------------------------------------------------------------------
 # _convergence_classification
 # ---------------------------------------------------------------------------
+
 
 class TestConvergenceClassification:
     def test_high_convergence_failure(self):
@@ -109,6 +112,7 @@ class TestConvergenceClassification:
 # _duplicate_work_rate
 # ---------------------------------------------------------------------------
 
+
 class TestDuplicateWorkRate:
     def test_identical_texts(self):
         texts = ["aircraft parameters", "aircraft parameters", "aircraft parameters"]
@@ -136,6 +140,7 @@ class TestDuplicateWorkRate:
 # ---------------------------------------------------------------------------
 # _orchestrated_os_metrics
 # ---------------------------------------------------------------------------
+
 
 class TestOrchestratedOSMetrics:
     def _make_messages(self):
@@ -222,6 +227,7 @@ class TestOrchestratedOSMetrics:
 # _networked_os_metrics
 # ---------------------------------------------------------------------------
 
+
 class TestNetworkedOSMetrics:
     def _make_messages(self):
         return [
@@ -255,9 +261,12 @@ class TestNetworkedOSMetrics:
         result = _networked_os_metrics(msgs, {}, True, w)
         # Low convergence + success
         assert result["convergence_classification"] in (
-            "healthy_diversity", "effective_consensus",
-            "incoherent_team", "joint_myopia",
-            "high_convergence", "low_convergence",
+            "healthy_diversity",
+            "effective_consensus",
+            "incoherent_team",
+            "joint_myopia",
+            "high_convergence",
+            "low_convergence",
         )
 
     def test_convergence_classification_joint_myopia(self):
@@ -285,8 +294,7 @@ class TestNetworkedOSMetrics:
         # claim_conflicts defaults to 0 when no metadata.
         assert result["claim_conflicts"] == 0
         # These remain None (no data sources).
-        for key in ("prediction_count", "prediction_accuracy_mean",
-                    "self_selection_diversity"):
+        for key in ("prediction_count", "prediction_accuracy_mean", "self_selection_diversity"):
             assert result[key] is None
         assert len(w) >= 3
 
@@ -311,6 +319,7 @@ class TestNetworkedOSMetrics:
 # ---------------------------------------------------------------------------
 # _sequential_os_metrics
 # ---------------------------------------------------------------------------
+
 
 class TestSequentialOSMetrics:
     def _make_messages(self):
@@ -368,8 +377,12 @@ class TestSequentialOSMetrics:
         msgs = self._make_messages()
         w = []
         result = _sequential_os_metrics(msgs, {}, w)
-        for key in ("per_stage_tokens", "tool_utilization_per_stage",
-                    "stage_independence_score", "tool_restriction_violations"):
+        for key in (
+            "per_stage_tokens",
+            "tool_utilization_per_stage",
+            "stage_independence_score",
+            "tool_restriction_violations",
+        ):
             assert result[key] is None
         assert len(w) >= 4
 
@@ -385,12 +398,15 @@ class TestSequentialOSMetrics:
 # Modularity metrics (tool_utilization, stage_independence, tool_violations)
 # ---------------------------------------------------------------------------
 
+
 class TestModularityMetrics:
     """Tests for modularity metrics in _sequential_os_metrics."""
 
     def _tc(self, name: str) -> "ToolCallRecord":
         return ToolCallRecord(
-            tool_name=name, inputs={}, output="ok",
+            tool_name=name,
+            inputs={},
+            output="ok",
             duration_seconds=0.1,
         )
 
@@ -398,26 +414,42 @@ class TestModularityMetrics:
         """4-stage sample pipeline with realistic tool_calls."""
         return [
             AgentMessage(
-                agent_name="design_planning", content="Plan", turn_number=1,
-                timestamp=100.0, duration_seconds=34.0, token_count=500,
+                agent_name="design_planning",
+                content="Plan",
+                turn_number=1,
+                timestamp=100.0,
+                duration_seconds=34.0,
+                token_count=500,
                 tool_calls=[],
             ),
             AgentMessage(
-                agent_name="code_writing", content="Code", turn_number=2,
-                timestamp=134.0, duration_seconds=30.0, token_count=600,
+                agent_name="code_writing",
+                content="Code",
+                turn_number=2,
+                timestamp=134.0,
+                duration_seconds=30.0,
+                token_count=600,
                 tool_calls=[],
             ),
             AgentMessage(
-                agent_name="code_execution", content="Executed", turn_number=3,
-                timestamp=164.0, duration_seconds=71.0, token_count=800,
+                agent_name="code_execution",
+                content="Executed",
+                turn_number=3,
+                timestamp=164.0,
+                duration_seconds=71.0,
+                token_count=800,
                 tool_calls=[
                     self._tc("run_simulation"),
                     self._tc("get_results"),
                 ],
             ),
             AgentMessage(
-                agent_name="output_review", content="TASK_COMPLETE", turn_number=4,
-                timestamp=235.0, duration_seconds=42.0, token_count=300,
+                agent_name="output_review",
+                content="TASK_COMPLETE",
+                turn_number=4,
+                timestamp=235.0,
+                duration_seconds=42.0,
+                token_count=300,
                 tool_calls=[self._tc("final_answer")],
             ),
         ]
@@ -467,13 +499,19 @@ class TestModularityMetrics:
         """Detect stages using tools outside their allowed list."""
         msgs = [
             AgentMessage(
-                agent_name="planner", content="Plan", turn_number=1,
-                timestamp=100.0, duration_seconds=10.0,
+                agent_name="planner",
+                content="Plan",
+                turn_number=1,
+                timestamp=100.0,
+                duration_seconds=10.0,
                 tool_calls=[self._tc("run_simulation")],  # not allowed
             ),
             AgentMessage(
-                agent_name="executor", content="Done", turn_number=2,
-                timestamp=110.0, duration_seconds=20.0,
+                agent_name="executor",
+                content="Done",
+                turn_number=2,
+                timestamp=110.0,
+                duration_seconds=20.0,
                 tool_calls=[self._tc("run_simulation")],
             ),
         ]
@@ -492,8 +530,11 @@ class TestModularityMetrics:
         """Stages with allowed_tools=["*"] never count as violations."""
         msgs = [
             AgentMessage(
-                agent_name="worker", content="Done", turn_number=1,
-                timestamp=100.0, duration_seconds=10.0,
+                agent_name="worker",
+                content="Done",
+                turn_number=1,
+                timestamp=100.0,
+                duration_seconds=10.0,
                 tool_calls=[self._tc("any_tool"), self._tc("another_tool")],
             ),
         ]
@@ -507,13 +548,19 @@ class TestModularityMetrics:
         """Without _stage_allowed_tools, compute from cross-stage tool overlap."""
         msgs = [
             AgentMessage(
-                agent_name="stage_a", content="A", turn_number=1,
-                timestamp=100.0, duration_seconds=10.0,
+                agent_name="stage_a",
+                content="A",
+                turn_number=1,
+                timestamp=100.0,
+                duration_seconds=10.0,
                 tool_calls=[self._tc("tool_x"), self._tc("tool_y")],
             ),
             AgentMessage(
-                agent_name="stage_b", content="B", turn_number=2,
-                timestamp=110.0, duration_seconds=10.0,
+                agent_name="stage_b",
+                content="B",
+                turn_number=2,
+                timestamp=110.0,
+                duration_seconds=10.0,
                 tool_calls=[self._tc("tool_x"), self._tc("tool_z")],
             ),
         ]
@@ -530,13 +577,19 @@ class TestModularityMetrics:
         """Complete tool separation = independence 1.0."""
         msgs = [
             AgentMessage(
-                agent_name="stage_a", content="A", turn_number=1,
-                timestamp=100.0, duration_seconds=10.0,
+                agent_name="stage_a",
+                content="A",
+                turn_number=1,
+                timestamp=100.0,
+                duration_seconds=10.0,
                 tool_calls=[self._tc("tool_x")],
             ),
             AgentMessage(
-                agent_name="stage_b", content="B", turn_number=2,
-                timestamp=110.0, duration_seconds=10.0,
+                agent_name="stage_b",
+                content="B",
+                turn_number=2,
+                timestamp=110.0,
+                duration_seconds=10.0,
                 tool_calls=[self._tc("tool_y")],
             ),
         ]
@@ -582,6 +635,7 @@ class TestModularityMetrics:
 # ---------------------------------------------------------------------------
 # _iterative_feedback_metrics
 # ---------------------------------------------------------------------------
+
 
 class TestIterativeFeedbackMetrics:
     def test_single_attempt_per_agent(self):
@@ -670,6 +724,7 @@ class TestIterativeFeedbackMetrics:
 # _graph_routed_metrics
 # ---------------------------------------------------------------------------
 
+
 class TestGraphRoutedMetrics:
     def _make_messages(self):
         # Simulate a graph traversal: classifier → designer → coder → executor
@@ -708,7 +763,7 @@ class TestGraphRoutedMetrics:
             _msg("classifier", "classify", turn_number=1),
             _msg("coder", "code v1", turn_number=2),
             _msg("classifier", "reclassify", turn_number=3),  # revisit
-            _msg("coder", "code v2", turn_number=4),          # revisit
+            _msg("coder", "code v2", turn_number=4),  # revisit
             _msg("output_reviewer", "done", turn_number=5),
         ]
         w = []
@@ -721,10 +776,16 @@ class TestGraphRoutedMetrics:
         w = []
         result = _graph_routed_metrics(msgs, {}, w)
         # Without resource metadata in messages, attention metrics default to None.
-        for key in ("resource_utilization", "context_utilization",
-                    "complexity_budget", "budget_constrained",
-                    "initial_complexity", "final_complexity",
-                    "complexity_escalations", "missed_routes"):
+        for key in (
+            "resource_utilization",
+            "context_utilization",
+            "complexity_budget",
+            "budget_constrained",
+            "initial_complexity",
+            "final_complexity",
+            "complexity_escalations",
+            "missed_routes",
+        ):
             assert result[key] is None
         # Warnings for fields that could not be inferred:
         # missed_routes (always) + initial_complexity (no metadata).
@@ -734,25 +795,46 @@ class TestGraphRoutedMetrics:
         """When messages carry resource metadata, attention metrics are populated."""
         msgs = [
             AgentMessage(
-                agent_name="classifier", content="simple", turn_number=1,
-                timestamp=0.0, duration_seconds=1.0,
-                metadata={"complexity": "simple", "passes_remaining": 5,
-                           "passes_max": 6, "context_used": 10,
-                           "context_budget": 2000},
+                agent_name="classifier",
+                content="simple",
+                turn_number=1,
+                timestamp=0.0,
+                duration_seconds=1.0,
+                metadata={
+                    "complexity": "simple",
+                    "passes_remaining": 5,
+                    "passes_max": 6,
+                    "context_used": 10,
+                    "context_budget": 2000,
+                },
             ),
             AgentMessage(
-                agent_name="coder", content="code", turn_number=2,
-                timestamp=1.0, duration_seconds=1.0,
-                metadata={"complexity": "simple", "passes_remaining": 4,
-                           "passes_max": 6, "context_used": 30,
-                           "context_budget": 2000},
+                agent_name="coder",
+                content="code",
+                turn_number=2,
+                timestamp=1.0,
+                duration_seconds=1.0,
+                metadata={
+                    "complexity": "simple",
+                    "passes_remaining": 4,
+                    "passes_max": 6,
+                    "context_used": 30,
+                    "context_budget": 2000,
+                },
             ),
             AgentMessage(
-                agent_name="executor", content="success", turn_number=3,
-                timestamp=2.0, duration_seconds=1.0,
-                metadata={"complexity": "simple", "passes_remaining": 3,
-                           "passes_max": 6, "context_used": 50,
-                           "context_budget": 2000},
+                agent_name="executor",
+                content="success",
+                turn_number=3,
+                timestamp=2.0,
+                duration_seconds=1.0,
+                metadata={
+                    "complexity": "simple",
+                    "passes_remaining": 3,
+                    "passes_max": 6,
+                    "context_used": 50,
+                    "context_budget": 2000,
+                },
             ),
         ]
         w = []
@@ -782,6 +864,7 @@ class TestGraphRoutedMetrics:
 # _staged_pipeline_metrics
 # ---------------------------------------------------------------------------
 
+
 class TestStagedPipelineMetrics:
     def _make_messages(self, errors=None):
         errors = errors or [None, None, None, None]
@@ -793,8 +876,7 @@ class TestStagedPipelineMetrics:
             "ACCEPTABLE",
         ]
         return [
-            _msg(stage, content, turn_number=i + 1, duration_seconds=float(10 + i * 5),
-                 error=errors[i])
+            _msg(stage, content, turn_number=i + 1, duration_seconds=float(10 + i * 5), error=errors[i])
             for i, (stage, content) in enumerate(zip(stages, contents))
         ]
 
@@ -871,6 +953,7 @@ class TestStagedPipelineMetrics:
 # compute_org_theory_metrics dispatch routing
 # ---------------------------------------------------------------------------
 
+
 class TestDispatchRouting:
     def _orch_msgs(self):
         return [
@@ -902,8 +985,8 @@ class TestDispatchRouting:
 
     def test_orchestrated_iterative_feedback_routing(self):
         result = compute_org_theory_metrics(self._orch_msgs(), "orchestrated", "iterative_feedback")
-        assert "agents_spawned" in result          # OS
-        assert "aspiration_mode" in result          # handler
+        assert "agents_spawned" in result  # OS
+        assert "aspiration_mode" in result  # handler
         assert "escalation_detected" in result
 
     def test_orchestrated_graph_routed_routing(self):
@@ -912,14 +995,14 @@ class TestDispatchRouting:
             _msg("coder", "code", turn_number=2),
         ]
         result = compute_org_theory_metrics(msgs, "orchestrated", "graph_routed")
-        assert "orchestrator_turns" in result       # OS
-        assert "total_transitions" in result        # handler
+        assert "orchestrator_turns" in result  # OS
+        assert "total_transitions" in result  # handler
         assert "routing_accuracy" in result
 
     def test_orchestrated_staged_pipeline_routing(self):
         result = compute_org_theory_metrics(self._orch_msgs(), "orchestrated", "staged_pipeline")
-        assert "orchestrator_overhead_ratio" in result   # OS
-        assert "completion_rate" in result                # handler
+        assert "orchestrator_overhead_ratio" in result  # OS
+        assert "completion_rate" in result  # handler
         assert "propagation_rate" in result
 
     def test_networked_graph_routed_routing(self):
@@ -928,19 +1011,19 @@ class TestDispatchRouting:
             _msg("agent_2", "code", turn_number=2),
         ]
         result = compute_org_theory_metrics(msgs, "networked", "graph_routed")
-        assert "convergence_score" in result        # OS
-        assert "total_transitions" in result        # handler
+        assert "convergence_score" in result  # OS
+        assert "total_transitions" in result  # handler
 
     def test_sequential_iterative_feedback_routing(self):
         result = compute_org_theory_metrics(self._seq_msgs(), "sequential", "iterative_feedback")
-        assert "stage_count" in result              # OS
+        assert "stage_count" in result  # OS
         assert "propagation_time" in result
-        assert "ambidexterity_score" in result      # handler
+        assert "ambidexterity_score" in result  # handler
 
     def test_sequential_staged_pipeline_routing(self):
         result = compute_org_theory_metrics(self._seq_msgs(), "sequential", "staged_pipeline")
-        assert "stage_count" in result              # sequential OS
-        assert "completion_rate" in result          # staged pipeline handler
+        assert "stage_count" in result  # sequential OS
+        assert "completion_rate" in result  # staged pipeline handler
 
     def test_unknown_os_warns(self):
         result = compute_org_theory_metrics(self._orch_msgs(), "unknown_os", "placeholder")
@@ -964,10 +1047,24 @@ class TestDispatchRouting:
     def test_dict_messages_accepted(self):
         # Serialised dict format (from batch_summary.json)
         msgs = [
-            {"agent_name": "orchestrator", "content": "delegating", "turn_number": 1,
-             "duration_seconds": 5.0, "timestamp": 100.0, "error": None, "tool_calls": []},
-            {"agent_name": "worker", "content": "working", "turn_number": 2,
-             "duration_seconds": 3.0, "timestamp": 105.0, "error": None, "tool_calls": []},
+            {
+                "agent_name": "orchestrator",
+                "content": "delegating",
+                "turn_number": 1,
+                "duration_seconds": 5.0,
+                "timestamp": 100.0,
+                "error": None,
+                "tool_calls": [],
+            },
+            {
+                "agent_name": "worker",
+                "content": "working",
+                "turn_number": 2,
+                "duration_seconds": 3.0,
+                "timestamp": 105.0,
+                "error": None,
+                "tool_calls": [],
+            },
         ]
         result = compute_org_theory_metrics(msgs, "orchestrated", "placeholder")
         assert result["agents_spawned"] == 1
@@ -978,14 +1075,13 @@ class TestDispatchRouting:
 # Integration: convergence_score with known texts
 # ---------------------------------------------------------------------------
 
+
 class TestConvergenceScoreIntegration:
     def test_identical_texts_high_convergence(self):
         text = "aircraft parameters fuel_burn 7000 gtow 67365 wing_mass 5200"
         msgs = [_msg(f"agent_{i}", text) for i in range(1, 4)]
         # Provide eval_success so classification resolves to a named outcome
-        result = compute_org_theory_metrics(
-            msgs, "networked", "placeholder", config={"_eval_success": True}
-        )
+        result = compute_org_theory_metrics(msgs, "networked", "placeholder", config={"_eval_success": True})
         assert result["convergence_score"] == pytest.approx(1.0, abs=0.01)
         assert result["convergence_classification"] == "effective_consensus"
 
@@ -1003,6 +1099,7 @@ class TestConvergenceScoreIntegration:
 # ---------------------------------------------------------------------------
 # Integration: escalation_length with known sequences
 # ---------------------------------------------------------------------------
+
 
 class TestEscalationIntegration:
     def test_escalation_detected_after_4_similar_retries(self):
@@ -1025,6 +1122,7 @@ class TestEscalationIntegration:
 # ---------------------------------------------------------------------------
 # Integration: ambidexterity_score with known patterns
 # ---------------------------------------------------------------------------
+
 
 class TestAmbidexterityIntegration:
     def test_high_variance_ambidexterity(self):
@@ -1051,6 +1149,7 @@ class TestAmbidexterityIntegration:
 # ---------------------------------------------------------------------------
 # Integration: error_propagation_rate with known stage sequences
 # ---------------------------------------------------------------------------
+
 
 class TestErrorPropagationIntegration:
     def test_full_propagation_chain(self):

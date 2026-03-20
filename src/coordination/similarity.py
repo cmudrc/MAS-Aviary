@@ -39,9 +39,7 @@ def _jaccard_similarity(text_a: str, text_b: str) -> float:
     return len(intersection) / len(union)
 
 
-def compute_similarity(
-    text_a: str, text_b: str, method: str = "tfidf"
-) -> float:
+def compute_similarity(text_a: str, text_b: str, method: str = "tfidf") -> float:
     """Compute similarity between two text strings.
 
     Args:
@@ -70,6 +68,4 @@ def compute_similarity(
     elif method == "jaccard":
         return _jaccard_similarity(text_a, text_b)
     else:
-        raise ValueError(
-            f"Unknown similarity method {method!r}. Use 'tfidf' or 'jaccard'."
-        )
+        raise ValueError(f"Unknown similarity method {method!r}. Use 'tfidf' or 'jaccard'.")

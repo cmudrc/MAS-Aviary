@@ -14,6 +14,7 @@ from src.logging.cross_strategy_metrics import (
 
 # ---- Helpers ---------------------------------------------------------------
 
+
 def _msg(agent: str, content: str, error: str | None = None) -> AgentMessage:
     return AgentMessage(
         agent_name=agent,
@@ -25,6 +26,7 @@ def _msg(agent: str, content: str, error: str | None = None) -> AgentMessage:
 
 
 # ---- Coordination Overhead -------------------------------------------------
+
 
 class TestCoordinationOverhead:
     def test_no_overhead(self):
@@ -51,6 +53,7 @@ class TestCoordinationOverhead:
 
 # ---- Message Density -------------------------------------------------------
 
+
 class TestMessageDensity:
     def test_count(self):
         msgs = [_msg("a", "1"), _msg("b", "2"), _msg("c", "3")]
@@ -61,6 +64,7 @@ class TestMessageDensity:
 
 
 # ---- Redundancy Rate -------------------------------------------------------
+
 
 class TestRedundancyRate:
     def test_no_redundancy(self):
@@ -104,6 +108,7 @@ class TestRedundancyRate:
 
 # ---- Coordination Efficiency -----------------------------------------------
 
+
 class TestCoordinationEfficiency:
     def test_perfect_efficiency(self):
         msgs = [
@@ -124,6 +129,7 @@ class TestCoordinationEfficiency:
 
 
 # ---- Error Amplification ---------------------------------------------------
+
 
 class TestErrorAmplification:
     def test_no_errors(self):
@@ -169,6 +175,7 @@ class TestErrorAmplification:
 
 
 # ---- All-in-one computation ------------------------------------------------
+
 
 class TestComputeAllMetrics:
     def test_all_metrics_returned(self):

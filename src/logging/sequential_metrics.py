@@ -52,19 +52,14 @@ def compute_sequential_metrics(
     per_stage_duration: dict[str, float] = {}
     for stage_name in stage_order:
         msgs = stage_messages.get(stage_name, [])
-        total_dur = sum(
-            m.duration_seconds for m in msgs
-            if m.duration_seconds is not None
-        )
+        total_dur = sum(m.duration_seconds for m in msgs if m.duration_seconds is not None)
         per_stage_duration[stage_name] = round(total_dur, 4)
 
     # Per-stage token count: sum of token_count per stage.
     per_stage_tokens: dict[str, int] = {}
     for stage_name in stage_order:
         msgs = stage_messages.get(stage_name, [])
-        total_tokens = sum(
-            m.token_count for m in msgs if m.token_count is not None
-        )
+        total_tokens = sum(m.token_count for m in msgs if m.token_count is not None)
         per_stage_tokens[stage_name] = total_tokens
 
     # Tool utilization per stage: tools_used / tools_available.
@@ -91,13 +86,9 @@ def compute_sequential_metrics(
         # Utilization: tools_used / tools_available.
         if is_wildcard:
             # Wildcard means "all tools" — can't compute a ratio meaningfully.
-            per_stage_tool_utilization[stage_name] = (
-                1.0 if tools_used else 0.0
-            )
+            per_stage_tool_utilization[stage_name] = 1.0 if tools_used else 0.0
         elif allowed:
-            per_stage_tool_utilization[stage_name] = round(
-                len(tools_used & allowed) / len(allowed), 4
-            )
+            per_stage_tool_utilization[stage_name] = round(len(tools_used & allowed) / len(allowed), 4)
         else:
             # No tools allowed — utilization is 0 if no tools used, else violation.
             per_stage_tool_utilization[stage_name] = 0.0
@@ -105,26 +96,14 @@ def compute_sequential_metrics(
     # Interface pass rate.
     interfaces_checked = len(interface_results)
     interfaces_passed = sum(1 for r in interface_results if r.get("valid"))
-    interface_pass_rate = (
-        interfaces_passed / interfaces_checked
-        if interfaces_checked > 0
-        else 0.0
-    )
+    interface_pass_rate = interfaces_passed / interfaces_checked if interfaces_checked > 0 else 0.0
 
     # Propagation time: first message timestamp to last message timestamp.
-    timestamps = [
-        m.timestamp for m in messages if m.timestamp is not None
-    ]
-    propagation_time = (
-        max(timestamps) - min(timestamps) if len(timestamps) >= 2 else 0.0
-    )
+    timestamps = [m.timestamp for m in messages if m.timestamp is not None]
+    propagation_time = max(timestamps) - min(timestamps) if len(timestamps) >= 2 else 0.0
 
     # Stage independence score: 1 - (cross_stage_refs / total_refs).
-    stage_independence = (
-        1.0 - (cross_stage_tool_refs / total_tool_refs)
-        if total_tool_refs > 0
-        else 1.0
-    )
+    stage_independence = 1.0 - (cross_stage_tool_refs / total_tool_refs) if total_tool_refs > 0 else 1.0
 
     return {
         "stage_count": len(stage_order),
@@ -165,18 +144,16 @@ def compute_cross_prompt_metrics(
     # but could have succeeded (proxied by low score).
     omission_threshold = 0.5
     omission_errors = sum(
-        1 for r in all_runs
-        if r.get("final_score") is not None
-        and r["final_score"] < omission_threshold
-        and not r.get("success", False)
+        1
+        for r in all_runs
+        if r.get("final_score") is not None and r["final_score"] < omission_threshold and not r.get("success", False)
     )
 
     # Commission errors: prompts where success=True but final_score is low.
     commission_errors = sum(
-        1 for r in all_runs
-        if r.get("success", False)
-        and r.get("final_score") is not None
-        and r["final_score"] < omission_threshold
+        1
+        for r in all_runs
+        if r.get("success", False) and r.get("final_score") is not None and r["final_score"] < omission_threshold
     )
 
     # Escalation of commitment: consecutive failed prompts.
@@ -185,9 +162,7 @@ def compute_cross_prompt_metrics(
     for r in all_runs:
         if not r.get("success", False):
             current_streak += 1
-            max_consecutive_failures = max(
-                max_consecutive_failures, current_streak
-            )
+            max_consecutive_failures = max(max_consecutive_failures, current_streak)
         else:
             current_streak = 0
 
@@ -275,9 +250,7 @@ def compute_template_comparison(
             "success_rate": round(success_rate, 4),
             "avg_tokens_per_run": round(avg_tokens, 1),
             "efficiency": round(efficiency, 8),
-            "avg_propagation_time": round(
-                total_propagation / total, 4
-            ) if total > 0 else 0.0,
+            "avg_propagation_time": round(total_propagation / total, 4) if total > 0 else 0.0,
             "stage_bottleneck": bottleneck,
         }
 

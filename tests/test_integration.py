@@ -24,6 +24,7 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 # ---- Model stubs for fast integration tests -----------------------------------
 
+
 class _FinalAnswerModel(Model):
     """Model that returns final_answer immediately with configurable output."""
 
@@ -32,8 +33,7 @@ class _FinalAnswerModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         answer = f"{self._answer} [call {self._call_count}]"
         tc = ChatMessageToolCall(
@@ -81,6 +81,7 @@ def _make_sequential_config(model, **overrides):
 
 # ---- Mock agent for graph-routed (pre-existing agent approach) ----------------
 
+
 class _MockAgent:
     """Canned-response agent matching the ToolCallingAgent.run() interface."""
 
@@ -98,20 +99,30 @@ class _MockAgent:
 def _make_agents():
     """Create a standard 3-agent set for graph-routed integration."""
     return {
-        "planner": _MockAgent("planner", [
-            "Plan: Step 1 calculate, Step 2 verify",
-        ]),
-        "executor": _MockAgent("executor", [
-            "Calculated: 2+2=4",
-            "Verified: result correct",
-        ]),
-        "reviewer": _MockAgent("reviewer", [
-            "Review: looks correct. TASK_COMPLETE",
-        ]),
+        "planner": _MockAgent(
+            "planner",
+            [
+                "Plan: Step 1 calculate, Step 2 verify",
+            ],
+        ),
+        "executor": _MockAgent(
+            "executor",
+            [
+                "Calculated: 2+2=4",
+                "Verified: result correct",
+            ],
+        ),
+        "reviewer": _MockAgent(
+            "reviewer",
+            [
+                "Review: looks correct. TASK_COMPLETE",
+            ],
+        ),
     }
 
 
 # ---- Full-stack integration with sequential strategy -------------------------
+
 
 class TestIntegrationSequential:
     def test_full_run_with_logger(self, tmp_path):
@@ -190,6 +201,7 @@ class TestIntegrationSequential:
 
 # ---- Full-stack integration with graph-routed strategy -----------------------
 
+
 class TestIntegrationGraphRouted:
     def test_graph_routed_run(self, tmp_path):
         agents = _make_agents()
@@ -215,6 +227,7 @@ class TestIntegrationGraphRouted:
 
 # ---- Config loading integration ---------------------------------------------
 
+
 class TestConfigIntegration:
     def test_default_config_loads_cleanly(self):
         config = load_config("config/default.yaml")
@@ -234,6 +247,7 @@ class TestConfigIntegration:
 
 
 # ---- Metrics integration ----------------------------------------------------
+
 
 class TestMetricsIntegration:
     def test_metrics_from_real_run(self):
@@ -267,6 +281,7 @@ class TestMetricsIntegration:
 
         # Export
         from src.logging.exporter import export_run
+
         path = str(tmp_path / "integration_run.json")
         export_run(result.history, result.metrics, path)
 
@@ -281,6 +296,7 @@ class TestMetricsIntegration:
 
 # ---- Real LLM integration (slow) -------------------------------------------
 
+
 @pytest.mark.slow
 class TestIntegrationRealLLM:
     """These tests load the real LLM. Run with: pytest -m slow"""
@@ -291,7 +307,9 @@ class TestIntegrationRealLLM:
             {"logging": {"output_dir": str(tmp_path)}},
         )
         coordinator = Coordinator.from_config(
-            config, logger=logger, strategy_override="sequential",
+            config,
+            logger=logger,
+            strategy_override="sequential",
         )
         result = coordinator.run("What is 2 plus 2?")
 

@@ -75,8 +75,7 @@ class PlaceholderExecutor(ExecutionHandler):
       or max turns reached
     """
 
-    def __init__(self, termination_keyword: str = "TASK_COMPLETE",
-                 max_turns: int = 30):
+    def __init__(self, termination_keyword: str = "TASK_COMPLETE", max_turns: int = 30):
         self._termination_keyword = termination_keyword
         self._max_turns = max_turns
 
@@ -115,10 +114,7 @@ class PlaceholderExecutor(ExecutionHandler):
 
             # Build input: task + context from previous agent.
             if previous_output:
-                input_context = (
-                    f"{assignment.task}\n\n"
-                    f"Context from previous agent:\n{previous_output}"
-                )
+                input_context = f"{assignment.task}\n\nContext from previous agent:\n{previous_output}"
             else:
                 input_context = assignment.task
 

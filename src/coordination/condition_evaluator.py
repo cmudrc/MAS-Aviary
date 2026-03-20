@@ -31,8 +31,8 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 _TOKEN_PATTERNS = [
-    ("STRING_SQ", r"'[^']*'"),        # single-quoted string
-    ("STRING_DQ", r'"[^"]*"'),        # double-quoted string
+    ("STRING_SQ", r"'[^']*'"),  # single-quoted string
+    ("STRING_DQ", r'"[^"]*"'),  # double-quoted string
     ("LIST_OPEN", r"\["),
     ("LIST_CLOSE", r"\]"),
     ("COMMA", r","),
@@ -48,9 +48,7 @@ _TOKEN_PATTERNS = [
     ("WS", r"\s+"),
 ]
 
-_TOKEN_RE = re.compile(
-    "|".join(f"(?P<{name}>{pattern})" for name, pattern in _TOKEN_PATTERNS)
-)
+_TOKEN_RE = re.compile("|".join(f"(?P<{name}>{pattern})" for name, pattern in _TOKEN_PATTERNS))
 
 
 @dataclass
@@ -75,6 +73,7 @@ def _tokenize(expr: str) -> list[_Token]:
 # AST node types
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class _Always:
     """The ``always`` literal — always matches."""
@@ -84,27 +83,31 @@ class _Always:
 class _VarRef:
     """A reference to a state dict variable (unquoted identifier on the
     right side of a comparison, e.g. ``cycle_count >= escalation_threshold``)."""
+
     name: str
 
 
 @dataclass
 class _Comparison:
     """A binary comparison: ``left op right``."""
-    left: str       # state dict key
-    op: str         # ==, !=, >, <, >=, <=
-    right: Any      # literal value or _VarRef
+
+    left: str  # state dict key
+    op: str  # ==, !=, >, <, >=, <=
+    right: Any  # literal value or _VarRef
 
 
 @dataclass
 class _Membership:
     """An ``in`` check: ``left in [list]``."""
-    left: str            # state dict key
-    values: list[Any]    # list of literal values
+
+    left: str  # state dict key
+    values: list[Any]  # list of literal values
 
 
 @dataclass
 class _And:
     """Logical AND of two sub-expressions."""
+
     left: Any
     right: Any
 
@@ -112,6 +115,7 @@ class _And:
 @dataclass
 class _Or:
     """Logical OR of two sub-expressions."""
+
     left: Any
     right: Any
 
@@ -119,6 +123,7 @@ class _Or:
 # ---------------------------------------------------------------------------
 # Parser
 # ---------------------------------------------------------------------------
+
 
 class ConditionParseError(Exception):
     """Raised when a condition expression cannot be parsed."""
@@ -146,17 +151,13 @@ class _Parser:
         if tok is None or tok.type not in types:
             expected = " or ".join(types)
             got = tok.type if tok else "end of input"
-            raise ConditionParseError(
-                f"Expected {expected}, got {got}"
-            )
+            raise ConditionParseError(f"Expected {expected}, got {got}")
         return self._advance()
 
     def parse(self) -> Any:
         node = self._parse_or()
         if self._pos < len(self._tokens):
-            raise ConditionParseError(
-                f"Unexpected token: {self._tokens[self._pos].value!r}"
-            )
+            raise ConditionParseError(f"Unexpected token: {self._tokens[self._pos].value!r}")
         return node
 
     def _parse_or(self) -> Any:
@@ -190,9 +191,7 @@ class _Parser:
 
             next_tok = self._peek()
             if next_tok is None:
-                raise ConditionParseError(
-                    f"Expected operator after {ident!r}, got end of input"
-                )
+                raise ConditionParseError(f"Expected operator after {ident!r}, got end of input")
 
             # Membership: ident in [...]
             if next_tok.type == "IN":
@@ -206,9 +205,7 @@ class _Parser:
                 right = self._parse_literal()
                 return _Comparison(left=ident, op=op_tok.value, right=right)
 
-            raise ConditionParseError(
-                f"Expected operator after {ident!r}, got {next_tok.value!r}"
-            )
+            raise ConditionParseError(f"Expected operator after {ident!r}, got {next_tok.value!r}")
 
         raise ConditionParseError(f"Unexpected token: {tok.value!r}")
 
@@ -240,9 +237,7 @@ class _Parser:
             self._advance()
             return _VarRef(name=tok.value)
 
-        raise ConditionParseError(
-            f"Expected literal value, got {tok.value!r}"
-        )
+        raise ConditionParseError(f"Expected literal value, got {tok.value!r}")
 
     def _parse_list(self) -> list[Any]:
         self._expect("LIST_OPEN")
@@ -276,9 +271,11 @@ def parse_condition(expr: str) -> Any:
 # Evaluator
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class EvalResult:
     """Result of evaluating a condition expression."""
+
     matched: bool
     warnings: list[str] = field(default_factory=list)
 

@@ -12,6 +12,7 @@ from src.coordination.similarity import compute_similarity
 
 # ---- Ambidexterity -----------------------------------------------------------
 
+
 def compute_ambidexterity(
     attempts: list[AttemptFeedback],
     similarity_method: str = "tfidf",
@@ -47,6 +48,7 @@ def compute_ambidexterity(
 
 # ---- Escalation of commitment ------------------------------------------------
 
+
 def compute_escalation(
     attempts: list[AttemptFeedback],
     similarity_threshold: float = 0.8,
@@ -65,14 +67,15 @@ def compute_escalation(
     current_run = 0
 
     for i in range(len(attempts) - 1):
-        both_failed = (
-            attempts[i].has_tool_errors and attempts[i + 1].has_tool_errors
+        both_failed = attempts[i].has_tool_errors and attempts[i + 1].has_tool_errors
+        high_sim = (
+            compute_similarity(
+                attempts[i].output_content,
+                attempts[i + 1].output_content,
+                method=similarity_method,
+            )
+            > similarity_threshold
         )
-        high_sim = compute_similarity(
-            attempts[i].output_content,
-            attempts[i + 1].output_content,
-            method=similarity_method,
-        ) > similarity_threshold
 
         if both_failed and high_sim:
             current_run += 1
@@ -88,6 +91,7 @@ def compute_escalation(
 
 
 # ---- Per-agent aggregate metrics ---------------------------------------------
+
 
 def compute_per_agent_metrics(
     attempts: list[AttemptFeedback],
@@ -119,6 +123,7 @@ def compute_per_agent_metrics(
         for err in fb.error_messages:
             # Try to extract error type from message text.
             from src.coordination.feedback_extraction import _extract_error_type
+
             et = _extract_error_type(err)
             if et:
                 error_types.add(et)
@@ -149,6 +154,7 @@ def compute_per_agent_metrics(
 
 # ---- Per-prompt aggregate metrics --------------------------------------------
 
+
 def compute_per_prompt_metrics(
     all_attempt_histories: list[list[AttemptFeedback]],
     similarity_method: str = "tfidf",
@@ -172,14 +178,8 @@ def compute_per_prompt_metrics(
     handoffs = sum(1 for m in agent_metrics if m["final_outcome"] == "summary_handoff")
     human_interventions = 0  # TODO: track from handler if needed
 
-    success_attempts = [
-        m["success_attempt"] for m in agent_metrics
-        if m["success_attempt"] is not None
-    ]
-    mean_attempts = (
-        sum(success_attempts) / len(success_attempts)
-        if success_attempts else None
-    )
+    success_attempts = [m["success_attempt"] for m in agent_metrics if m["success_attempt"] is not None]
+    mean_attempts = sum(success_attempts) / len(success_attempts) if success_attempts else None
 
     # Per-agent ambidexterity and escalation.
     ambidexterity_scores = []
@@ -208,6 +208,7 @@ def compute_per_prompt_metrics(
 
 # ---- Cross-prompt metrics ----------------------------------------------------
 
+
 def compute_cross_prompt_metrics(
     prompt_metrics_list: list[dict],
 ) -> dict:
@@ -229,23 +230,14 @@ def compute_cross_prompt_metrics(
             "mean_ambidexterity_per_prompt": None,
         }
 
-    omission = sum(
-        1 for m in prompt_metrics_list
-        if m.get("agents_exhausted_retries", 0) > 0
-    )
-    commission = sum(
-        1 for m in prompt_metrics_list
-        if m.get("summary_handoffs", 0) > 0
-    )
+    omission = sum(1 for m in prompt_metrics_list if m.get("agents_exhausted_retries", 0) > 0)
+    commission = sum(1 for m in prompt_metrics_list if m.get("summary_handoffs", 0) > 0)
 
     # Cross-prompt escalation: consecutive prompts with errors.
     max_consecutive_errors = 0
     current_run = 0
     for m in prompt_metrics_list:
-        has_problems = (
-            m.get("agents_exhausted_retries", 0) > 0
-            or m.get("summary_handoffs", 0) > 0
-        )
+        has_problems = m.get("agents_exhausted_retries", 0) > 0 or m.get("summary_handoffs", 0) > 0
         if has_problems:
             current_run += 1
             max_consecutive_errors = max(max_consecutive_errors, current_run)

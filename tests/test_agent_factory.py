@@ -20,14 +20,16 @@ from src.tools.mock_tools import EchoTool
 
 # ---- Fixtures -----------------------------------------------------------------
 
+
 class DummyModel(Model):
     """Minimal model stub that satisfies the ToolCallingAgent constructor."""
+
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.types import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -43,12 +45,16 @@ def mock_config():
 
 # ---- AgentRegistry tests ------------------------------------------------------
 
+
 class TestAgentRegistry:
     def test_register_and_get(self, dummy_model):
         registry = AgentRegistry()
         agent = ToolCallingAgent(
-            tools=[EchoTool()], model=dummy_model, name="test_agent",
-            description="test", add_base_tools=False,
+            tools=[EchoTool()],
+            model=dummy_model,
+            name="test_agent",
+            description="test",
+            add_base_tools=False,
         )
         registry.register(agent)
         assert registry.get("test_agent") is agent
@@ -56,8 +62,11 @@ class TestAgentRegistry:
     def test_duplicate_name_raises(self, dummy_model):
         registry = AgentRegistry()
         agent = ToolCallingAgent(
-            tools=[EchoTool()], model=dummy_model, name="dup",
-            description="test", add_base_tools=False,
+            tools=[EchoTool()],
+            model=dummy_model,
+            name="dup",
+            description="test",
+            add_base_tools=False,
         )
         registry.register(agent)
         with pytest.raises(ValueError, match="already registered"):
@@ -72,8 +81,11 @@ class TestAgentRegistry:
         registry = AgentRegistry()
         for name in ["a", "b", "c"]:
             agent = ToolCallingAgent(
-                tools=[], model=dummy_model, name=name,
-                description=name, add_base_tools=False,
+                tools=[],
+                model=dummy_model,
+                name=name,
+                description=name,
+                add_base_tools=False,
             )
             registry.register(agent)
         assert registry.list_names() == ["a", "b", "c"]
@@ -81,8 +93,11 @@ class TestAgentRegistry:
     def test_len_and_contains(self, dummy_model):
         registry = AgentRegistry()
         agent = ToolCallingAgent(
-            tools=[], model=dummy_model, name="x",
-            description="x", add_base_tools=False,
+            tools=[],
+            model=dummy_model,
+            name="x",
+            description="x",
+            add_base_tools=False,
         )
         registry.register(agent)
         assert len(registry) == 1
@@ -91,6 +106,7 @@ class TestAgentRegistry:
 
 
 # ---- create_agent tests -------------------------------------------------------
+
 
 class TestCreateAgent:
     def test_creates_tool_calling_agent(self, dummy_model):
@@ -109,12 +125,17 @@ class TestCreateAgent:
 
     def test_default_max_steps(self, dummy_model):
         agent = create_agent(
-            name="test", role="test", system_prompt="", tools=[], model=dummy_model,
+            name="test",
+            role="test",
+            system_prompt="",
+            tools=[],
+            model=dummy_model,
         )
         assert agent.max_steps == 8
 
 
 # ---- create_agent_from_dict tests ---------------------------------------------
+
 
 class TestCreateAgentFromDict:
     def test_from_dict_with_mock_tools(self, dummy_model, mock_config):
@@ -141,6 +162,7 @@ class TestCreateAgentFromDict:
 
 # ---- create_agents_from_yaml tests --------------------------------------------
 
+
 class TestCreateAgentsFromYaml:
     def test_loads_agents_yaml(self, dummy_model, mock_config):
         registry = create_agents_from_yaml("config/agents.yaml", dummy_model, mock_config)
@@ -160,11 +182,15 @@ class TestCreateAgentsFromYaml:
 
     def test_custom_yaml(self, tmp_path, dummy_model, mock_config):
         custom = tmp_path / "custom_agents.yaml"
-        custom.write_text(yaml.dump({
-            "agents": [
-                {"name": "solo", "role": "Single agent", "tools": ["echo_tool"], "max_steps": 3},
-            ]
-        }))
+        custom.write_text(
+            yaml.dump(
+                {
+                    "agents": [
+                        {"name": "solo", "role": "Single agent", "tools": ["echo_tool"], "max_steps": 3},
+                    ]
+                }
+            )
+        )
         registry = create_agents_from_yaml(str(custom), dummy_model, mock_config)
         assert len(registry) == 1
         assert registry.get("solo").max_steps == 3

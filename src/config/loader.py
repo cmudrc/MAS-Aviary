@@ -78,10 +78,7 @@ def _dict_to_dataclass(cls, data: dict[str, Any]):
         if isinstance(v, dict) and k in _NESTED_TYPES:
             filtered[k] = _dict_to_dataclass(_NESTED_TYPES[k], v)
         elif isinstance(v, list) and k == "servers":
-            filtered[k] = [
-                _dict_to_dataclass(MCPServerConfig, item) if isinstance(item, dict) else item
-                for item in v
-            ]
+            filtered[k] = [_dict_to_dataclass(MCPServerConfig, item) if isinstance(item, dict) else item for item in v]
         else:
             filtered[k] = v
     return cls(**filtered)

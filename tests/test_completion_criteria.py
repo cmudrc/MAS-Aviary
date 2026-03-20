@@ -1,6 +1,5 @@
 """Unit tests for completion criteria evaluation."""
 
-
 from src.coordination.completion_criteria import (
     CompletionCriteria,
     evaluate_completion,
@@ -10,15 +9,20 @@ from src.coordination.history import ToolCallRecord
 
 # ---- Helpers ---------------------------------------------------------------
 
+
 def _tc(name: str, error: str | None = None) -> ToolCallRecord:
     """Shortcut to create a ToolCallRecord."""
     return ToolCallRecord(
-        tool_name=name, inputs={}, output="ok", duration_seconds=0.1,
+        tool_name=name,
+        inputs={},
+        output="ok",
+        duration_seconds=0.1,
         error=error,
     )
 
 
 # ---- non_empty_output ------------------------------------------------------
+
 
 class TestNonEmptyOutput:
     def test_passes_on_non_empty_string(self):
@@ -48,6 +52,7 @@ class TestNonEmptyOutput:
 
 
 # ---- code_block ------------------------------------------------------------
+
 
 class TestCodeBlock:
     def test_passes_on_triple_backtick_python(self):
@@ -91,7 +96,8 @@ class TestCodeBlock:
     def test_custom_patterns(self):
         c = CompletionCriteria(type="output_contains", check="code_block")
         r = evaluate_completion(
-            c, "from numpy import array",
+            c,
+            "from numpy import array",
             code_block_patterns=["from numpy"],
         )
         assert r.met is True
@@ -99,7 +105,8 @@ class TestCodeBlock:
     def test_custom_patterns_no_match(self):
         c = CompletionCriteria(type="output_contains", check="code_block")
         r = evaluate_completion(
-            c, "No code here",
+            c,
+            "No code here",
             code_block_patterns=["```python", "from numpy"],
         )
         assert r.met is False
@@ -107,10 +114,12 @@ class TestCodeBlock:
 
 # ---- tool_called -----------------------------------------------------------
 
+
 class TestToolCalled:
     def test_passes_when_tool_called(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="run_simulation",
         )
         r = evaluate_completion(c, "done", [_tc("run_simulation")])
@@ -118,7 +127,8 @@ class TestToolCalled:
 
     def test_passes_even_when_tool_failed(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="run_simulation",
         )
         tc = _tc("run_simulation", error="SyntaxError")
@@ -127,7 +137,8 @@ class TestToolCalled:
 
     def test_fails_when_no_tool_calls(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="run_simulation",
         )
         r = evaluate_completion(c, "done", [])
@@ -135,7 +146,8 @@ class TestToolCalled:
 
     def test_fails_when_different_tool_called(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="run_simulation",
         )
         r = evaluate_completion(c, "done", [_tc("get_design_space")])
@@ -143,7 +155,8 @@ class TestToolCalled:
 
     def test_passes_with_multiple_tools_including_target(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="run_simulation",
         )
         tools = [_tc("get_design_space"), _tc("run_simulation")]
@@ -152,7 +165,8 @@ class TestToolCalled:
 
     def test_any_tool_when_no_tool_name(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name=None,
         )
         r = evaluate_completion(c, "done", [_tc("something")])
@@ -160,7 +174,8 @@ class TestToolCalled:
 
     def test_dict_tool_calls(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="my_tool",
         )
         r = evaluate_completion(c, "done", [{"tool_name": "my_tool"}])
@@ -168,7 +183,8 @@ class TestToolCalled:
 
     def test_fails_with_none_tool_calls(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="x",
         )
         r = evaluate_completion(c, "done", None)
@@ -176,6 +192,7 @@ class TestToolCalled:
 
 
 # ---- verdict_present -------------------------------------------------------
+
 
 class TestVerdictPresent:
     def test_passes_on_acceptable(self):
@@ -206,13 +223,15 @@ class TestVerdictPresent:
     def test_custom_verdict_patterns(self):
         c = CompletionCriteria(type="output_contains", check="verdict_present")
         r = evaluate_completion(
-            c, "Result: APPROVED",
+            c,
+            "Result: APPROVED",
             verdict_patterns=["APPROVED", "REJECTED"],
         )
         assert r.met is True
 
 
 # ---- always ----------------------------------------------------------------
+
 
 class TestAlways:
     def test_always_passes_regardless(self):
@@ -233,6 +252,7 @@ class TestAlways:
 
 # ---- Unknown types ---------------------------------------------------------
 
+
 class TestUnknownTypes:
     def test_unknown_criteria_type(self):
         c = CompletionCriteria(type="magic", check="unicorn")
@@ -248,6 +268,7 @@ class TestUnknownTypes:
 
 
 # ---- Loading ---------------------------------------------------------------
+
 
 class TestLoadCompletionCriteria:
     def test_load_full(self):
@@ -279,6 +300,7 @@ class TestLoadCompletionCriteria:
 
 # ---- CompletionResult fields -----------------------------------------------
 
+
 class TestCompletionResultFields:
     def test_result_has_all_fields(self):
         c = CompletionCriteria(type="output_contains", check="non_empty_output")
@@ -294,7 +316,8 @@ class TestCompletionResultFields:
 
     def test_evidence_on_tool_called(self):
         c = CompletionCriteria(
-            type="tool_attempted", check="tool_called",
+            type="tool_attempted",
+            check="tool_called",
             tool_name="exec",
         )
         r = evaluate_completion(c, "done", [_tc("exec")])

@@ -41,6 +41,7 @@ from src.logging.logger import InstrumentationLogger
 # smolagents extraction helpers (Fix 6 + Fix 7)
 # ---------------------------------------------------------------------------
 
+
 def _extract_tool_calls(agent: Any) -> list[ToolCallRecord]:
     """Extract ToolCallRecords from a smolagents agent after agent.run()."""
     tool_calls: list[ToolCallRecord] = []
@@ -56,12 +57,14 @@ def _extract_tool_calls(agent: Any) -> list[ToolCallRecord]:
         for tc in step_calls:
             name = getattr(tc, "name", "") or getattr(tc, "tool_name", "")
             args = getattr(tc, "arguments", {}) or {}
-            tool_calls.append(ToolCallRecord(
-                tool_name=name,
-                inputs=args if isinstance(args, dict) else {},
-                output=str(obs)[:2000] if obs else "",
-                duration_seconds=0.0,
-            ))
+            tool_calls.append(
+                ToolCallRecord(
+                    tool_name=name,
+                    inputs=args if isinstance(args, dict) else {},
+                    output=str(obs)[:2000] if obs else "",
+                    duration_seconds=0.0,
+                )
+            )
     return tool_calls
 
 
@@ -95,6 +98,7 @@ def _extract_token_count(agent: Any, content: str) -> int | None:
 # Transition record for metrics
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class TransitionRecord:
     """Record of a single state transition for metrics."""
@@ -113,9 +117,7 @@ class TransitionRecord:
 # Error type regex
 # ---------------------------------------------------------------------------
 
-_ERROR_TYPE_RE = re.compile(
-    r"\b([A-Z][a-zA-Z]*(?:Error|Exception|Warning|Fault))\b"
-)
+_ERROR_TYPE_RE = re.compile(r"\b([A-Z][a-zA-Z]*(?:Error|Exception|Warning|Fault))\b")
 
 # Default error type patterns for extraction from agent output/errors.
 _DEFAULT_ERROR_PATTERNS = [
@@ -170,6 +172,7 @@ def _extract_complexity(text: str) -> str | None:
 # Review extraction
 # ---------------------------------------------------------------------------
 
+
 def _extract_review_result(text: str) -> dict:
     """Extract review pass/fail or verdict from agent output.
 
@@ -202,6 +205,7 @@ def _extract_review_result(text: str) -> dict:
 # Execution result extraction
 # ---------------------------------------------------------------------------
 
+
 def _extract_execution_result(text: str) -> dict:
     """Extract execution success from agent output."""
     lower = text.lower()
@@ -218,6 +222,7 @@ def _extract_execution_result(text: str) -> dict:
 # ---------------------------------------------------------------------------
 # Internal representations (mental model)
 # ---------------------------------------------------------------------------
+
 
 def _build_mental_model(
     graph: GraphDefinition,
@@ -239,9 +244,7 @@ def _build_mental_model(
     if state.transitions:
         targets = [t.target for t in state.transitions]
         unique_targets = list(dict.fromkeys(targets))
-        lines.append(
-            f"Possible next states: {', '.join(unique_targets)}."
-        )
+        lines.append(f"Possible next states: {', '.join(unique_targets)}.")
 
     # Upstream info — which states lead here.
     upstream = []
@@ -257,10 +260,7 @@ def _build_mental_model(
     pr = state_dict.get("passes_remaining", "?")
     cu = state_dict.get("context_used", 0)
     cb = state_dict.get("context_budget", "?")
-    lines.append(
-        f"The system has {pr} passes remaining and has used "
-        f"{cu}/{cb} of the context budget."
-    )
+    lines.append(f"The system has {pr} passes remaining and has used {cu}/{cb} of the context budget.")
 
     return "\n".join(lines)
 
@@ -268,6 +268,7 @@ def _build_mental_model(
 # ---------------------------------------------------------------------------
 # GraphRoutedHandler
 # ---------------------------------------------------------------------------
+
 
 class GraphRoutedHandler(ExecutionHandler):
     """State-machine execution handler with conditional branching.
@@ -281,14 +282,18 @@ class GraphRoutedHandler(ExecutionHandler):
         self._predefined_graph_name: str = cfg.get("predefined_graph", "aviary")
         self._custom_graph_data: dict | None = cfg.get("custom_graph")
         self._allow_graph_modification: bool = cfg.get(
-            "allow_graph_modification", False,
+            "allow_graph_modification",
+            False,
         )
         self._max_transitions: int = cfg.get("max_transitions", 50)
-        self._internal_representations: bool = cfg.get(
-            "internal_representations", {},
-        ).get("enabled", False) if isinstance(
-            cfg.get("internal_representations"), dict
-        ) else bool(cfg.get("internal_representations", False))
+        self._internal_representations: bool = (
+            cfg.get(
+                "internal_representations",
+                {},
+            ).get("enabled", False)
+            if isinstance(cfg.get("internal_representations"), dict)
+            else bool(cfg.get("internal_representations", False))
+        )
 
         # Error type extraction config.
         self._error_patterns: list[dict] | None = cfg.get("error_type_patterns")
@@ -353,9 +358,7 @@ class GraphRoutedHandler(ExecutionHandler):
 
         # 2. Initialize resource manager.
         # Auto-detect design states: any state with "DESIGN" in the name.
-        design_states = frozenset(
-            name for name in graph.states if "DESIGN" in name.upper()
-        )
+        design_states = frozenset(name for name in graph.states if "DESIGN" in name.upper())
         self._resource_mgr = ResourceManager(
             budgets=graph.resource_budgets,
             design_states=design_states or None,
@@ -416,7 +419,9 @@ class GraphRoutedHandler(ExecutionHandler):
             if state_def.agent is not None:
                 try:
                     agent = resolve_agent_for_role(
-                        state_def.agent, agents, current_state,
+                        state_def.agent,
+                        agents,
+                        current_state,
                     )
                 except ValueError as e:
                     msg = AgentMessage(
@@ -434,7 +439,9 @@ class GraphRoutedHandler(ExecutionHandler):
 
                 # Build context.
                 context = self._build_agent_context(
-                    task, state_def, current_state,
+                    task,
+                    state_def,
+                    current_state,
                 )
 
                 turn += 1
@@ -462,16 +469,20 @@ class GraphRoutedHandler(ExecutionHandler):
                     error_text = str(e)
                     self._state_dict["last_error"] = error_text
                     self._state_dict["error_type"] = _extract_error_type(
-                        error_text, self._error_patterns, self._default_error_type,
+                        error_text,
+                        self._error_patterns,
+                        self._default_error_type,
                     )
                     self._state_dict["error_message"] = error_text
                     self._state_dict["execution_success"] = False
-                    self._state_dict["attempt_history"].append({
-                        "state": current_state,
-                        "agent": state_def.agent,
-                        "error": error_text,
-                        "output": "",
-                    })
+                    self._state_dict["attempt_history"].append(
+                        {
+                            "state": current_state,
+                            "agent": state_def.agent,
+                            "error": error_text,
+                            "output": "",
+                        }
+                    )
                     self._resource_mgr.consume_pass()
                     self._sync_resource_state()
 
@@ -480,16 +491,18 @@ class GraphRoutedHandler(ExecutionHandler):
                     if next_state is None:
                         break
 
-                    self.transition_history.append(TransitionRecord(
-                        from_state=current_state,
-                        to_state=next_state,
-                        condition_matched="error_fallback",
-                        agent_invoked=state_def.agent,
-                        passes_remaining=self._resource_mgr.state.passes_remaining,
-                        context_used=self._resource_mgr.state.context_used,
-                        cycle_count=self._resource_mgr.state.cycle_count,
-                        timestamp=time.time(),
-                    ))
+                    self.transition_history.append(
+                        TransitionRecord(
+                            from_state=current_state,
+                            to_state=next_state,
+                            condition_matched="error_fallback",
+                            agent_invoked=state_def.agent,
+                            passes_remaining=self._resource_mgr.state.passes_remaining,
+                            context_used=self._resource_mgr.state.context_used,
+                            cycle_count=self._resource_mgr.state.cycle_count,
+                            timestamp=time.time(),
+                        )
+                    )
                     transition_count += 1
                     current_state = next_state
                     continue
@@ -523,20 +536,21 @@ class GraphRoutedHandler(ExecutionHandler):
                             uuid_match = re.search(
                                 r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}"
                                 r"-[0-9a-f]{4}-[0-9a-f]{12}",
-                                tc.output, re.IGNORECASE,
+                                tc.output,
+                                re.IGNORECASE,
                             )
                             if uuid_match:
-                                self._state_dict["session_id"] = (
-                                    uuid_match.group(0)
-                                )
+                                self._state_dict["session_id"] = uuid_match.group(0)
                                 break
 
                 self._state_dict["last_agent_output"] = content
-                self._state_dict["attempt_history"].append({
-                    "state": current_state,
-                    "agent": state_def.agent,
-                    "output": content,
-                })
+                self._state_dict["attempt_history"].append(
+                    {
+                        "state": current_state,
+                        "agent": state_def.agent,
+                        "output": content,
+                    }
+                )
 
                 self._resource_mgr.consume_pass()
 
@@ -566,16 +580,18 @@ class GraphRoutedHandler(ExecutionHandler):
                 # No matching transition — stuck.
                 break
 
-            self.transition_history.append(TransitionRecord(
-                from_state=current_state,
-                to_state=next_state,
-                condition_matched=matched_condition or "none",
-                agent_invoked=state_def.agent,
-                passes_remaining=self._resource_mgr.state.passes_remaining,
-                context_used=self._resource_mgr.state.context_used,
-                cycle_count=self._resource_mgr.state.cycle_count,
-                timestamp=time.time(),
-            ))
+            self.transition_history.append(
+                TransitionRecord(
+                    from_state=current_state,
+                    to_state=next_state,
+                    condition_matched=matched_condition or "none",
+                    agent_invoked=state_def.agent,
+                    passes_remaining=self._resource_mgr.state.passes_remaining,
+                    context_used=self._resource_mgr.state.context_used,
+                    cycle_count=self._resource_mgr.state.cycle_count,
+                    timestamp=time.time(),
+                )
+            )
             transition_count += 1
             current_state = next_state
 
@@ -605,6 +621,7 @@ class GraphRoutedHandler(ExecutionHandler):
         # Load predefined graph from YAML.
         graph_file = f"config/{self._predefined_graph_name}_graph.yaml"
         from src.coordination.graph_definition import load_graph_from_yaml
+
         return load_graph_from_yaml(graph_file)
 
     def _generate_graph_with_llm(self, agents: dict) -> GraphDefinition:
@@ -614,13 +631,12 @@ class GraphRoutedHandler(ExecutionHandler):
         """
         try:
             designer = resolve_agent_for_role(
-                "graph_designer", agents, "LLM_GRAPH_GENERATION",
+                "graph_designer",
+                agents,
+                "LLM_GRAPH_GENERATION",
             )
         except ValueError:
-            raise ValueError(
-                "graph_mode is 'llm_generated' but no 'graph_designer' "
-                "agent is available."
-            )
+            raise ValueError("graph_mode is 'llm_generated' but no 'graph_designer' agent is available.")
 
         roles = list(agents.keys())
         prompt = (
@@ -640,9 +656,7 @@ class GraphRoutedHandler(ExecutionHandler):
             if json_match:
                 graph_data = json.loads(json_match.group(1))
             else:
-                raise ValueError(
-                    f"LLM graph designer did not produce valid JSON: {text[:200]}"
-                )
+                raise ValueError(f"LLM graph designer did not produce valid JSON: {text[:200]}")
 
         graph = load_graph(graph_data)
         validate_graph_strict(graph)
@@ -678,7 +692,9 @@ class GraphRoutedHandler(ExecutionHandler):
         # Internal representations (mental model).
         if self._internal_representations and self._graph is not None:
             mental = _build_mental_model(
-                self._graph, current_state, self._state_dict,
+                self._graph,
+                current_state,
+                self._state_dict,
             )
             if mental:
                 parts.append(mental)
@@ -686,7 +702,9 @@ class GraphRoutedHandler(ExecutionHandler):
         return "\n\n".join(parts)
 
     def _update_state_from_output(
-        self, content: str, current_state: str,
+        self,
+        content: str,
+        current_state: str,
     ) -> None:
         """Update the state dict based on agent output content."""
         # Complexity extraction (for classifier states).
@@ -709,7 +727,8 @@ class GraphRoutedHandler(ExecutionHandler):
         # Session ID extraction (domain-agnostic).
         session_match = re.search(
             r"(?:SESSION_ID|session_id)['\"\s:=]+([0-9a-f-]{36})",
-            content, re.IGNORECASE,
+            content,
+            re.IGNORECASE,
         )
         if session_match:
             self._state_dict["session_id"] = session_match.group(1)
@@ -724,7 +743,9 @@ class GraphRoutedHandler(ExecutionHandler):
         # Extract error type from content when execution failed.
         if exec_result.get("execution_success") is False:
             etype = _extract_error_type(
-                content, self._error_patterns, self._default_error_type,
+                content,
+                self._error_patterns,
+                self._default_error_type,
             )
             self._state_dict["error_type"] = etype
             self._state_dict["error_message"] = content

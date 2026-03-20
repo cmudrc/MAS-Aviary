@@ -15,6 +15,7 @@ from src.coordination.history import AgentMessage, ToolCallRecord
 # Helpers / factories
 # ---------------------------------------------------------------------------
 
+
 def _make_msg(**kwargs) -> AgentMessage:
     defaults = dict(
         agent_name="agent_1",
@@ -29,6 +30,7 @@ def _make_msg(**kwargs) -> AgentMessage:
 # ---------------------------------------------------------------------------
 # Fix 1: AgentMessage.metadata field
 # ---------------------------------------------------------------------------
+
 
 class TestAgentMessageMetadata:
     def test_default_is_empty_dict(self):
@@ -55,6 +57,7 @@ class TestAgentMessageMetadata:
 # ---------------------------------------------------------------------------
 # Fix 2/3/4: coordinator._execute_agent() metadata propagation
 # ---------------------------------------------------------------------------
+
 
 class TestCoordinatorMetadata:
     """Tests for coordinator._execute_agent metadata injection."""
@@ -93,31 +96,33 @@ class TestCoordinatorMetadata:
         return coord, action
 
     def test_action_metadata_passed_to_message(self):
-        coord, action = self._make_coordinator(
-            {"phase": "creation", "orchestrator_turn": 1}
-        )
+        coord, action = self._make_coordinator({"phase": "creation", "orchestrator_turn": 1})
         msgs = coord._execute_agent(action)
         assert len(msgs) == 1
         assert msgs[0].metadata["phase"] == "creation"
         assert msgs[0].metadata["orchestrator_turn"] == 1
 
     def test_sequential_metadata_passed_through(self):
-        coord, action = self._make_coordinator({
-            "stage_name": "design",
-            "stage_index": 0,
-            "total_stages": 3,
-            "pipeline_template": "linear",
-        })
+        coord, action = self._make_coordinator(
+            {
+                "stage_name": "design",
+                "stage_index": 0,
+                "total_stages": 3,
+                "pipeline_template": "linear",
+            }
+        )
         msgs = coord._execute_agent(action)
         assert msgs[0].metadata["stage_name"] == "design"
         assert msgs[0].metadata["pipeline_template"] == "linear"
 
     def test_networked_metadata_passed_through(self):
-        coord, action = self._make_coordinator({
-            "turn": 2,
-            "rotation_index": 1,
-            "total_agents": 5,
-        })
+        coord, action = self._make_coordinator(
+            {
+                "turn": 2,
+                "rotation_index": 1,
+                "total_agents": 5,
+            }
+        )
         msgs = coord._execute_agent(action)
         assert msgs[0].metadata["turn"] == 2
         assert msgs[0].metadata["total_agents"] == 5
@@ -235,17 +240,22 @@ class TestCoordinatorMetadata:
 # Fix 5a: IterativeFeedbackHandler metadata
 # ---------------------------------------------------------------------------
 
+
 class TestIterativeFeedbackMetadata:
     def _make_handler(self, aspiration_mode="tool_success", max_retries=3):
         from src.coordination.iterative_feedback_handler import IterativeFeedbackHandler
-        return IterativeFeedbackHandler({
-            "aspiration_mode": aspiration_mode,
-            "max_retries": max_retries,
-            "retry_toolless_agents": True,
-        })
+
+        return IterativeFeedbackHandler(
+            {
+                "aspiration_mode": aspiration_mode,
+                "max_retries": max_retries,
+                "retry_toolless_agents": True,
+            }
+        )
 
     def _make_assignment(self, agent_name="worker", task="do it"):
         from src.coordination.execution_handler import Assignment
+
         return Assignment(agent_name=agent_name, task=task, assigned_at_turn=0)
 
     def test_first_attempt_has_attempt_number_zero(self):
@@ -306,7 +316,6 @@ class TestIterativeFeedbackMetadata:
     def test_retry_increments_attempt_number(self):
         """Agent with tool errors retries; later attempts have higher attempt_number."""
 
-
         def run_with_tool_error(_task):
             return "output"
 
@@ -334,9 +343,7 @@ class TestIterativeFeedbackMetadata:
 
     def test_missing_agent_metadata(self):
         handler = self._make_handler()
-        msgs = handler.execute(
-            [self._make_assignment(agent_name="missing")], {}, None
-        )
+        msgs = handler.execute([self._make_assignment(agent_name="missing")], {}, None)
         assert msgs[0].metadata["attempt_number"] == 0
         assert msgs[0].metadata["aspiration_met"] is False
         assert msgs[0].metadata["total_attempts"] == 0
@@ -362,9 +369,11 @@ class TestIterativeFeedbackMetadata:
 # Fix 5b: GraphRoutedHandler metadata
 # ---------------------------------------------------------------------------
 
+
 class TestGraphRoutedMetadata:
     def _make_handler(self, graph_data: dict) -> Any:
         from src.coordination.graph_routed_handler import GraphRoutedHandler
+
         return GraphRoutedHandler({"_graph_data": graph_data})
 
     def _simple_terminal_graph(self) -> dict:
@@ -473,14 +482,17 @@ class TestGraphRoutedMetadata:
 # Fix 5c: StagedPipelineHandler metadata
 # ---------------------------------------------------------------------------
 
+
 class TestStagedPipelineMetadata:
     def _make_handler(self, pipeline_config: dict | None = None):
         from src.coordination.staged_pipeline_handler import StagedPipelineHandler
+
         cfg = pipeline_config or {}
         return StagedPipelineHandler(cfg)
 
     def _make_assignment(self, name="worker", task="do stage"):
         from src.coordination.execution_handler import Assignment
+
         return Assignment(agent_name=name, task=task, assigned_at_turn=0)
 
     def _simple_pipeline(self):
@@ -560,15 +572,18 @@ class TestStagedPipelineMetadata:
 # Fix 8: _msg_to_dict serialization
 # ---------------------------------------------------------------------------
 
+
 class TestMsgToDict:
     def test_metadata_serialized(self):
         from src.runners.batch_runner import _msg_to_dict
+
         msg = _make_msg(metadata={"stage_name": "analysis", "stage_index": 0})
         d = _msg_to_dict(msg)
         assert d["metadata"] == {"stage_name": "analysis", "stage_index": 0}
 
     def test_is_retry_serialized(self):
         from src.runners.batch_runner import _msg_to_dict
+
         msg = _make_msg(is_retry=True, retry_of_turn=1)
         d = _msg_to_dict(msg)
         assert d["is_retry"] is True
@@ -576,6 +591,7 @@ class TestMsgToDict:
 
     def test_is_retry_false_by_default(self):
         from src.runners.batch_runner import _msg_to_dict
+
         msg = _make_msg()
         d = _msg_to_dict(msg)
         assert d["is_retry"] is False
@@ -583,12 +599,14 @@ class TestMsgToDict:
 
     def test_empty_metadata_serialized(self):
         from src.runners.batch_runner import _msg_to_dict
+
         msg = _make_msg()
         d = _msg_to_dict(msg)
         assert d["metadata"] == {}
 
     def test_tool_calls_still_present(self):
         from src.runners.batch_runner import _msg_to_dict
+
         tc = ToolCallRecord(
             tool_name="my_tool",
             inputs={"x": 1},
@@ -602,6 +620,7 @@ class TestMsgToDict:
 
     def test_token_count_serialized(self):
         from src.runners.batch_runner import _msg_to_dict
+
         msg = _make_msg(token_count=512)
         d = _msg_to_dict(msg)
         assert d["token_count"] == 512
@@ -611,9 +630,11 @@ class TestMsgToDict:
 # Coordinator helper functions (Fix 6 + Fix 7)
 # ---------------------------------------------------------------------------
 
+
 class TestCoordinatorHelpers:
     def test_extract_tool_calls_empty_on_no_logs(self):
         from src.coordination.coordinator import _extract_tool_calls
+
         agent = MagicMock()
         agent.logs = []
         agent.memory = None
@@ -622,6 +643,7 @@ class TestCoordinatorHelpers:
 
     def test_extract_token_count_from_content_estimate(self):
         from src.coordination.coordinator import _extract_token_count
+
         agent = MagicMock()
         agent.token_count = None
         agent.total_tokens = None
@@ -632,6 +654,7 @@ class TestCoordinatorHelpers:
 
     def test_extract_token_count_from_agent_attr(self):
         from src.coordination.coordinator import _extract_token_count
+
         agent = MagicMock()
         agent.token_count = 256
         tc, estimated = _extract_token_count(agent, "some content")
@@ -640,6 +663,7 @@ class TestCoordinatorHelpers:
 
     def test_extract_token_count_none_for_empty_content(self):
         from src.coordination.coordinator import _extract_token_count
+
         agent = MagicMock()
         agent.token_count = None
         agent.total_tokens = None
@@ -651,6 +675,7 @@ class TestCoordinatorHelpers:
 # ---------------------------------------------------------------------------
 # action_metadata pass-through tests (Change 1)
 # ---------------------------------------------------------------------------
+
 
 class TestActionMetadataPassthrough:
     """Tests that action_metadata flows through all handlers."""
@@ -665,10 +690,12 @@ class TestActionMetadataPassthrough:
 
     def _assignment(self, name="worker", task="task"):
         from src.coordination.execution_handler import Assignment
+
         return Assignment(agent_name=name, task=task, assigned_at_turn=0)
 
     def test_placeholder_merges_action_metadata(self):
         from src.coordination.execution_handler import PlaceholderExecutor
+
         handler = PlaceholderExecutor()
         agents = {"worker": self._mock_agent()}
         meta = {"phase": "execution", "rotation_index": 2}
@@ -678,6 +705,7 @@ class TestActionMetadataPassthrough:
 
     def test_if_handler_merges_action_metadata(self):
         from src.coordination.iterative_feedback_handler import IterativeFeedbackHandler
+
         handler = IterativeFeedbackHandler({"max_retries": 1, "aspiration_mode": "any_output"})
         agents = {"worker": self._mock_agent()}
         meta = {"turn": 5, "total_agents": 3}
@@ -691,6 +719,7 @@ class TestActionMetadataPassthrough:
     def test_if_handler_keys_override_base(self):
         """Handler-specific keys take precedence over action_metadata."""
         from src.coordination.iterative_feedback_handler import IterativeFeedbackHandler
+
         handler = IterativeFeedbackHandler({"max_retries": 1, "aspiration_mode": "any_output"})
         agents = {"worker": self._mock_agent()}
         # Try to override aspiration_mode from action_metadata — handler should win.
@@ -700,6 +729,7 @@ class TestActionMetadataPassthrough:
 
     def test_sp_handler_merges_action_metadata(self):
         from src.coordination.staged_pipeline_handler import StagedPipelineHandler
+
         handler = StagedPipelineHandler({})
         agents = {"worker": self._mock_agent()}
         meta = {"phase": "execution", "assignment_index": 1}
@@ -711,6 +741,7 @@ class TestActionMetadataPassthrough:
 
     def test_gr_handler_merges_action_metadata(self):
         from src.coordination.graph_routed_handler import GraphRoutedHandler
+
         graph = {
             "initial_state": "WORK",
             "terminal_states": ["DONE"],
@@ -736,6 +767,7 @@ class TestActionMetadataPassthrough:
     def test_backward_compat_no_action_metadata(self):
         """Calling without action_metadata still works (no crash, empty base)."""
         from src.coordination.execution_handler import PlaceholderExecutor
+
         handler = PlaceholderExecutor()
         agents = {"worker": self._mock_agent()}
         msgs = handler.execute([self._assignment()], agents, None)
@@ -747,9 +779,7 @@ class TestActionMetadataPassthrough:
         from src.coordination.strategy import CoordinationAction
 
         mock_handler = MagicMock()
-        mock_handler.execute.return_value = [
-            _make_msg(turn_number=1, metadata={"from_handler": True})
-        ]
+        mock_handler.execute.return_value = [_make_msg(turn_number=1, metadata={"from_handler": True})]
 
         coord = Coordinator.__new__(Coordinator)
         coord.agents = {"worker": self._mock_agent()}
@@ -826,23 +856,31 @@ class TestActionMetadataPassthrough:
 # org_theory_metrics: blackboard computation + aspiration_mode fix (Change 2)
 # ---------------------------------------------------------------------------
 
+
 class TestOrgTheoryBlackboardMetrics:
     """Tests for Tier 1 and Tier 2 blackboard metric computation."""
 
     def test_tier1_metadata_fields(self):
         """When messages have metadata.blackboard_writes etc., Tier 1 is used."""
         from src.logging.org_theory_metrics import _networked_os_metrics
+
         msgs = [
-            _make_msg(agent_name="agent_1", metadata={
-                "blackboard_writes": 3,
-                "blackboard_size": 5,
-                "claim_conflicts": 1,
-            }),
-            _make_msg(agent_name="agent_2", metadata={
-                "blackboard_writes": 2,
-                "blackboard_size": 7,
-                "claim_conflicts": 0,
-            }),
+            _make_msg(
+                agent_name="agent_1",
+                metadata={
+                    "blackboard_writes": 3,
+                    "blackboard_size": 5,
+                    "claim_conflicts": 1,
+                },
+            ),
+            _make_msg(
+                agent_name="agent_2",
+                metadata={
+                    "blackboard_writes": 2,
+                    "blackboard_size": 7,
+                    "claim_conflicts": 0,
+                },
+            ),
         ]
         warnings = []
         result = _networked_os_metrics(msgs, {}, None, warnings)
@@ -854,6 +892,7 @@ class TestOrgTheoryBlackboardMetrics:
     def test_tier2_tool_calls_fallback(self):
         """When metadata is absent, blackboard metrics are inferred from tool_calls."""
         from src.logging.org_theory_metrics import _networked_os_metrics
+
         tc_write = ToolCallRecord(tool_name="write_blackboard", inputs={}, output="", duration_seconds=0.0)
         tc_read = ToolCallRecord(tool_name="read_blackboard", inputs={}, output="", duration_seconds=0.0)
         tc_done = ToolCallRecord(tool_name="mark_task_done", inputs={}, output="", duration_seconds=0.0)
@@ -876,6 +915,7 @@ class TestOrgTheoryBlackboardMetrics:
 
     def test_empty_messages_no_crash(self):
         from src.logging.org_theory_metrics import _networked_os_metrics
+
         warnings = []
         result = _networked_os_metrics([], {}, None, warnings)
         assert result["blackboard_utilization"] is None
@@ -884,6 +924,7 @@ class TestOrgTheoryBlackboardMetrics:
 class TestAspirationModeFromMetadata:
     def test_reads_from_message_metadata(self):
         from src.logging.org_theory_metrics import _iterative_feedback_metrics
+
         msgs = [
             _make_msg(agent_name="worker", metadata={"aspiration_mode": "any_output"}),
         ]
@@ -893,6 +934,7 @@ class TestAspirationModeFromMetadata:
 
     def test_falls_back_to_config(self):
         from src.logging.org_theory_metrics import _iterative_feedback_metrics
+
         msgs = [_make_msg(agent_name="worker")]
         warnings = []
         result = _iterative_feedback_metrics(msgs, {"aspiration_mode": "tool_success"}, warnings)
@@ -900,6 +942,7 @@ class TestAspirationModeFromMetadata:
 
     def test_metadata_takes_precedence_over_config(self):
         from src.logging.org_theory_metrics import _iterative_feedback_metrics
+
         msgs = [
             _make_msg(agent_name="worker", metadata={"aspiration_mode": "any_output"}),
         ]

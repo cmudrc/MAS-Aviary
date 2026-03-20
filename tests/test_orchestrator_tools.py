@@ -20,15 +20,16 @@ from src.tools.orchestrator_tools import (
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class DummyModel(Model):
     """Minimal model stub that satisfies the ToolCallingAgent constructor."""
 
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.types import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -60,6 +61,7 @@ def context(dummy_model, available_tools):
 
 
 # ---- ListAvailableTools tests ------------------------------------------------
+
 
 class TestListAvailableTools:
     def test_returns_all_tools(self, context):
@@ -96,14 +98,17 @@ class TestListAvailableTools:
 
 # ---- CreateAgent tests -------------------------------------------------------
 
+
 class TestCreateAgent:
     def test_creates_agent_successfully(self, context):
         tool = CreateAgent(context)
-        result = json.loads(tool(
-            name="coder",
-            persona="You write Python code",
-            tools=["calculator_tool"],
-        ))
+        result = json.loads(
+            tool(
+                name="coder",
+                persona="You write Python code",
+                tools=["calculator_tool"],
+            )
+        )
         assert result["success"] is True
         assert result["agent_name"] == "coder"
         assert result["tools_assigned"] == ["calculator_tool"]
@@ -137,11 +142,13 @@ class TestCreateAgent:
 
     def test_rejects_unknown_tool(self, context):
         tool = CreateAgent(context)
-        result = json.loads(tool(
-            name="coder",
-            persona="Writes code",
-            tools=["nonexistent_tool"],
-        ))
+        result = json.loads(
+            tool(
+                name="coder",
+                persona="Writes code",
+                tools=["nonexistent_tool"],
+            )
+        )
         assert result["success"] is False
         assert "not found" in result["error"]
 
@@ -157,21 +164,25 @@ class TestCreateAgent:
 
     def test_tools_as_json_string(self, context):
         tool = CreateAgent(context)
-        result = json.loads(tool(
-            name="coder",
-            persona="Writes code",
-            tools='["echo_tool", "calculator_tool"]',
-        ))
+        result = json.loads(
+            tool(
+                name="coder",
+                persona="Writes code",
+                tools='["echo_tool", "calculator_tool"]',
+            )
+        )
         assert result["success"] is True
         assert result["tools_assigned"] == ["echo_tool", "calculator_tool"]
 
     def test_tools_as_csv_string(self, context):
         tool = CreateAgent(context)
-        result = json.loads(tool(
-            name="coder",
-            persona="Writes code",
-            tools="echo_tool, calculator_tool",
-        ))
+        result = json.loads(
+            tool(
+                name="coder",
+                persona="Writes code",
+                tools="echo_tool, calculator_tool",
+            )
+        )
         assert result["success"] is True
         assert result["tools_assigned"] == ["echo_tool", "calculator_tool"]
 
@@ -183,6 +194,7 @@ class TestCreateAgent:
 
 
 # ---- AssignTask tests --------------------------------------------------------
+
 
 class TestAssignTask:
     def test_assigns_task_successfully(self, context):
@@ -233,6 +245,7 @@ class TestAssignTask:
 
 
 # ---- _parse_tool_names tests ------------------------------------------------
+
 
 class TestParseToolNames:
     def test_list_input(self):

@@ -1,29 +1,39 @@
 """Unit tests for the resource manager — budget tracking and decrement."""
 
-
 from src.coordination.graph_definition import ResourceBudget
 from src.coordination.resource_manager import ResourceManager
 
 # ---- Helpers ---------------------------------------------------------------
 
+
 def _budgets() -> dict[str, ResourceBudget]:
     return {
         "simple": ResourceBudget(
-            max_passes=6, context_budget=2000, reasoning_enabled=False,
-            max_code_review_cycles=1, escalation_threshold=2,
+            max_passes=6,
+            context_budget=2000,
+            reasoning_enabled=False,
+            max_code_review_cycles=1,
+            escalation_threshold=2,
         ),
         "moderate": ResourceBudget(
-            max_passes=12, context_budget=3000, reasoning_enabled=True,
-            max_code_review_cycles=2, escalation_threshold=3,
+            max_passes=12,
+            context_budget=3000,
+            reasoning_enabled=True,
+            max_code_review_cycles=2,
+            escalation_threshold=3,
         ),
         "complex": ResourceBudget(
-            max_passes=20, context_budget=4000, reasoning_enabled=True,
-            max_code_review_cycles=3, escalation_threshold=4,
+            max_passes=20,
+            context_budget=4000,
+            reasoning_enabled=True,
+            max_code_review_cycles=3,
+            escalation_threshold=4,
         ),
     }
 
 
 # ---- Initialization -------------------------------------------------------
+
 
 class TestInit:
     def test_default_state(self):
@@ -65,6 +75,7 @@ class TestInit:
 
 # ---- Pass consumption ------------------------------------------------------
 
+
 class TestPassConsumption:
     def test_consume_pass(self):
         rm = ResourceManager(budgets=_budgets())
@@ -97,6 +108,7 @@ class TestPassConsumption:
 
 # ---- Context tracking ------------------------------------------------------
 
+
 class TestContextTracking:
     def test_add_context(self):
         rm = ResourceManager()
@@ -112,6 +124,7 @@ class TestContextTracking:
 
 # ---- Code review cycles ---------------------------------------------------
 
+
 class TestCodeReviewCycles:
     def test_increment_code_review(self):
         rm = ResourceManager()
@@ -126,6 +139,7 @@ class TestCodeReviewCycles:
 
 
 # ---- Cycle counting and escalation ----------------------------------------
+
 
 class TestCycleTracking:
     def test_record_design_state_first_visit(self):
@@ -182,6 +196,7 @@ class TestCycleTracking:
 
 
 # ---- Escalation budget adjustment -----------------------------------------
+
 
 class TestEscalationBudgets:
     def test_upgrade_simple_to_moderate(self):
@@ -241,6 +256,7 @@ class TestEscalationBudgets:
 
 
 # ---- State dict export -----------------------------------------------------
+
 
 class TestStateDictExport:
     def test_to_state_dict_keys(self):

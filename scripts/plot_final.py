@@ -24,34 +24,40 @@ import matplotlib.pyplot as plt
 SAMPLE_DIR = "logs/1Sample"
 
 COMBOS = {
-    "1_sequential_IF":    "aviary_sequential_iterative_feedback",
-    "2_sequential_SP":    "aviary_sequential_staged_pipeline",
-    "3_orchestrated_IF":  "aviary_orchestrated_iterative_feedback",
-    "4_orchestrated_SP":  "aviary_orchestrated_staged_pipeline",
-    "5_orchestrated_GR":  "aviary_orchestrated_graph_routed",
-    "6_networked_IF":     "aviary_networked_iterative_feedback",
-    "7_networked_SP":     "aviary_networked_staged_pipeline",
-    "8_networked_GR":     "aviary_networked_graph_routed",
-    "9_sequential_GR":    "aviary_sequential_graph_routed",
+    "1_sequential_IF": "aviary_sequential_iterative_feedback",
+    "2_sequential_SP": "aviary_sequential_staged_pipeline",
+    "3_orchestrated_IF": "aviary_orchestrated_iterative_feedback",
+    "4_orchestrated_SP": "aviary_orchestrated_staged_pipeline",
+    "5_orchestrated_GR": "aviary_orchestrated_graph_routed",
+    "6_networked_IF": "aviary_networked_iterative_feedback",
+    "7_networked_SP": "aviary_networked_staged_pipeline",
+    "8_networked_GR": "aviary_networked_graph_routed",
+    "9_sequential_GR": "aviary_sequential_graph_routed",
 }
 
 COMBO_LABELS = {
-    "1_sequential_IF":   "Sequential + Iterative Feedback",
-    "2_sequential_SP":   "Sequential + Staged Pipeline",
+    "1_sequential_IF": "Sequential + Iterative Feedback",
+    "2_sequential_SP": "Sequential + Staged Pipeline",
     "3_orchestrated_IF": "Orchestrated + Iterative Feedback",
     "4_orchestrated_SP": "Orchestrated + Staged Pipeline",
     "5_orchestrated_GR": "Orchestrated + Graph-Routed",
-    "6_networked_IF":    "Networked + Iterative Feedback",
-    "7_networked_SP":    "Networked + Staged Pipeline",
-    "8_networked_GR":    "Networked + Graph-Routed",
-    "9_sequential_GR":   "Sequential + Graph-Routed",
+    "6_networked_IF": "Networked + Iterative Feedback",
+    "7_networked_SP": "Networked + Staged Pipeline",
+    "8_networked_GR": "Networked + Graph-Routed",
+    "9_sequential_GR": "Sequential + Graph-Routed",
 }
 
 # Tools grouped by stage-gate role
 TOOL_GROUPS = [
-    ("Orchestrator", [
-        "list_available_tools", "list_graph_roles", "create_agent", "assign_task",
-    ]),
+    (
+        "Orchestrator",
+        [
+            "list_available_tools",
+            "list_graph_roles",
+            "create_agent",
+            "assign_task",
+        ],
+    ),
     ("Mission Architect", ["create_session", "configure_mission"]),
     ("Aero / Propulsion", ["get_design_space", "set_aircraft_parameters", "validate_parameters"]),
     ("Simulation Executor", ["run_simulation", "get_results"]),
@@ -64,61 +70,76 @@ for _, tools in TOOL_GROUPS:
     ALL_TOOLS_ORDERED.extend(tools)
 
 AGENT_COLORS = {
-    "orchestrator":          "#5B7FA5",
-    "mission_architect":     "#6AAB9C",
-    "aerodynamics_analyst":  "#E8A87C",
-    "weights_analyst":       "#D4A5A5",
-    "propulsion_analyst":    "#9B8EC0",
-    "simulation_executor":   "#7DB8D6",
-    "mdo_integrator":        "#C9B458",
-    "agent_1":               "#E07A5F",
-    "agent_2":               "#3D85C6",
-    "agent_3":               "#81B29A",
-    "pre-hook":              "#4A4A4A",
-    "implicit":              "#B0B0B0",
+    "orchestrator": "#5B7FA5",
+    "mission_architect": "#6AAB9C",
+    "aerodynamics_analyst": "#E8A87C",
+    "weights_analyst": "#D4A5A5",
+    "propulsion_analyst": "#9B8EC0",
+    "simulation_executor": "#7DB8D6",
+    "mdo_integrator": "#C9B458",
+    "agent_1": "#E07A5F",
+    "agent_2": "#3D85C6",
+    "agent_3": "#81B29A",
+    "pre-hook": "#4A4A4A",
+    "implicit": "#B0B0B0",
 }
 DEFAULT_COLOR = "#A0A0A0"
 
 GROUP_COLORS = {
-    "Orchestrator":         "#E8EDF2",
-    "Mission Architect":    "#E8F4F0",
-    "Aero / Propulsion":    "#FDF0E6",
-    "Simulation Executor":  "#E6F2F8",
-    "MDO Integrator":       "#F5F0DC",
-    "Blackboard":           "#F0ECF5",
+    "Orchestrator": "#E8EDF2",
+    "Mission Architect": "#E8F4F0",
+    "Aero / Propulsion": "#FDF0E6",
+    "Simulation Executor": "#E6F2F8",
+    "MDO Integrator": "#F5F0DC",
+    "Blackboard": "#F0ECF5",
 }
 
 ROLE_ORDER = [
-    "orchestrator", "mission_architect", "aerodynamics_analyst",
-    "weights_analyst", "propulsion_analyst", "simulation_executor", "mdo_integrator",
+    "orchestrator",
+    "mission_architect",
+    "aerodynamics_analyst",
+    "weights_analyst",
+    "propulsion_analyst",
+    "simulation_executor",
+    "mdo_integrator",
 ]
 ROLE_DISPLAY = {
-    "orchestrator":         "Orchestrator",
-    "mission_architect":    "Mission Architect",
+    "orchestrator": "Orchestrator",
+    "mission_architect": "Mission Architect",
     "aerodynamics_analyst": "Aerodynamics Analyst",
-    "weights_analyst":      "Weights Analyst",
-    "propulsion_analyst":   "Propulsion Analyst",
-    "simulation_executor":  "Simulation Executor",
-    "mdo_integrator":       "MDO Integrator",
+    "weights_analyst": "Weights Analyst",
+    "propulsion_analyst": "Propulsion Analyst",
+    "simulation_executor": "Simulation Executor",
+    "mdo_integrator": "MDO Integrator",
 }
 
 ROLE_COLORS = {
-    "orchestrator":          "#5B7FA5",
-    "mission_architect":     "#6AAB9C",
-    "aerodynamics_analyst":  "#E8A87C",
-    "weights_analyst":       "#D4A5A5",
-    "propulsion_analyst":    "#9B8EC0",
-    "simulation_executor":   "#7DB8D6",
-    "mdo_integrator":        "#C9B458",
-    "idle (echo)":           "#D0D0D0",
+    "orchestrator": "#5B7FA5",
+    "mission_architect": "#6AAB9C",
+    "aerodynamics_analyst": "#E8A87C",
+    "weights_analyst": "#D4A5A5",
+    "propulsion_analyst": "#9B8EC0",
+    "simulation_executor": "#7DB8D6",
+    "mdo_integrator": "#C9B458",
+    "idle (echo)": "#D0D0D0",
 }
 
 TOOL_ICONS = {
-    "create_session": "s", "configure_mission": "D", "get_design_space": "^",
-    "set_aircraft_parameters": "o", "validate_parameters": "P", "run_simulation": "*",
-    "get_results": "X", "check_constraints": "h", "write_blackboard": "v",
-    "read_blackboard": "<", "mark_task_done": ">", "list_available_tools": "p",
-    "create_agent": "+", "assign_task": "1", "list_graph_roles": "2",
+    "create_session": "s",
+    "configure_mission": "D",
+    "get_design_space": "^",
+    "set_aircraft_parameters": "o",
+    "validate_parameters": "P",
+    "run_simulation": "*",
+    "get_results": "X",
+    "check_constraints": "h",
+    "write_blackboard": "v",
+    "read_blackboard": "<",
+    "mark_task_done": ">",
+    "list_available_tools": "p",
+    "create_agent": "+",
+    "assign_task": "1",
+    "list_graph_roles": "2",
     "final_answer": "d",
 }
 
@@ -126,6 +147,7 @@ TOOL_ICONS = {
 # ============================================================
 # Shared helpers
 # ============================================================
+
 
 def load_result(key):
     """Load best.json for a combination."""
@@ -159,8 +181,7 @@ def resolve_role(msg):
     if not name.startswith("agent_"):
         return name
 
-    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", [])
-                  if tc["tool_name"] != "final_answer"}
+    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"}
     if not tools_used:
         return "idle (echo)"
 
@@ -178,8 +199,9 @@ def resolve_role(msg):
             if tc["tool_name"] == "set_aircraft_parameters":
                 params = tc.get("inputs", {}).get("parameters", {})
                 pk = " ".join(params.keys()) if params else ""
-                if ("Engine" in pk or "SCALE_FACTOR" in pk) \
-                        and not any(w in pk for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")):
+                if ("Engine" in pk or "SCALE_FACTOR" in pk) and not any(
+                    w in pk for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")
+                ):
                     return "propulsion_analyst"
                 return "aerodynamics_analyst"
     if "validate_parameters" in tools_used or "get_design_space" in tools_used:
@@ -200,10 +222,11 @@ def extract_calls_from_trace(trace):
 
     # Detect which keys to use
     agent_n_keys = sorted(k for k in agents_data if k.startswith("agent_"))
-    role_keys = sorted(k for k in agents_data
-                       if isinstance(agents_data[k], dict)
-                       and not k.startswith("agent_")
-                       and "steps" in agents_data[k])
+    role_keys = sorted(
+        k
+        for k in agents_data
+        if isinstance(agents_data[k], dict) and not k.startswith("agent_") and "steps" in agents_data[k]
+    )
 
     # Count real tool calls per key set to pick the most complete one
     def _count_real_tools(keys):
@@ -246,10 +269,14 @@ def extract_calls_from_trace(trace):
                 tool_name = tc.get("name", "unknown")
                 if tool_name == "final_answer":
                     continue
-                all_steps.append({
-                    "agent": agent_name, "tool": tool_name,
-                    "start_abs": start, "dur": dur,
-                })
+                all_steps.append(
+                    {
+                        "agent": agent_name,
+                        "tool": tool_name,
+                        "start_abs": start,
+                        "dur": dur,
+                    }
+                )
 
     if not all_steps:
         return None
@@ -267,11 +294,16 @@ def extract_calls_from_trace(trace):
             prev_agent = s["agent"]
         if s["agent"] not in agents_seen:
             agents_seen.append(s["agent"])
-        calls.append({
-            "tool": s["tool"], "agent": s["agent"], "turn": turn_counter,
-            "start": s["start_abs"] - t0, "end": s["start_abs"] - t0 + s["dur"],
-            "dur": s["dur"],
-        })
+        calls.append(
+            {
+                "tool": s["tool"],
+                "agent": s["agent"],
+                "turn": turn_counter,
+                "start": s["start_abs"] - t0,
+                "end": s["start_abs"] - t0 + s["dur"],
+                "dur": s["dur"],
+            }
+        )
 
     total_duration = calls[-1]["end"] if calls else 0
     return calls, agents_seen, total_duration, turn_counter
@@ -301,10 +333,16 @@ def extract_calls_from_messages(messages):
                 tc_end = turn_end
             if tc_dur > 0 and tc_dur < (tc_end - tc_start):
                 tc_start = tc_end - tc_dur
-            calls.append({
-                "tool": tc["tool_name"], "agent": agent, "turn": msg["turn_number"],
-                "start": tc_start, "end": tc_end, "dur": tc_end - tc_start,
-            })
+            calls.append(
+                {
+                    "tool": tc["tool_name"],
+                    "agent": agent,
+                    "turn": msg["turn_number"],
+                    "start": tc_start,
+                    "end": tc_end,
+                    "dur": tc_end - tc_start,
+                }
+            )
     return calls, agents_seen
 
 
@@ -315,8 +353,7 @@ def get_subtitle(result):
     eval_result = ec.get("result", "unknown")
     duration = result.get("duration_seconds", 0)
     n_turns = result.get("total_turns", len(result.get("messages", [])))
-    return (f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
-            f"eval={eval_result}  |  {n_turns} turns  |  {duration:.0f}s")
+    return f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  eval={eval_result}  |  {n_turns} turns  |  {duration:.0f}s"
 
 
 # ============================================================
@@ -340,12 +377,9 @@ for _grp_name, _grp_tools in TOOL_GROUPS:
 # Networked: Mission Architect + Aero/Propulsion + Sim Executor + MDO Integrator + Blackboard
 
 TIER_GROUPS = {
-    "sequential": ["Mission Architect", "Aero / Propulsion",
-                    "Simulation Executor", "MDO Integrator"],
-    "orchestrated": ["Orchestrator", "Mission Architect", "Aero / Propulsion",
-                     "Simulation Executor", "MDO Integrator"],
-    "networked": ["Mission Architect", "Aero / Propulsion",
-                  "Simulation Executor", "MDO Integrator", "Blackboard"],
+    "sequential": ["Mission Architect", "Aero / Propulsion", "Simulation Executor", "MDO Integrator"],
+    "orchestrated": ["Orchestrator", "Mission Architect", "Aero / Propulsion", "Simulation Executor", "MDO Integrator"],
+    "networked": ["Mission Architect", "Aero / Propulsion", "Simulation Executor", "MDO Integrator", "Blackboard"],
 }
 
 GROUP_TOOL_MAP = {name: tools for name, tools in TOOL_GROUPS}
@@ -415,12 +449,24 @@ def _inject_prehook_calls(calls, agents_seen, global_x_max):
     """Add synthetic pre-hook bars for create_session + configure_mission at t<0."""
     prehook_w = global_x_max * 0.012
     synthetic = [
-        {"tool": "create_session",    "agent": "pre-hook", "turn": 0,
-         "start": -prehook_w * 2.4, "end": -prehook_w * 1.4, "dur": prehook_w,
-         "synthetic": "pre-hook"},
-        {"tool": "configure_mission", "agent": "pre-hook", "turn": 0,
-         "start": -prehook_w * 1.2, "end": -prehook_w * 0.2, "dur": prehook_w,
-         "synthetic": "pre-hook"},
+        {
+            "tool": "create_session",
+            "agent": "pre-hook",
+            "turn": 0,
+            "start": -prehook_w * 2.4,
+            "end": -prehook_w * 1.4,
+            "dur": prehook_w,
+            "synthetic": "pre-hook",
+        },
+        {
+            "tool": "configure_mission",
+            "agent": "pre-hook",
+            "turn": 0,
+            "start": -prehook_w * 1.2,
+            "end": -prehook_w * 0.2,
+            "dur": prehook_w,
+            "synthetic": "pre-hook",
+        },
     ]
     if "pre-hook" not in agents_seen:
         agents_seen.insert(0, "pre-hook")
@@ -453,20 +499,24 @@ def _inject_implicit_reads(calls, messages, agents_seen, global_x_max):
         agent = turn_agent.get(msg["turn_number"], msg["agent_name"])
         if agent not in agents_seen:
             agents_seen.append(agent)
-        synthetic.append({
-            "tool": "read_blackboard", "agent": agent,
-            "turn": msg["turn_number"],
-            "start": turn_start, "end": turn_start + implicit_w,
-            "dur": implicit_w, "synthetic": "implicit",
-        })
+        synthetic.append(
+            {
+                "tool": "read_blackboard",
+                "agent": agent,
+                "turn": msg["turn_number"],
+                "start": turn_start,
+                "end": turn_start + implicit_w,
+                "dur": implicit_w,
+                "synthetic": "implicit",
+            }
+        )
     return calls + synthetic
 
 
 def _prepare_calls(key, result, trace, messages, global_x_max):
     """Extract tool calls and inject synthetic actions. Returns (calls, agents_seen)."""
     # Count real tool calls in messages for comparison
-    msg_tool_count = sum(1 for m in messages for tc in m.get("tool_calls", [])
-                         if tc["tool_name"] != "final_answer")
+    msg_tool_count = sum(1 for m in messages for tc in m.get("tool_calls", []) if tc["tool_name"] != "final_answer")
 
     trace_result = None
     if trace:
@@ -494,8 +544,7 @@ def _prepare_calls(key, result, trace, messages, global_x_max):
     return calls, agents_seen
 
 
-def _render_tool_activity(key, result, calls, agents_seen, tool_list, group_spans,
-                          global_x_max, output_dir, suffix=""):
+def _render_tool_activity(key, result, calls, agents_seen, tool_list, group_spans, global_x_max, output_dir, suffix=""):
     """Core rendering: plot tool activity with given y-axis tool list."""
     label = COMBO_LABELS[key]
     tools_used = {c["tool"] for c in calls}
@@ -514,9 +563,18 @@ def _render_tool_activity(key, result, calls, agents_seen, tool_list, group_span
     # Group labels on the right
     for group_name, y_start, y_end in group_spans:
         y_mid = (y_start + y_end) / 2 - 0.5
-        ax.text(global_x_max * 1.07, y_mid, group_name,
-                ha="left", va="center", fontsize=8,
-                fontstyle="italic", color="#555", fontweight="medium", zorder=10)
+        ax.text(
+            global_x_max * 1.07,
+            y_mid,
+            group_name,
+            ha="left",
+            va="center",
+            fontsize=8,
+            fontstyle="italic",
+            color="#555",
+            fontweight="medium",
+            zorder=10,
+        )
 
     # Plot bars
     for c in calls:
@@ -528,20 +586,45 @@ def _render_tool_activity(key, result, calls, agents_seen, tool_list, group_span
 
         if syn == "pre-hook":
             bar_w = max(c["dur"], global_x_max * 0.008)
-            ax.barh(y, bar_w, left=c["start"], height=bar_height,
-                    color=AGENT_COLORS["pre-hook"], alpha=0.6,
-                    edgecolor="#222", linewidth=0.6, hatch="///", zorder=4)
+            ax.barh(
+                y,
+                bar_w,
+                left=c["start"],
+                height=bar_height,
+                color=AGENT_COLORS["pre-hook"],
+                alpha=0.6,
+                edgecolor="#222",
+                linewidth=0.6,
+                hatch="///",
+                zorder=4,
+            )
         else:
             # Real and implicit reads use the SAME style: agent color, solid bar
             bar_w = max(c["dur"], global_x_max * 0.004)
-            ax.barh(y, bar_w, left=c["start"], height=bar_height,
-                    color=color, alpha=0.85, edgecolor="#333", linewidth=0.4, zorder=3)
+            ax.barh(
+                y,
+                bar_w,
+                left=c["start"],
+                height=bar_height,
+                color=color,
+                alpha=0.85,
+                edgecolor="#333",
+                linewidth=0.4,
+                zorder=3,
+            )
             if bar_w > global_x_max * 0.025:
-                ax.text(c["start"] + bar_w * 0.5, y, f"T{c['turn']}",
-                        ha="center", va="center", fontsize=7, color="white",
-                        fontweight="bold",
-                        path_effects=[pe.withStroke(linewidth=1.4, foreground="#222")],
-                        zorder=6)
+                ax.text(
+                    c["start"] + bar_w * 0.5,
+                    y,
+                    f"T{c['turn']}",
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="white",
+                    fontweight="bold",
+                    path_effects=[pe.withStroke(linewidth=1.4, foreground="#222")],
+                    zorder=6,
+                )
 
     # Connection lines (real calls only)
     agent_calls = {}
@@ -557,10 +640,19 @@ def _render_tool_activity(key, result, calls, agents_seen, tool_list, group_span
                 continue
             y1, y2 = tool_to_y[c1["tool"]], tool_to_y[c2["tool"]]
             if y1 != y2:
-                ax.annotate("", xy=(c2["start"], y2), xytext=(c1["end"], y1),
-                            arrowprops=dict(arrowstyle="->,head_width=0.1,head_length=0.06",
-                                            color=color, lw=0.5, alpha=0.35,
-                                            connectionstyle="arc3,rad=0.15"), zorder=1)
+                ax.annotate(
+                    "",
+                    xy=(c2["start"], y2),
+                    xytext=(c1["end"], y1),
+                    arrowprops=dict(
+                        arrowstyle="->,head_width=0.1,head_length=0.06",
+                        color=color,
+                        lw=0.5,
+                        alpha=0.35,
+                        connectionstyle="arc3,rad=0.15",
+                    ),
+                    zorder=1,
+                )
 
     # Y-axis labels — grey out unused tools
     display_names = [t.replace("_", " ") for t in tool_list]
@@ -573,27 +665,40 @@ def _render_tool_activity(key, result, calls, agents_seen, tool_list, group_span
 
     # Shared x-axis
     ax.set_xlabel("Time (seconds)", fontsize=11, fontweight="bold")
-    ax.tick_params(axis='x', labelsize=9)
+    ax.tick_params(axis="x", labelsize=9)
     ax.set_xlim(-global_x_max * 0.04, global_x_max * 1.18)
     ax.set_ylim(n_tools - 0.5, -0.5)
     ax.xaxis.grid(True, alpha=0.15, linestyle="--")
     ax.set_axisbelow(True)
 
-    ax.set_title(f"{label}  — Tool Call Activity\n{get_subtitle(result)}",
-                 fontsize=12, fontweight="bold", pad=10, loc="left")
+    ax.set_title(
+        f"{label}  — Tool Call Activity\n{get_subtitle(result)}", fontsize=12, fontweight="bold", pad=10, loc="left"
+    )
 
     # Legend
     legend_agents = [a for a in agents_seen if a != "pre-hook"]
-    agent_patches = [mpatches.Patch(color=AGENT_COLORS.get(a, DEFAULT_COLOR),
-                                    label=a, alpha=0.85) for a in legend_agents]
-    prehook_patch = mpatches.Patch(facecolor=AGENT_COLORS["pre-hook"], alpha=0.6,
-                                   edgecolor="#222", linewidth=0.6, hatch="///",
-                                   label="pre-hook (framework)")
+    agent_patches = [
+        mpatches.Patch(color=AGENT_COLORS.get(a, DEFAULT_COLOR), label=a, alpha=0.85) for a in legend_agents
+    ]
+    prehook_patch = mpatches.Patch(
+        facecolor=AGENT_COLORS["pre-hook"],
+        alpha=0.6,
+        edgecolor="#222",
+        linewidth=0.6,
+        hatch="///",
+        label="pre-hook (framework)",
+    )
     agent_patches.append(prehook_patch)
 
-    ax.legend(handles=agent_patches, loc="upper right", fontsize=7.5,
-              framealpha=0.92, title="Agent / Action Type", title_fontsize=8.5,
-              ncol=min(4, len(agent_patches)))
+    ax.legend(
+        handles=agent_patches,
+        loc="upper right",
+        fontsize=7.5,
+        framealpha=0.92,
+        title="Agent / Action Type",
+        title_fontsize=8.5,
+        ncol=min(4, len(agent_patches)),
+    )
 
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
@@ -617,9 +722,9 @@ def plot_tool_activity(key, result, trace, output_dir, global_x_max):
     calls, agents_seen = _prepare_calls(key, result, trace, messages, global_x_max)
     if not calls:
         return
-    _render_tool_activity(key, result, calls, agents_seen,
-                          SUPERSET_TOOLS, SUPERSET_GROUP_SPANS,
-                          global_x_max, output_dir)
+    _render_tool_activity(
+        key, result, calls, agents_seen, SUPERSET_TOOLS, SUPERSET_GROUP_SPANS, global_x_max, output_dir
+    )
 
 
 def plot_tool_activity_tiered(key, result, trace, output_dir, global_x_max):
@@ -631,14 +736,15 @@ def plot_tool_activity_tiered(key, result, trace, output_dir, global_x_max):
     if not calls:
         return
     tier_tools, tier_spans = _build_tier(key)
-    _render_tool_activity(key, result, calls, agents_seen,
-                          tier_tools, tier_spans,
-                          global_x_max, output_dir, suffix="_tiered")
+    _render_tool_activity(
+        key, result, calls, agents_seen, tier_tools, tier_spans, global_x_max, output_dir, suffix="_tiered"
+    )
 
 
 # ============================================================
 # Plot 2: Role Activity
 # ============================================================
+
 
 def plot_role_activity(key, result, output_dir):
     messages = result.get("messages", [])
@@ -660,8 +766,17 @@ def plot_role_activity(key, result, output_dir):
         dur = msg.get("duration_seconds", 0)
         start_t = end_t - dur
         tool_calls = [tc for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"]
-        turns.append({"turn": msg["turn_number"], "agent": raw_name, "role": role,
-                       "start": start_t, "end": end_t, "dur": dur, "tools": tool_calls})
+        turns.append(
+            {
+                "turn": msg["turn_number"],
+                "agent": raw_name,
+                "role": role,
+                "start": start_t,
+                "end": end_t,
+                "dur": dur,
+                "tools": tool_calls,
+            }
+        )
         if role not in ("idle", "idle (echo)", "unknown"):
             roles_seen.add(role)
         if raw_name not in agents_seen:
@@ -689,21 +804,47 @@ def plot_role_activity(key, result, output_dir):
         y = role_to_y[role]
         color = AGENT_COLORS.get(t["agent"], DEFAULT_COLOR)
 
-        ax.barh(y, t["dur"], left=t["start"], height=bar_height,
-                color=color, alpha=0.85, edgecolor="#333", linewidth=0.5, zorder=3)
+        ax.barh(
+            y,
+            t["dur"],
+            left=t["start"],
+            height=bar_height,
+            color=color,
+            alpha=0.85,
+            edgecolor="#333",
+            linewidth=0.5,
+            zorder=3,
+        )
 
         bar_w = t["end"] - t["start"]
         if bar_w > total_duration * 0.03:
-            ax.text(t["start"] + bar_w * 0.5, y, f"T{t['turn']}",
-                    ha="center", va="center", fontsize=5.5, color="white", fontweight="bold",
-                    path_effects=[pe.withStroke(linewidth=1.5, foreground="#222")], zorder=6)
+            ax.text(
+                t["start"] + bar_w * 0.5,
+                y,
+                f"T{t['turn']}",
+                ha="center",
+                va="center",
+                fontsize=5.5,
+                color="white",
+                fontweight="bold",
+                path_effects=[pe.withStroke(linewidth=1.5, foreground="#222")],
+                zorder=6,
+            )
 
         n_tools = len(t["tools"])
         for j, tc in enumerate(t["tools"]):
             tx = t["start"] + (j + 0.5) * t["dur"] / max(n_tools, 1)
             marker = TOOL_ICONS.get(tc["tool_name"], ".")
-            ax.plot(tx, y + bar_height * 0.42, marker=marker, color="#222",
-                    markersize=4, markeredgewidth=0.3, zorder=7, alpha=0.7)
+            ax.plot(
+                tx,
+                y + bar_height * 0.42,
+                marker=marker,
+                color="#222",
+                markersize=4,
+                markeredgewidth=0.3,
+                zorder=7,
+                alpha=0.7,
+            )
             if tc["tool_name"] not in tool_legend:
                 tool_legend[tc["tool_name"]] = marker
 
@@ -716,10 +857,19 @@ def plot_role_activity(key, result, output_dir):
             _, y1, _, x1_end = points[k]
             _, y2, x2_start, _ = points[k + 1]
             if y1 != y2:
-                ax.annotate("", xy=(x2_start, y2), xytext=(x1_end, y1),
-                            arrowprops=dict(arrowstyle="->,head_width=0.12,head_length=0.08",
-                                            color=color, lw=0.8, alpha=0.5,
-                                            connectionstyle="arc3,rad=0.2"), zorder=2)
+                ax.annotate(
+                    "",
+                    xy=(x2_start, y2),
+                    xytext=(x1_end, y1),
+                    arrowprops=dict(
+                        arrowstyle="->,head_width=0.12,head_length=0.08",
+                        color=color,
+                        lw=0.8,
+                        alpha=0.5,
+                        connectionstyle="arc3,rad=0.2",
+                    ),
+                    zorder=2,
+                )
             else:
                 ax.plot([x1_end, x2_start], [y1, y2], color=color, lw=0.5, alpha=0.3, zorder=1)
 
@@ -732,22 +882,37 @@ def plot_role_activity(key, result, output_dir):
     ax.yaxis.grid(True, alpha=0.08, linestyle="-")
     ax.set_axisbelow(True)
 
-    ax.set_title(f"{label}  — Agent Role Activity\n{get_subtitle(result)}",
-                 fontsize=10, fontweight="bold", pad=10, loc="left")
+    ax.set_title(
+        f"{label}  — Agent Role Activity\n{get_subtitle(result)}", fontsize=10, fontweight="bold", pad=10, loc="left"
+    )
 
-    agent_patches = [mpatches.Patch(color=AGENT_COLORS.get(a, DEFAULT_COLOR), label=a, alpha=0.85)
-                     for a in agents_seen]
-    leg1 = ax.legend(handles=agent_patches, loc="upper right", fontsize=6.5,
-                     framealpha=0.92, title="Agent Identity", title_fontsize=7,
-                     ncol=min(3, len(agent_patches)))
+    agent_patches = [mpatches.Patch(color=AGENT_COLORS.get(a, DEFAULT_COLOR), label=a, alpha=0.85) for a in agents_seen]
+    leg1 = ax.legend(
+        handles=agent_patches,
+        loc="upper right",
+        fontsize=6.5,
+        framealpha=0.92,
+        title="Agent Identity",
+        title_fontsize=7,
+        ncol=min(3, len(agent_patches)),
+    )
 
     if tool_legend:
-        tool_handles = [plt.Line2D([0], [0], marker=m, color="#222", linestyle="None",
-                                    markersize=4, label=tn.replace("_", " "), alpha=0.75)
-                        for tn, m in sorted(tool_legend.items())]
-        ax.legend(handles=tool_handles, loc="lower right", fontsize=5,
-                  framealpha=0.92, title="Tools", title_fontsize=6,
-                  ncol=min(3, len(tool_handles)))
+        tool_handles = [
+            plt.Line2D(
+                [0], [0], marker=m, color="#222", linestyle="None", markersize=4, label=tn.replace("_", " "), alpha=0.75
+            )
+            for tn, m in sorted(tool_legend.items())
+        ]
+        ax.legend(
+            handles=tool_handles,
+            loc="lower right",
+            fontsize=5,
+            framealpha=0.92,
+            title="Tools",
+            title_fontsize=6,
+            ncol=min(3, len(tool_handles)),
+        )
         ax.add_artist(leg1)
 
     ax.spines["top"].set_visible(False)
@@ -769,6 +934,7 @@ def plot_role_activity(key, result, output_dir):
 # ============================================================
 # Plot 3: Timeline
 # ============================================================
+
 
 def plot_timeline(key, result, output_dir):
     messages = result.get("messages", [])
@@ -808,21 +974,46 @@ def plot_timeline(key, result, output_dir):
         y = seen[role]
         color = ROLE_COLORS.get(role, DEFAULT_COLOR)
         is_idle = role == "idle (echo)"
-        ax.barh(y, end - start, left=start, height=bar_height,
-                color=color, alpha=0.45 if is_idle else 0.85,
-                edgecolor="#999" if is_idle else "white", linewidth=0.8 if is_idle else 0.5,
-                hatch="///" if is_idle else None, zorder=2)
+        ax.barh(
+            y,
+            end - start,
+            left=start,
+            height=bar_height,
+            color=color,
+            alpha=0.45 if is_idle else 0.85,
+            edgecolor="#999" if is_idle else "white",
+            linewidth=0.8 if is_idle else 0.5,
+            hatch="///" if is_idle else None,
+            zorder=2,
+        )
         mid = (start + end) / 2
         if (end - start) > duration * 0.04:
-            ax.text(mid, y, f"T{turn}", ha="center", va="center", fontsize=6,
-                    fontweight="bold", color="#666" if is_idle else "white", zorder=3)
+            ax.text(
+                mid,
+                y,
+                f"T{turn}",
+                ha="center",
+                va="center",
+                fontsize=6,
+                fontweight="bold",
+                color="#666" if is_idle else "white",
+                zorder=3,
+            )
 
     tool_legend = {}
     for role, t, tool_name in events:
         y = seen[role]
         marker = TOOL_ICONS.get(tool_name, ".")
-        ax.plot(t, y + bar_height / 2 + 0.08, marker=marker, color="black",
-                markersize=5, markeredgewidth=0.5, zorder=4, alpha=0.7)
+        ax.plot(
+            t,
+            y + bar_height / 2 + 0.08,
+            marker=marker,
+            color="black",
+            markersize=5,
+            markeredgewidth=0.5,
+            zorder=4,
+            alpha=0.7,
+        )
         if tool_name not in tool_legend:
             tool_legend[tool_name] = marker
 
@@ -834,22 +1025,35 @@ def plot_timeline(key, result, output_dir):
     ax.xaxis.grid(True, alpha=0.2, linestyle="--")
     ax.set_axisbelow(True)
 
-    ax.set_title(f"{label}\n{get_subtitle(result)}",
-                 fontsize=10, fontweight="bold", pad=10, loc="left")
+    ax.set_title(f"{label}\n{get_subtitle(result)}", fontsize=10, fontweight="bold", pad=10, loc="left")
 
-    role_patches = [mpatches.Patch(color=ROLE_COLORS.get(r, DEFAULT_COLOR), label=r, alpha=0.85)
-                    for r in roles]
-    leg1 = ax.legend(handles=role_patches, loc="upper right", fontsize=6,
-                     framealpha=0.9, title="Roles", title_fontsize=7,
-                     ncol=min(3, len(roles)))
+    role_patches = [mpatches.Patch(color=ROLE_COLORS.get(r, DEFAULT_COLOR), label=r, alpha=0.85) for r in roles]
+    leg1 = ax.legend(
+        handles=role_patches,
+        loc="upper right",
+        fontsize=6,
+        framealpha=0.9,
+        title="Roles",
+        title_fontsize=7,
+        ncol=min(3, len(roles)),
+    )
 
     if tool_legend:
-        tool_handles = [plt.Line2D([0], [0], marker=m, color="black", linestyle="None",
-                                    markersize=4, label=tn.replace("_", " "), alpha=0.7)
-                        for tn, m in sorted(tool_legend.items())]
-        ax.legend(handles=tool_handles, loc="lower right", fontsize=5,
-                  framealpha=0.9, title="Tools", title_fontsize=6,
-                  ncol=min(3, len(tool_handles)))
+        tool_handles = [
+            plt.Line2D(
+                [0], [0], marker=m, color="black", linestyle="None", markersize=4, label=tn.replace("_", " "), alpha=0.7
+            )
+            for tn, m in sorted(tool_legend.items())
+        ]
+        ax.legend(
+            handles=tool_handles,
+            loc="lower right",
+            fontsize=5,
+            framealpha=0.9,
+            title="Tools",
+            title_fontsize=6,
+            ncol=min(3, len(tool_handles)),
+        )
         ax.add_artist(leg1)
 
     ax.spines["top"].set_visible(False)
@@ -867,6 +1071,7 @@ def plot_timeline(key, result, output_dir):
 # ============================================================
 # Plot 4: Sequence
 # ============================================================
+
 
 def plot_sequence(key, result, output_dir):
     messages = result.get("messages", [])
@@ -887,8 +1092,17 @@ def plot_sequence(key, result, output_dir):
         dur = msg.get("duration_seconds", 0)
         start_t = end_t - dur
         tool_calls = [tc for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"]
-        turns.append({"turn": msg["turn_number"], "agent": raw_name, "role": role,
-                       "start": start_t, "end": end_t, "dur": dur, "tools": tool_calls})
+        turns.append(
+            {
+                "turn": msg["turn_number"],
+                "agent": raw_name,
+                "role": role,
+                "start": start_t,
+                "end": end_t,
+                "dur": dur,
+                "tools": tool_calls,
+            }
+        )
         agent_role_map.setdefault(raw_name, set()).add(role)
 
     bar_height = 0.65
@@ -906,36 +1120,67 @@ def plot_sequence(key, result, output_dir):
         color = AGENT_COLORS.get(t["agent"], DEFAULT_COLOR)
         is_idle = t["role"] in ("idle", "idle (echo)")
 
-        ax.barh(y, t["dur"], left=t["start"], height=bar_height,
-                color=color, alpha=0.40 if is_idle else 0.88,
-                edgecolor="#888" if is_idle else "#444", linewidth=0.6,
-                hatch="///" if is_idle else None, zorder=2)
+        ax.barh(
+            y,
+            t["dur"],
+            left=t["start"],
+            height=bar_height,
+            color=color,
+            alpha=0.40 if is_idle else 0.88,
+            edgecolor="#888" if is_idle else "#444",
+            linewidth=0.6,
+            hatch="///" if is_idle else None,
+            zorder=2,
+        )
 
         bar_w = t["end"] - t["start"]
         if bar_w > total_duration * 0.06:
-            ax.text(t["start"] + bar_w * 0.5, y, t["role"],
-                    ha="center", va="center", fontsize=5.5, fontstyle="italic",
-                    color="white" if not is_idle else "#555", fontweight="medium",
-                    path_effects=[pe.withStroke(linewidth=1.5,
-                                               foreground="#333" if not is_idle else "#ccc")],
-                    zorder=5)
+            ax.text(
+                t["start"] + bar_w * 0.5,
+                y,
+                t["role"],
+                ha="center",
+                va="center",
+                fontsize=5.5,
+                fontstyle="italic",
+                color="white" if not is_idle else "#555",
+                fontweight="medium",
+                path_effects=[pe.withStroke(linewidth=1.5, foreground="#333" if not is_idle else "#ccc")],
+                zorder=5,
+            )
 
         n_tools = len(t["tools"])
         for j, tc in enumerate(t["tools"]):
             tx = t["start"] + (j + 0.5) * t["dur"] / max(n_tools, 1)
             marker = TOOL_ICONS.get(tc["tool_name"], ".")
-            ax.plot(tx, y - bar_height * 0.38, marker=marker, color="#222",
-                    markersize=4.5, markeredgewidth=0.4, zorder=6, alpha=0.75)
+            ax.plot(
+                tx,
+                y - bar_height * 0.38,
+                marker=marker,
+                color="#222",
+                markersize=4.5,
+                markeredgewidth=0.4,
+                zorder=6,
+                alpha=0.75,
+            )
             if tc["tool_name"] not in tool_legend:
                 tool_legend[tc["tool_name"]] = marker
 
         if i < n_turns - 1:
             next_t = turns[i + 1]
             if t["agent"] != next_t["agent"]:
-                ax.annotate("", xy=(next_t["start"], i + 1), xytext=(t["end"], i),
-                            arrowprops=dict(arrowstyle="->,head_width=0.15,head_length=0.1",
-                                            color="#999", lw=0.6,
-                                            connectionstyle="arc3,rad=0.15"), zorder=1)
+                ax.annotate(
+                    "",
+                    xy=(next_t["start"], i + 1),
+                    xytext=(t["end"], i),
+                    arrowprops=dict(
+                        arrowstyle="->,head_width=0.15,head_length=0.1",
+                        color="#999",
+                        lw=0.6,
+                        connectionstyle="arc3,rad=0.15",
+                    ),
+                    zorder=1,
+                )
 
     y_labels = [f"T{t['turn']}  {t['agent']}" for t in turns]
     ax.set_yticks(range(n_turns))
@@ -952,14 +1197,20 @@ def plot_sequence(key, result, output_dir):
     ax.xaxis.grid(True, alpha=0.15, linestyle="--")
     ax.set_axisbelow(True)
 
-    ax.set_title(f"{label}  — Turn Sequence\n{get_subtitle(result)}",
-                 fontsize=10, fontweight="bold", pad=10, loc="left")
+    ax.set_title(
+        f"{label}  — Turn Sequence\n{get_subtitle(result)}", fontsize=10, fontweight="bold", pad=10, loc="left"
+    )
 
-    agent_patches = [mpatches.Patch(color=AGENT_COLORS.get(a, DEFAULT_COLOR), label=a, alpha=0.88)
-                     for a in agent_order]
-    leg1 = ax.legend(handles=agent_patches, loc="upper right", fontsize=6,
-                     framealpha=0.92, title="Agents", title_fontsize=7,
-                     ncol=min(3, len(agent_patches)))
+    agent_patches = [mpatches.Patch(color=AGENT_COLORS.get(a, DEFAULT_COLOR), label=a, alpha=0.88) for a in agent_order]
+    leg1 = ax.legend(
+        handles=agent_patches,
+        loc="upper right",
+        fontsize=6,
+        framealpha=0.92,
+        title="Agents",
+        title_fontsize=7,
+        ncol=min(3, len(agent_patches)),
+    )
 
     mapping_lines = []
     for a in agent_order:
@@ -967,19 +1218,35 @@ def plot_sequence(key, result, output_dir):
         if roles and roles != [a]:
             mapping_lines.append(f"{a} -> {', '.join(roles)}")
     if mapping_lines:
-        props = dict(boxstyle="round,pad=0.4", facecolor="white",
-                     alpha=0.9, edgecolor="#ccc", linewidth=0.5)
-        ax.text(0.01, 0.01, "\n".join(mapping_lines), transform=ax.transAxes,
-                fontsize=5, fontfamily="monospace", verticalalignment="bottom",
-                bbox=props, zorder=10)
+        props = dict(boxstyle="round,pad=0.4", facecolor="white", alpha=0.9, edgecolor="#ccc", linewidth=0.5)
+        ax.text(
+            0.01,
+            0.01,
+            "\n".join(mapping_lines),
+            transform=ax.transAxes,
+            fontsize=5,
+            fontfamily="monospace",
+            verticalalignment="bottom",
+            bbox=props,
+            zorder=10,
+        )
 
     if tool_legend:
-        tool_handles = [plt.Line2D([0], [0], marker=m, color="#222", linestyle="None",
-                                    markersize=4, label=tn.replace("_", " "), alpha=0.75)
-                        for tn, m in sorted(tool_legend.items())]
-        ax.legend(handles=tool_handles, loc="lower right", fontsize=5,
-                  framealpha=0.92, title="Tools", title_fontsize=6,
-                  ncol=min(3, len(tool_handles)))
+        tool_handles = [
+            plt.Line2D(
+                [0], [0], marker=m, color="#222", linestyle="None", markersize=4, label=tn.replace("_", " "), alpha=0.75
+            )
+            for tn, m in sorted(tool_legend.items())
+        ]
+        ax.legend(
+            handles=tool_handles,
+            loc="lower right",
+            fontsize=5,
+            framealpha=0.92,
+            title="Tools",
+            title_fontsize=6,
+            ncol=min(3, len(tool_handles)),
+        )
         ax.add_artist(leg1)
 
     ax.spines["top"].set_visible(False)
@@ -997,6 +1264,7 @@ def plot_sequence(key, result, output_dir):
 # ============================================================
 # Main
 # ============================================================
+
 
 def main():
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

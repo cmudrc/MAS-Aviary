@@ -22,15 +22,16 @@ from src.tools.networked_tools import (
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class DummyModel(Model):
     """Minimal model stub for agent construction."""
 
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.types import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -107,6 +108,7 @@ def none_context(dummy_model, domain_tools):
 
 
 # ---- ReadBlackboard tests ---------------------------------------------------
+
 
 class TestReadBlackboard:
     def test_reads_all_entries(self, context):
@@ -194,6 +196,7 @@ class TestReadBlackboard:
 
 # ---- WriteBlackboard tests ---------------------------------------------------
 
+
 class TestWriteBlackboard:
     def test_creates_entry(self, context):
         tool = WriteBlackboard(context, agent_name="agent_1")
@@ -242,6 +245,7 @@ class TestWriteBlackboard:
 
 
 # ---- SpawnPeer tests ---------------------------------------------------------
+
 
 class TestSpawnPeer:
     def test_spawns_new_agent(self, context):
@@ -309,6 +313,7 @@ class TestSpawnPeer:
 
 # ---- MarkTaskDone -----------------------------------------------------------
 
+
 class TestMarkTaskDone:
     def test_writes_done_to_blackboard(self, context):
         tool = MarkTaskDone(context, agent_name="agent_1")
@@ -334,8 +339,7 @@ class TestMarkTaskDone:
 
 # ---- PEER_TOOL_NAMES --------------------------------------------------------
 
+
 class TestPeerToolNames:
     def test_contains_expected_names(self):
-        assert PEER_TOOL_NAMES == {
-            "read_blackboard", "write_blackboard", "spawn_peer", "mark_task_done"
-        }
+        assert PEER_TOOL_NAMES == {"read_blackboard", "write_blackboard", "spawn_peer", "mark_task_done"}

@@ -15,62 +15,72 @@ sns.set_theme(style="whitegrid", context="paper", font="DejaVu Serif")
 # ── Data ──────────────────────────────────────────────────────────────────
 
 DEFAULTS = {
-    "AR": 11.22, "AREA": 124.6, "SPAN": 37.35,
-    "SWEEP": 25.0, "TAPER": 0.278,
-    "FUS_LENGTH": 37.79, "FUS_HEIGHT": 4.06, "FUS_WIDTH": 3.76,
-    "SF": 1.0
+    "AR": 11.22,
+    "AREA": 124.6,
+    "SPAN": 37.35,
+    "SWEEP": 25.0,
+    "TAPER": 0.278,
+    "FUS_LENGTH": 37.79,
+    "FUS_HEIGHT": 4.06,
+    "FUS_WIDTH": 3.76,
+    "SF": 1.0,
 }
 
 COMBINATIONS = {
-    "seq_if":    {"AR": 8.719,  "AREA": 160.0,                          "SF": 1.0},
-    "seq_sp":    {"AR": 12.5,   "AREA": 160.0,  "SPAN": 44.72,          "SF": 0.8},
-    "orch_if":   {"AR": 10.0,                   "FUS_LENGTH": 35.0,     "SF": 1.2},
-    "orch_sp":   {"AR": 12.1,                   "SWEEP": 25.0, "TAPER": 0.3},
-    "orch_gr":   {                                                        "SF": 0.8},
-    "net_if":    {"AR": 14.0,   "AREA": 162.86, "SPAN": 46.0},
-    "net_sp":    {"AR": 12.1,   "AREA": 160.0,  "SPAN": 44.0,           "SF": 0.8},
-    "net_gr":    {"AR": 11.22,                                           "SF": 0.8},
-    "reference": {}
+    "seq_if": {"AR": 8.719, "AREA": 160.0, "SF": 1.0},
+    "seq_sp": {"AR": 12.5, "AREA": 160.0, "SPAN": 44.72, "SF": 0.8},
+    "orch_if": {"AR": 10.0, "FUS_LENGTH": 35.0, "SF": 1.2},
+    "orch_sp": {"AR": 12.1, "SWEEP": 25.0, "TAPER": 0.3},
+    "orch_gr": {"SF": 0.8},
+    "net_if": {"AR": 14.0, "AREA": 162.86, "SPAN": 46.0},
+    "net_sp": {"AR": 12.1, "AREA": 160.0, "SPAN": 44.0, "SF": 0.8},
+    "net_gr": {"AR": 11.22, "SF": 0.8},
+    "reference": {},
 }
 
 LABELS = {
-    "seq_if":    "Seq + IterFB",
-    "seq_sp":    "Seq + StagedPipe",
-    "orch_if":   "Orch + IterFB",
-    "orch_sp":   "Orch + StagedPipe",
-    "orch_gr":   "Orch + GraphRt",
-    "net_if":    "Net + IterFB",
-    "net_sp":    "Net + StagedPipe",
-    "net_gr":    "Net + GraphRt",
-    "reference": "Reference (SLSQP)"
+    "seq_if": "Seq + IterFB",
+    "seq_sp": "Seq + StagedPipe",
+    "orch_if": "Orch + IterFB",
+    "orch_sp": "Orch + StagedPipe",
+    "orch_gr": "Orch + GraphRt",
+    "net_if": "Net + IterFB",
+    "net_sp": "Net + StagedPipe",
+    "net_gr": "Net + GraphRt",
+    "reference": "Reference (SLSQP)",
 }
 
 HANDLERS = {
-    "seq_if": "sequential", "seq_sp": "sequential",
-    "orch_if": "orchestrated", "orch_sp": "orchestrated", "orch_gr": "orchestrated",
-    "net_if": "networked", "net_sp": "networked", "net_gr": "networked",
-    "reference": "baseline"
+    "seq_if": "sequential",
+    "seq_sp": "sequential",
+    "orch_if": "orchestrated",
+    "orch_sp": "orchestrated",
+    "orch_gr": "orchestrated",
+    "net_if": "networked",
+    "net_sp": "networked",
+    "net_gr": "networked",
+    "reference": "baseline",
 }
 
 HANDLER_COLORS = {
-    "sequential":  "#4e79a7",
+    "sequential": "#4e79a7",
     "orchestrated": "#f28e2b",
-    "networked":   "#59a14f",
-    "baseline":    "#333333",
+    "networked": "#59a14f",
+    "baseline": "#333333",
 }
 
 HANDLER_LS = {
-    "sequential":  "-",
+    "sequential": "-",
     "orchestrated": "--",
-    "networked":   ":",
-    "baseline":    "-",
+    "networked": ":",
+    "baseline": "-",
 }
 
 HANDLER_MARKER = {
-    "sequential":  "s",
+    "sequential": "s",
     "orchestrated": "^",
-    "networked":   "o",
-    "baseline":    "*",
+    "networked": "o",
+    "baseline": "*",
 }
 
 FIGSIZE_1 = (10, 7)
@@ -80,6 +90,7 @@ DPI = 300
 
 
 # ── Parameter derivation ─────────────────────────────────────────────────
+
 
 def derive_params(combo_overrides):
     p = {**DEFAULTS, **combo_overrides}
@@ -111,6 +122,7 @@ ALL_PARAMS = {k: derive_params(v) for k, v in COMBINATIONS.items()}
 
 # ── Wing planform geometry ────────────────────────────────────────────────
 
+
 def wing_polygon(p):
     """Return (right_wing_verts, left_wing_verts) as Nx2 arrays.
     Coordinate system: x = chordwise (aft positive), y = spanwise (right positive).
@@ -126,13 +138,15 @@ def wing_polygon(p):
     tip_te_x = tip_qc_x + 0.75 * c_tip
 
     # Right wing polygon (root to tip)
-    right = np.array([
-        [0, 0],
-        [tip_le_x, semispan],
-        [tip_te_x, semispan],
-        [c_root, 0],
-        [0, 0],
-    ])
+    right = np.array(
+        [
+            [0, 0],
+            [tip_le_x, semispan],
+            [tip_te_x, semispan],
+            [c_root, 0],
+            [0, 0],
+        ]
+    )
 
     # Left wing: mirror y, shift so symmetric about x = c_root/2
     left = right.copy()
@@ -142,6 +156,7 @@ def wing_polygon(p):
 
 
 # ── FIGURE 1 — 2D Planform Overlay ───────────────────────────────────────
+
 
 def plot_planform(output_dir):
     fig, ax = plt.subplots(figsize=FIGSIZE_1, dpi=DPI)
@@ -159,16 +174,13 @@ def plot_planform(output_dir):
         right, left = wing_polygon(p)
 
         if key == "reference":
-            kwargs_fill = dict(facecolor="#d0d0d0", edgecolor="black",
-                               linewidth=1.8, linestyle=ls, alpha=0.5, zorder=10)
-            kwargs_fus = dict(facecolor="#e0e0e0", edgecolor="black",
-                              linewidth=1.5, zorder=10)
+            kwargs_fill = dict(
+                facecolor="#d0d0d0", edgecolor="black", linewidth=1.8, linestyle=ls, alpha=0.5, zorder=10
+            )
+            kwargs_fus = dict(facecolor="#e0e0e0", edgecolor="black", linewidth=1.5, zorder=10)
         else:
-            kwargs_fill = dict(facecolor=color, edgecolor=color,
-                               linewidth=1.0, linestyle=ls,
-                               alpha=0.25, zorder=2)
-            kwargs_fus = dict(facecolor=color, edgecolor=color,
-                              linewidth=0.8, alpha=0.15, zorder=2)
+            kwargs_fill = dict(facecolor=color, edgecolor=color, linewidth=1.0, linestyle=ls, alpha=0.25, zorder=2)
+            kwargs_fus = dict(facecolor=color, edgecolor=color, linewidth=0.8, alpha=0.15, zorder=2)
 
         # Draw wings
         ax.fill(right[:, 1], right[:, 0], label=label_text, **kwargs_fill)
@@ -178,28 +190,24 @@ def plot_planform(output_dir):
         fus_w = p["FUS_WIDTH"]
         fus_l = p["FUS_LENGTH"]
         c_root = p["c_root"]
-        fus_rect = plt.Rectangle(
-            (-fus_w / 2, -fus_l + c_root * 0.4),
-            fus_w, fus_l,
-            **kwargs_fus)
+        fus_rect = plt.Rectangle((-fus_w / 2, -fus_l + c_root * 0.4), fus_w, fus_l, **kwargs_fus)
         ax.add_patch(fus_rect)
 
     ax.set_aspect("equal")
     ax.set_xlabel("Spanwise y (m)", fontsize=11)
     ax.set_ylabel("x (m)", fontsize=11)
-    ax.set_title("Wing Planform Comparison — All Combinations",
-                 fontsize=13, fontweight="bold")
+    ax.set_title("Wing Planform Comparison — All Combinations", fontsize=13, fontweight="bold")
     ax.legend(fontsize=7, loc="upper left", framealpha=0.9, ncol=1)
 
     plt.tight_layout()
     for ext in ("pdf", "png", "svg"):
-        fig.savefig(os.path.join(output_dir, f"fig1_planform.{ext}"),
-                    dpi=DPI, bbox_inches="tight", facecolor="white")
+        fig.savefig(os.path.join(output_dir, f"fig1_planform.{ext}"), dpi=DPI, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print("Saved fig1_planform")
 
 
 # ── FIGURE 2 — Design Space Scatter ──────────────────────────────────────
+
 
 def plot_design_space(output_dir):
     fig, ax = plt.subplots(figsize=FIGSIZE_2, dpi=DPI)
@@ -212,18 +220,26 @@ def plot_design_space(output_dir):
     ax.contourf(A, R, fuel_proxy, levels=15, cmap="YlOrRd", alpha=0.15)
 
     # Design bounds rectangle
-    ax.plot([100, 160, 160, 100, 100], [7, 7, 14, 14, 7],
-            color="#888", linestyle="--", linewidth=1.0, alpha=0.6, zorder=3,
-            label="Design bounds")
+    ax.plot(
+        [100, 160, 160, 100, 100],
+        [7, 7, 14, 14, 7],
+        color="#888",
+        linestyle="--",
+        linewidth=1.0,
+        alpha=0.6,
+        zorder=3,
+        label="Design bounds",
+    )
 
     # Span constraint curves
-    for span_val, style, lbl in [(28, "-", "span = 28 m"),
-                                  (37.35, "--", "span = 37.35 m (default)"),
-                                  (48, "-", "span = 48 m")]:
-        ar_curve = span_val ** 2 / area_grid
+    for span_val, style, lbl in [
+        (28, "-", "span = 28 m"),
+        (37.35, "--", "span = 37.35 m (default)"),
+        (48, "-", "span = 48 m"),
+    ]:
+        ar_curve = span_val**2 / area_grid
         clr = "#2ca02c" if span_val == 37.35 else "#7fbfff"
-        ax.plot(area_grid, ar_curve, color=clr, linewidth=1.0,
-                linestyle=style, alpha=0.6, zorder=3, label=lbl)
+        ax.plot(area_grid, ar_curve, color=clr, linewidth=1.0, linestyle=style, alpha=0.6, zorder=3, label=lbl)
 
     # Scatter points
     for key in COMBINATIONS:
@@ -235,9 +251,17 @@ def plot_design_space(output_dir):
         edgew = 1.5 if key == "reference" else 1.0
         zord = 12 if key == "reference" else 8
 
-        ax.scatter(p["AREA"], p["AR"], s=s, marker=marker, color=color,
-                   edgecolors="black", linewidths=edgew, zorder=zord,
-                   label=LABELS[key])
+        ax.scatter(
+            p["AREA"],
+            p["AR"],
+            s=s,
+            marker=marker,
+            color=color,
+            edgecolors="black",
+            linewidths=edgew,
+            zorder=zord,
+            label=LABELS[key],
+        )
 
         # Annotation offset
         dx, dy = 2.0, 0.25
@@ -249,58 +273,77 @@ def plot_design_space(output_dir):
             dx, dy = -8.0, 0.4
         elif key == "net_gr":
             dx, dy = 2.0, -0.5
-        ax.annotate(LABELS[key], (p["AREA"], p["AR"]),
-                    xytext=(p["AREA"] + dx, p["AR"] + dy),
-                    fontsize=6.5, ha="left", va="bottom",
-                    arrowprops=dict(arrowstyle="-", color="#aaa", lw=0.4),
-                    zorder=15)
+        ax.annotate(
+            LABELS[key],
+            (p["AREA"], p["AR"]),
+            xytext=(p["AREA"] + dx, p["AR"] + dy),
+            fontsize=6.5,
+            ha="left",
+            va="bottom",
+            arrowprops=dict(arrowstyle="-", color="#aaa", lw=0.4),
+            zorder=15,
+        )
 
     # Text box
-    textstr = ("Wing area drives structural weight.\n"
-               "AR drives induced drag.\n"
-               r"Span = $\sqrt{\mathrm{AR} \times \mathrm{Area}}$")
-    props = dict(boxstyle="round,pad=0.4", facecolor="white",
-                 alpha=0.85, edgecolor="#ccc")
-    ax.text(0.97, 0.03, textstr, transform=ax.transAxes, fontsize=7,
-            verticalalignment="bottom", horizontalalignment="right",
-            bbox=props, zorder=20)
+    textstr = (
+        "Wing area drives structural weight.\n"
+        "AR drives induced drag.\n"
+        r"Span = $\sqrt{\mathrm{AR} \times \mathrm{Area}}$"
+    )
+    props = dict(boxstyle="round,pad=0.4", facecolor="white", alpha=0.85, edgecolor="#ccc")
+    ax.text(
+        0.97,
+        0.03,
+        textstr,
+        transform=ax.transAxes,
+        fontsize=7,
+        verticalalignment="bottom",
+        horizontalalignment="right",
+        bbox=props,
+        zorder=20,
+    )
 
     ax.set_xlim(90, 180)
     ax.set_ylim(6, 16)
     ax.set_xlabel("Wing Area (m$^2$)", fontsize=11)
     ax.set_ylabel("Aspect Ratio", fontsize=11)
-    ax.set_title("Design Space — Wing Area vs. Aspect Ratio",
-                 fontsize=13, fontweight="bold")
+    ax.set_title("Design Space — Wing Area vs. Aspect Ratio", fontsize=13, fontweight="bold")
     ax.legend(fontsize=6.5, loc="upper left", framealpha=0.9, ncol=2)
 
     plt.tight_layout()
     for ext in ("pdf", "png", "svg"):
-        fig.savefig(os.path.join(output_dir, f"fig2_design_space.{ext}"),
-                    dpi=DPI, bbox_inches="tight", facecolor="white")
+        fig.savefig(
+            os.path.join(output_dir, f"fig2_design_space.{ext}"), dpi=DPI, bbox_inches="tight", facecolor="white"
+        )
     plt.close(fig)
     print("Saved fig2_design_space")
 
 
 # ── FIGURE 3 — Orthographic Silhouettes ──────────────────────────────────
 
+
 def draw_top_view(ax, p, color):
     """Top view: planform + fuselage + nacelles."""
     right, left = wing_polygon(p)
 
     # Wings
-    ax.fill(right[:, 1], right[:, 0], facecolor=color, alpha=0.2,
-            edgecolor=color, linewidth=1.2)
-    ax.fill(left[:, 1], left[:, 0], facecolor=color, alpha=0.2,
-            edgecolor=color, linewidth=1.2)
+    ax.fill(right[:, 1], right[:, 0], facecolor=color, alpha=0.2, edgecolor=color, linewidth=1.2)
+    ax.fill(left[:, 1], left[:, 0], facecolor=color, alpha=0.2, edgecolor=color, linewidth=1.2)
 
     # Fuselage
     fus_w = p["FUS_WIDTH"]
     fus_l = p["FUS_LENGTH"]
     c_root = p["c_root"]
     fus_rect = FancyBboxPatch(
-        (-fus_w / 2, -fus_l + c_root * 0.4), fus_w, fus_l,
+        (-fus_w / 2, -fus_l + c_root * 0.4),
+        fus_w,
+        fus_l,
         boxstyle="round,pad=0.3",
-        facecolor=color, alpha=0.15, edgecolor=color, linewidth=1.0)
+        facecolor=color,
+        alpha=0.15,
+        edgecolor=color,
+        linewidth=1.0,
+    )
     ax.add_patch(fus_rect)
 
     # Nacelles
@@ -310,9 +353,9 @@ def draw_top_view(ax, p, color):
     nacelle_x = p["c_root"] * 0.25 + np.tan(sweep_rad) * nacelle_y
     nacelle_r = 0.95 * p["SF"]
     for sign in [1, -1]:
-        circ = plt.Circle((sign * nacelle_y, nacelle_x),
-                           nacelle_r, facecolor=color, alpha=0.3,
-                           edgecolor=color, linewidth=0.8)
+        circ = plt.Circle(
+            (sign * nacelle_y, nacelle_x), nacelle_r, facecolor=color, alpha=0.3, edgecolor=color, linewidth=0.8
+        )
         ax.add_patch(circ)
 
     ax.set_aspect("equal")
@@ -326,37 +369,47 @@ def draw_side_view(ax, p, color):
 
     # Fuselage body
     fus = FancyBboxPatch(
-        (0, -fh / 2), fl, fh,
-        boxstyle="round,pad=0.8",
-        facecolor=color, alpha=0.15, edgecolor=color, linewidth=1.2)
+        (0, -fh / 2), fl, fh, boxstyle="round,pad=0.8", facecolor=color, alpha=0.15, edgecolor=color, linewidth=1.2
+    )
     ax.add_patch(fus)
 
     # Wing stub
     wing_y = -fh * 0.1
-    ax.plot([fl * 0.35, fl * 0.60], [wing_y, wing_y],
-            color=color, linewidth=2.5, solid_capstyle="round")
+    ax.plot([fl * 0.35, fl * 0.60], [wing_y, wing_y], color=color, linewidth=2.5, solid_capstyle="round")
 
     # Engine ellipse
-    eng = Ellipse((fl * 0.47, -fh * 0.35),
-                  width=fl * 0.14 * sf, height=fh * 0.24 * sf,
-                  facecolor=color, alpha=0.25, edgecolor=color, linewidth=0.8)
+    eng = Ellipse(
+        (fl * 0.47, -fh * 0.35),
+        width=fl * 0.14 * sf,
+        height=fh * 0.24 * sf,
+        facecolor=color,
+        alpha=0.25,
+        edgecolor=color,
+        linewidth=0.8,
+    )
     ax.add_patch(eng)
 
     # Vertical tail
     vt_base_x = fl * 0.88
     vt_height = fh * 0.55
-    vt = Polygon([
-        [vt_base_x, fh * 0.4],
-        [fl * 0.98, fh * 0.4 + vt_height],
-        [fl * 0.92, fh * 0.4 + vt_height],
-        [vt_base_x - fl * 0.03, fh * 0.4],
-    ], closed=True, facecolor=color, alpha=0.2, edgecolor=color, linewidth=0.8)
+    vt = Polygon(
+        [
+            [vt_base_x, fh * 0.4],
+            [fl * 0.98, fh * 0.4 + vt_height],
+            [fl * 0.92, fh * 0.4 + vt_height],
+            [vt_base_x - fl * 0.03, fh * 0.4],
+        ],
+        closed=True,
+        facecolor=color,
+        alpha=0.2,
+        edgecolor=color,
+        linewidth=0.8,
+    )
     ax.add_patch(vt)
 
     # Horizontal tail
     ht_y = fh * 0.5
-    ax.plot([fl * 0.87, fl * 0.97], [ht_y, ht_y],
-            color=color, linewidth=2.0, solid_capstyle="round")
+    ax.plot([fl * 0.87, fl * 0.97], [ht_y, ht_y], color=color, linewidth=2.0, solid_capstyle="round")
 
     ax.set_aspect("equal")
 
@@ -369,21 +422,19 @@ def draw_front_view(ax, p, color):
     sf = p["SF"]
 
     # Fuselage ellipse
-    fus = Ellipse((0, 0), fw, fh,
-                  facecolor=color, alpha=0.15, edgecolor=color, linewidth=1.2)
+    fus = Ellipse((0, 0), fw, fh, facecolor=color, alpha=0.15, edgecolor=color, linewidth=1.2)
     ax.add_patch(fus)
 
     # Wing line
-    ax.plot([-span / 2, span / 2], [0, 0],
-            color=color, linewidth=2.0)
+    ax.plot([-span / 2, span / 2], [0, 0], color=color, linewidth=2.0)
 
     # Engine circles
     eng_y = span * 0.35
     eng_r = 0.95 * sf
     for sign in [1, -1]:
-        circ = plt.Circle((sign * eng_y, -fh * 0.15),
-                           eng_r, facecolor=color, alpha=0.25,
-                           edgecolor=color, linewidth=0.8)
+        circ = plt.Circle(
+            (sign * eng_y, -fh * 0.15), eng_r, facecolor=color, alpha=0.25, edgecolor=color, linewidth=0.8
+        )
         ax.add_patch(circ)
 
     ax.set_aspect("equal")
@@ -391,13 +442,20 @@ def draw_front_view(ax, p, color):
 
 def add_dim_arrow(ax, start, end, text, offset=(0, 0), fontsize=7, color="#555"):
     """Add a dimension arrow with text."""
-    ax.annotate("", xy=end, xytext=start,
-                arrowprops=dict(arrowstyle="<->", color=color, lw=0.8))
+    ax.annotate("", xy=end, xytext=start, arrowprops=dict(arrowstyle="<->", color=color, lw=0.8))
     mid_x = (start[0] + end[0]) / 2 + offset[0]
     mid_y = (start[1] + end[1]) / 2 + offset[1]
-    ax.text(mid_x, mid_y, text, fontsize=fontsize, ha="center", va="center",
-            color=color, fontweight="medium",
-            bbox=dict(facecolor="white", alpha=0.8, edgecolor="none", pad=1))
+    ax.text(
+        mid_x,
+        mid_y,
+        text,
+        fontsize=fontsize,
+        ha="center",
+        va="center",
+        color=color,
+        fontweight="medium",
+        bbox=dict(facecolor="white", alpha=0.8, edgecolor="none", pad=1),
+    )
 
 
 def plot_silhouettes(output_dir):
@@ -422,8 +480,9 @@ def plot_silhouettes(output_dir):
         # Dimension: span arrow
         semispan = p["semispan"]
         c_root = p["c_root"]
-        add_dim_arrow(ax_top, (-semispan, c_root + 2), (semispan, c_root + 2),
-                      f"span = {p['SPAN']:.1f} m", offset=(0, 1.5))
+        add_dim_arrow(
+            ax_top, (-semispan, c_root + 2), (semispan, c_root + 2), f"span = {p['SPAN']:.1f} m", offset=(0, 1.5)
+        )
 
         # Side view
         ax_side = axes[1, col_idx]
@@ -434,11 +493,9 @@ def plot_silhouettes(output_dir):
         # Dimension: length
         fl = p["FUS_LENGTH"]
         fh = p["FUS_HEIGHT"]
-        add_dim_arrow(ax_side, (0, -fh * 0.7), (fl, -fh * 0.7),
-                      f"L = {fl:.1f} m", offset=(0, -fh * 0.2))
+        add_dim_arrow(ax_side, (0, -fh * 0.7), (fl, -fh * 0.7), f"L = {fl:.1f} m", offset=(0, -fh * 0.2))
         # Dimension: height
-        add_dim_arrow(ax_side, (fl + 2, -fh / 2), (fl + 2, fh / 2),
-                      f"H = {fh:.1f} m", offset=(2.5, 0))
+        add_dim_arrow(ax_side, (fl + 2, -fh / 2), (fl + 2, fh / 2), f"H = {fh:.1f} m", offset=(2.5, 0))
 
         # Front view
         ax_front = axes[2, col_idx]
@@ -448,12 +505,12 @@ def plot_silhouettes(output_dir):
 
         # Dimension: width
         fw = p["FUS_WIDTH"]
-        add_dim_arrow(ax_front, (-fw / 2, -fh / 2 - 1.5), (fw / 2, -fh / 2 - 1.5),
-                      f"W = {fw:.1f} m", offset=(0, -1.0))
+        add_dim_arrow(ax_front, (-fw / 2, -fh / 2 - 1.5), (fw / 2, -fh / 2 - 1.5), f"W = {fw:.1f} m", offset=(0, -1.0))
         # Dimension: span on front view
         span = p["SPAN"]
-        add_dim_arrow(ax_front, (-span / 2, fh / 2 + 1.5), (span / 2, fh / 2 + 1.5),
-                      f"span = {span:.1f} m", offset=(0, 1.0))
+        add_dim_arrow(
+            ax_front, (-span / 2, fh / 2 + 1.5), (span / 2, fh / 2 + 1.5), f"span = {span:.1f} m", offset=(0, 1.0)
+        )
 
     # Set axis limits per column for consistency
     for col_idx, key in enumerate(cols):
@@ -483,18 +540,21 @@ def plot_silhouettes(output_dir):
         for ax in ax_row:
             ax.tick_params(labelsize=7)
 
-    fig.suptitle("Orthographic Silhouettes — Reference vs. Best vs. Most Different",
-                 fontsize=13, fontweight="bold", y=0.98)
+    fig.suptitle(
+        "Orthographic Silhouettes — Reference vs. Best vs. Most Different", fontsize=13, fontweight="bold", y=0.98
+    )
     plt.tight_layout(rect=[0, 0, 1, 0.96])
 
     for ext in ("pdf", "png", "svg"):
-        fig.savefig(os.path.join(output_dir, f"fig3_silhouettes.{ext}"),
-                    dpi=DPI, bbox_inches="tight", facecolor="white")
+        fig.savefig(
+            os.path.join(output_dir, f"fig3_silhouettes.{ext}"), dpi=DPI, bbox_inches="tight", facecolor="white"
+        )
     plt.close(fig)
     print("Saved fig3_silhouettes")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────
+
 
 def main():
     base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

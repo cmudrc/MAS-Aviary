@@ -76,7 +76,7 @@ DEFAULT_AVIARY_THRESHOLDS = AviaryEvalThresholds(
 class AviaryEvalClassification:
     """Result of classifying an Aviary eval run."""
 
-    result: str             # "success" | "omission" | "commission" | "sim_fail" | "eval_skipped"
+    result: str  # "success" | "omission" | "commission" | "sim_fail" | "eval_skipped"
     converged: bool
     fuel_burned_kg: float
     gtow_kg: float

@@ -19,15 +19,16 @@ from src.tools.networked_tools import PEER_TOOL_NAMES
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class DummyModel(Model):
     """Minimal model stub."""
 
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.types import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -100,6 +101,7 @@ def _make_message(agent_name, content, turn, error=None):
 
 
 # ---- Initialization tests ----------------------------------------------------
+
 
 class TestInitialize:
     def test_creates_initial_agents(self, dummy_model, worker_tools):
@@ -181,6 +183,7 @@ class TestInitialize:
 
 # ---- Prompt assembly tests ---------------------------------------------------
 
+
 class TestPromptAssembly:
     def test_soft_claiming_prompt(self, dummy_model, worker_tools):
         strategy = NetworkedStrategy()
@@ -225,6 +228,7 @@ class TestPromptAssembly:
 
 
 # ---- next_step tests ---------------------------------------------------------
+
 
 class TestNextStep:
     def _init_strategy(self, dummy_model, worker_tools, **overrides):
@@ -337,6 +341,7 @@ class TestNextStep:
 
 # ---- is_complete tests -------------------------------------------------------
 
+
 class TestIsComplete:
     def _init_strategy(self, dummy_model, worker_tools, **overrides):
         strategy = NetworkedStrategy()
@@ -387,7 +392,7 @@ class TestIsComplete:
         ]
         # next_step tracks consecutive errors internally.
         for i in range(3):
-            strategy.next_step(history[:i+1], state)
+            strategy.next_step(history[: i + 1], state)
         assert strategy.is_complete(history, state) is True
 
     def test_empty_history_not_complete(self, dummy_model, worker_tools):
@@ -411,6 +416,7 @@ class TestIsComplete:
 
 # ---- Spawned agents in rotation ----------------------------------------------
 
+
 class TestSpawnedAgentsInRotation:
     def test_spawned_agent_added_to_rotation(self, dummy_model, worker_tools):
         strategy = NetworkedStrategy()
@@ -421,6 +427,7 @@ class TestSpawnedAgentsInRotation:
 
         # Simulate spawn by directly using SpawnPeer.
         from src.tools.networked_tools import SpawnPeer
+
         spawn = SpawnPeer(strategy.context, agent_name="agent_1")
         spawn.forward("Need help with fillets")
 
@@ -448,8 +455,13 @@ class TestToggleCombinations:
     @pytest.mark.parametrize("trans_spec", _BOOL_TOGGLES)
     @pytest.mark.parametrize("predictive", _BOOL_TOGGLES)
     def test_strategy_initializes_with_all_toggle_combos(
-        self, dummy_model, worker_tools,
-        claiming, peer_mon, trans_spec, predictive,
+        self,
+        dummy_model,
+        worker_tools,
+        claiming,
+        peer_mon,
+        trans_spec,
+        predictive,
     ):
         """Strategy should initialize cleanly for all 48 toggle combos."""
         strategy = NetworkedStrategy()

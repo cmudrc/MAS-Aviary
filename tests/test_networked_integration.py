@@ -17,13 +17,14 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class DummyModel(Model):
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.models import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -84,6 +85,7 @@ def networked_config():
 
 # ---- Fast integration: basic run ---------------------------------------------
 
+
 class TestNetworkedBasicRun:
     def test_full_flow_soft_claiming(self, worker_tools, networked_config, tmp_path):
         """Strategy creates agents, rotates, terminates on TASK_COMPLETE."""
@@ -138,6 +140,7 @@ class TestNetworkedBasicRun:
 
 # ---- Blackboard interaction ---------------------------------------------------
 
+
 class TestNetworkedBlackboard:
     def test_blackboard_populated_during_run(self, worker_tools, networked_config, tmp_path):
         """After the run, blackboard should have task entry."""
@@ -157,6 +160,7 @@ class TestNetworkedBlackboard:
 
 
 # ---- Metrics computation -----------------------------------------------------
+
 
 class TestNetworkedMetrics:
     def test_metrics_from_run(self, worker_tools, networked_config, tmp_path):
@@ -186,6 +190,7 @@ class TestNetworkedMetrics:
 
 # ---- Config loading ----------------------------------------------------------
 
+
 class TestNetworkedConfig:
     def test_networked_config_loads(self):
         config = load_yaml("config/networked.yaml")
@@ -206,11 +211,13 @@ class TestNetworkedConfig:
 
     def test_strategy_loadable(self):
         from src.coordination.coordinator import _load_strategy
+
         strategy = _load_strategy("networked")
         assert isinstance(strategy, NetworkedStrategy)
 
 
 # ---- JSON export integration ------------------------------------------------
+
 
 class TestNetworkedExport:
     def test_export_round_trip(self, worker_tools, networked_config, tmp_path):
@@ -233,6 +240,7 @@ class TestNetworkedExport:
 
 # ---- Real LLM integration (slow) -------------------------------------------
 
+
 @pytest.mark.slow
 class TestNetworkedRealLLM:
     """Requires GPU + model download. Run with: pytest -m slow"""
@@ -245,12 +253,13 @@ class TestNetworkedRealLLM:
 
         logger = InstrumentationLogger({"logging": {"output_dir": str(tmp_path)}})
         coordinator = Coordinator.from_config(
-            config, logger=logger, strategy_override="networked",
+            config,
+            logger=logger,
+            strategy_override="networked",
         )
 
         result = coordinator.run(
-            "Calculate the sum of 15 and 27, then multiply the result by 2, "
-            "then verify both answers"
+            "Calculate the sum of 15 and 27, then multiply the result by 2, then verify both answers"
         )
 
         assert len(result.history) >= 2
@@ -259,6 +268,7 @@ class TestNetworkedRealLLM:
         # Export.
         path = str(tmp_path / "networked_e2e.json")
         from src.logging.exporter import export_run
+
         export_run(result.history, result.metrics, path)
 
         with open(path) as f:

@@ -10,6 +10,7 @@ from src.tools.mcp_connector import MCPConnector
 
 # ---- Helpers ---------------------------------------------------------------
 
+
 class FakeTool:
     """Minimal stand-in for a smolagents Tool discovered via MCP."""
 
@@ -50,6 +51,7 @@ def _make_config(*servers: tuple[str, str]) -> MCPConfig:
 
 
 # ---- MCPConnector ----------------------------------------------------------
+
 
 class TestMCPConnector:
     @patch("src.tools.mcp_connector.ToolCollection.from_mcp")
@@ -146,6 +148,7 @@ class TestMCPConnector:
 
 
 # ---- tool_loader real mode -------------------------------------------------
+
 
 class TestToolLoaderRealMode:
     @patch("src.tools.mcp_connector.ToolCollection.from_mcp")

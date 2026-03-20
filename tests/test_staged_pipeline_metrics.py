@@ -1,6 +1,5 @@
 """Unit tests for staged pipeline metrics computation."""
 
-
 from src.coordination.staged_pipeline_handler import StageResult
 from src.logging.staged_pipeline_metrics import (
     compute_cross_prompt_metrics,
@@ -10,8 +9,12 @@ from src.logging.staged_pipeline_metrics import (
 
 # ---- Helpers ---------------------------------------------------------------
 
+
 def _sr(
-    name: str, index: int, met: bool, *,
+    name: str,
+    index: int,
+    met: bool,
+    *,
     received_failed: bool = False,
     duration: float = 1.0,
     tokens: int = 100,
@@ -36,6 +39,7 @@ def _sr(
 
 
 # ---- Per-prompt metrics ----------------------------------------------------
+
 
 class TestPerPromptMetrics:
     def test_empty_results(self):
@@ -68,7 +72,7 @@ class TestPerPromptMetrics:
         ]
         m = compute_per_prompt_metrics(results)
         assert m["stages_completed"] == 2
-        assert abs(m["completion_rate"] - 2/3) < 0.01
+        assert abs(m["completion_rate"] - 2 / 3) < 0.01
         assert m["first_failure_stage"] == 1
 
     def test_completion_rate_computed(self):
@@ -86,7 +90,7 @@ class TestPerPromptMetrics:
             _sr("s1", 0, True),
             _sr("s2", 1, False),  # first failure
             _sr("s3", 2, False, received_failed=True),  # propagated
-            _sr("s4", 3, True, received_failed=True),   # recovered
+            _sr("s4", 3, True, received_failed=True),  # recovered
         ]
         m = compute_per_prompt_metrics(results)
         assert m["error_propagation_count"] == 1
@@ -157,6 +161,7 @@ class TestPerPromptMetrics:
 
 # ---- Error propagation analysis --------------------------------------------
 
+
 class TestErrorPropagation:
     def test_empty_results(self):
         m = compute_error_propagation([])
@@ -175,7 +180,7 @@ class TestErrorPropagation:
         results = [
             _sr("s1", 0, False),  # fail
             _sr("s2", 1, False),  # fail after fail → propagated
-            _sr("s3", 2, True),   # succeed after fail → recovered
+            _sr("s3", 2, True),  # succeed after fail → recovered
         ]
         m = compute_error_propagation(results)
         # 2 transitions where prev failed: s1→s2 (propagated), s2→s3 (recovered)
@@ -185,7 +190,7 @@ class TestErrorPropagation:
     def test_recovery_rate(self):
         results = [
             _sr("s1", 0, False),
-            _sr("s2", 1, True),   # recovered
+            _sr("s2", 1, True),  # recovered
         ]
         m = compute_error_propagation(results)
         assert m["recovery_rate"] == 1.0
@@ -237,6 +242,7 @@ class TestErrorPropagation:
 
 # ---- Cross-prompt metrics --------------------------------------------------
 
+
 class TestCrossPromptMetrics:
     def test_empty_list(self):
         m = compute_cross_prompt_metrics([])
@@ -257,12 +263,9 @@ class TestCrossPromptMetrics:
 
     def test_multiple_prompts(self):
         metrics = [
-            {"completion_rate": 1.0, "propagation_depth": 0,
-             "propagation_rate": 0.0, "recovery_rate": 0.0},
-            {"completion_rate": 0.75, "propagation_depth": 1,
-             "propagation_rate": 0.5, "recovery_rate": 0.5},
-            {"completion_rate": 0.25, "propagation_depth": 3,
-             "propagation_rate": 1.0, "recovery_rate": 0.0},
+            {"completion_rate": 1.0, "propagation_depth": 0, "propagation_rate": 0.0, "recovery_rate": 0.0},
+            {"completion_rate": 0.75, "propagation_depth": 1, "propagation_rate": 0.5, "recovery_rate": 0.5},
+            {"completion_rate": 0.25, "propagation_depth": 3, "propagation_rate": 1.0, "recovery_rate": 0.0},
         ]
         m = compute_cross_prompt_metrics(metrics)
         assert m["total_prompts"] == 3
@@ -271,26 +274,22 @@ class TestCrossPromptMetrics:
 
     def test_omission_low_completion(self):
         metrics = [
-            {"completion_rate": 0.25, "propagation_depth": 3,
-             "propagation_rate": 0.0, "recovery_rate": 0.0},
+            {"completion_rate": 0.25, "propagation_depth": 3, "propagation_rate": 0.0, "recovery_rate": 0.0},
         ]
         m = compute_cross_prompt_metrics(metrics)
         assert m["omission_error_count"] == 1
 
     def test_commission_all_met_but_propagation(self):
         metrics = [
-            {"completion_rate": 1.0, "propagation_depth": 2,
-             "propagation_rate": 0.0, "recovery_rate": 0.0},
+            {"completion_rate": 1.0, "propagation_depth": 2, "propagation_rate": 0.0, "recovery_rate": 0.0},
         ]
         m = compute_cross_prompt_metrics(metrics)
         assert m["commission_error_count"] == 1
 
     def test_mean_error_propagation_rate(self):
         metrics = [
-            {"completion_rate": 0.5, "propagation_depth": 1,
-             "propagation_rate": 0.8, "recovery_rate": 0.2},
-            {"completion_rate": 0.5, "propagation_depth": 1,
-             "propagation_rate": 0.4, "recovery_rate": 0.6},
+            {"completion_rate": 0.5, "propagation_depth": 1, "propagation_rate": 0.8, "recovery_rate": 0.2},
+            {"completion_rate": 0.5, "propagation_depth": 1, "propagation_rate": 0.4, "recovery_rate": 0.6},
         ]
         m = compute_cross_prompt_metrics(metrics)
         assert abs(m["mean_error_propagation_rate"] - 0.6) < 0.01

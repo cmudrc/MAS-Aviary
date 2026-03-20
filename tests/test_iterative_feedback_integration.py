@@ -28,6 +28,7 @@ from src.logging.logger import InstrumentationLogger
 
 # ---- Model stubs (no GPU) ---------------------------------------------------
 
+
 class _FinalAnswerModel(Model):
     """Returns a final_answer tool call so ToolCallingAgents complete in 1 step."""
 
@@ -36,8 +37,7 @@ class _FinalAnswerModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         tc = ChatMessageToolCall(
             id=f"call_{self._call_count}",
@@ -59,8 +59,7 @@ class _ErrorThenSuccessModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         if self._call_count <= self._fail_count:
             raise RuntimeError(f"Simulated failure #{self._call_count}")
@@ -76,6 +75,7 @@ class _ErrorThenSuccessModel(Model):
 
 
 # ---- Mock agents for handler tests ------------------------------------------
+
 
 class _MockAgent:
     """Agent stub returning fixed output."""
@@ -110,6 +110,7 @@ class _FailThenSucceedAgent:
 
 # ---- Minimal strategy for coordinator tests ----------------------------------
 
+
 class _LinearStrategy(CoordinationStrategy):
     """Runs agents in order, one step per call — minimal test strategy."""
 
@@ -126,13 +127,17 @@ class _LinearStrategy(CoordinationStrategy):
             self._task = state["task"]
         if self._index >= len(self._names):
             return CoordinationAction(
-                action_type="terminate", agent_name=None, input_context="",
+                action_type="terminate",
+                agent_name=None,
+                input_context="",
             )
         name = self._names[self._index]
         self._index += 1
         ctx = self._task if not history else history[-1].content
         return CoordinationAction(
-            action_type="invoke_agent", agent_name=name, input_context=ctx,
+            action_type="invoke_agent",
+            agent_name=name,
+            input_context=ctx,
         )
 
     def is_complete(self, history, state):
@@ -140,6 +145,7 @@ class _LinearStrategy(CoordinationStrategy):
 
 
 # ---- Handler-level integration tests (fast) ----------------------------------
+
 
 class TestHandlerIntegration:
     """Test the handler with mock agents — no coordinator, no GPU."""
@@ -149,7 +155,8 @@ class TestHandlerIntegration:
         agents = {"a1": _MockAgent("success")}
         msgs = handler.execute(
             [Assignment(agent_name="a1", task="Do something")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 1
         assert msgs[0].content == "success"
@@ -158,15 +165,18 @@ class TestHandlerIntegration:
         assert metrics["final_outcome"] == "success"
 
     def test_retry_then_succeed_with_metrics(self):
-        handler = IterativeFeedbackHandler({
-            "max_retries": 5,
-            "aspiration_mode": "tool_success",
-        })
+        handler = IterativeFeedbackHandler(
+            {
+                "max_retries": 5,
+                "aspiration_mode": "tool_success",
+            }
+        )
         agent = _FailThenSucceedAgent(fail_count=2, success="recovered")
         agents = {"a1": agent}
         msgs = handler.execute(
             [Assignment(agent_name="a1", task="Retry test")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 3  # 2 failures + 1 success
         assert msgs[-1].content == "recovered"
@@ -186,7 +196,8 @@ class TestHandlerIntegration:
                 Assignment(agent_name="fail_agent", task="Hard task"),
                 Assignment(agent_name="next_agent", task="Continue"),
             ],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # fail_agent: 3 attempts, next_agent: 1 attempt = 4 total messages
         assert len(msgs) == 4
@@ -206,7 +217,8 @@ class TestHandlerIntegration:
                 Assignment(agent_name="executor", task="Execute the plan"),
                 Assignment(agent_name="reviewer", task="Review results"),
             ],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # planner: 1, executor: 2 (1 fail + 1 success), stops at TASK_COMPLETE
         # Total should be 3 (planner + executor fail + executor success)
@@ -226,7 +238,8 @@ class TestHandlerIntegration:
                 Assignment(agent_name="a1", task="T1"),
                 Assignment(agent_name="a2", task="T2"),
             ],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         prompt_metrics = compute_per_prompt_metrics(handler.attempt_histories)
         assert prompt_metrics["total_attempts_all_agents"] == 3  # 1 + 2
@@ -235,6 +248,7 @@ class TestHandlerIntegration:
 
 
 # ---- Coordinator-level integration tests (fast) ------------------------------
+
 
 class TestCoordinatorWithHandler:
     """Test handler wired through the Coordinator."""
@@ -304,16 +318,17 @@ class TestCoordinatorWithHandler:
 
 # ---- Ambidexterity / escalation end-to-end -----------------------------------
 
+
 class TestMetricsEndToEnd:
     def test_ambidexterity_from_handler(self):
         handler = IterativeFeedbackHandler({"max_retries": 4})
         # Agent that always fails with different outputs.
-        responses = iter(["alpha beta gamma", "delta epsilon zeta",
-                          "eta theta iota", "kappa lambda mu"])
+        responses = iter(["alpha beta gamma", "delta epsilon zeta", "eta theta iota", "kappa lambda mu"])
 
         class _VaryingAgent:
             tools = {"tool": True}
             calls = []
+
             def run(self, ctx):
                 self.calls.append(ctx)
                 raise RuntimeError(next(responses))
@@ -321,10 +336,12 @@ class TestMetricsEndToEnd:
         agents = {"a1": _VaryingAgent()}
         handler.execute(
             [Assignment(agent_name="a1", task="T")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         amb = compute_ambidexterity(
-            handler.attempt_histories[0], similarity_method="jaccard",
+            handler.attempt_histories[0],
+            similarity_method="jaccard",
         )
         assert amb.get("score") is not None or amb.get("ambidexterity_score") is not None
 
@@ -334,6 +351,7 @@ class TestMetricsEndToEnd:
         class _SameFailAgent:
             tools = {"tool": True}
             calls = []
+
             def run(self, ctx):
                 self.calls.append(ctx)
                 raise RuntimeError("same error every time")
@@ -341,7 +359,8 @@ class TestMetricsEndToEnd:
         agents = {"a1": _SameFailAgent()}
         handler.execute(
             [Assignment(agent_name="a1", task="T")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         esc = compute_escalation(
             handler.attempt_histories[0],
@@ -354,6 +373,7 @@ class TestMetricsEndToEnd:
 
 
 # ---- Real LLM integration test (slow) ----------------------------------------
+
 
 @pytest.mark.slow
 class TestRealLLMIntegration:
@@ -373,6 +393,7 @@ class TestRealLLMIntegration:
 
         # Build sequential strategy.
         from src.coordination.strategies.sequential import SequentialStrategy
+
         strategy = SequentialStrategy()
 
         agents: dict = {}
@@ -387,11 +408,13 @@ class TestRealLLMIntegration:
             "_model": model,
         }
 
-        handler = IterativeFeedbackHandler({
-            "max_retries": 3,
-            "aspiration_mode": "tool_success",
-            "human_feedback_mode": "none",
-        })
+        handler = IterativeFeedbackHandler(
+            {
+                "max_retries": 3,
+                "aspiration_mode": "tool_success",
+                "human_feedback_mode": "none",
+            }
+        )
 
         logger = InstrumentationLogger()
         coord = Coordinator(

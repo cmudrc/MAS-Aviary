@@ -7,18 +7,20 @@ from dataclasses import dataclass, field
 @dataclass
 class CoordinationAction:
     """Describes what the coordinator should do next."""
-    action_type: str          # "invoke_agent", "terminate", "error"
-    agent_name: str | None    # which agent to run (None if terminating)
-    input_context: str        # what to pass to the agent
+
+    action_type: str  # "invoke_agent", "terminate", "error"
+    agent_name: str | None  # which agent to run (None if terminating)
+    input_context: str  # what to pass to the agent
     metadata: dict = field(default_factory=dict)
 
 
 @dataclass
 class CoordinationResult:
     """Final result of a coordination run."""
+
     final_output: str
-    history: list            # list of AgentMessage
-    metrics: dict            # computed metrics dict
+    history: list  # list of AgentMessage
+    metrics: dict  # computed metrics dict
 
 
 class CoordinationStrategy(ABC):

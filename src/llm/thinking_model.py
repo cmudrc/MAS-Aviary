@@ -247,9 +247,9 @@ class ThinkingModel(TransformersModel):
                     truncated = self._is_truncated(raw_message)
                     if truncated:
                         logger.warning(
-                            "Output truncated (attempt %d/%d) — disabling "
-                            "thinking for retry",
-                            attempt + 1, max_retries + 1,
+                            "Output truncated (attempt %d/%d) — disabling thinking for retry",
+                            attempt + 1,
+                            max_retries + 1,
                         )
                         self._set_thinking_kwarg(False)
                         # Don't append error feedback — the model just
@@ -258,7 +258,9 @@ class ThinkingModel(TransformersModel):
 
                     logger.warning(
                         "Parse failed (attempt %d/%d): %s — retrying",
-                        attempt + 1, max_retries + 1, exc,
+                        attempt + 1,
+                        max_retries + 1,
+                        exc,
                     )
                     # Append the failed assistant output and error feedback
                     # so the model can self-correct on the next attempt.
@@ -297,9 +299,9 @@ class ThinkingModel(TransformersModel):
         # the natural error-recovery loop (CMU DRC "structured failure as
         # data" pattern) instead of escalating to an unrecoverable crash.
         logger.warning(
-            "All %d retries exhausted: %s — returning raw message for "
-            "smolagents error-recovery loop",
-            max_retries + 1, last_error,
+            "All %d retries exhausted: %s — returning raw message for smolagents error-recovery loop",
+            max_retries + 1,
+            last_error,
         )
         return raw_message  # type: ignore[possibly-undefined]
 
@@ -346,10 +348,7 @@ class ThinkingModel(TransformersModel):
 
             tool_name = tool_dict.get(self.tool_name_key)
             if tool_name is None:
-                raise ValueError(
-                    f"Tool call needs a '{self.tool_name_key}' key. "
-                    f"Got keys: {list(tool_dict.keys())}"
-                )
+                raise ValueError(f"Tool call needs a '{self.tool_name_key}' key. Got keys: {list(tool_dict.keys())}")
 
             tool_arguments = tool_dict.get(self.tool_arguments_key)
             if isinstance(tool_arguments, str):
@@ -359,9 +358,7 @@ class ThinkingModel(TransformersModel):
                 ChatMessageToolCall(
                     id=str(uuid.uuid4()),
                     type="function",
-                    function=ChatMessageToolCallFunction(
-                        name=tool_name, arguments=tool_arguments
-                    ),
+                    function=ChatMessageToolCallFunction(name=tool_name, arguments=tool_arguments),
                 )
             ]
 
@@ -372,9 +369,7 @@ class ThinkingModel(TransformersModel):
         assert len(message.tool_calls) > 0, "No tool call was found in the model output"
 
         for tool_call in message.tool_calls:
-            tool_call.function.arguments = parse_json_if_needed(
-                tool_call.function.arguments
-            )
+            tool_call.function.arguments = parse_json_if_needed(tool_call.function.arguments)
         return message
 
 

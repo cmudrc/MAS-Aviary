@@ -41,9 +41,13 @@ class ResourceState:
 
 
 # States that count as "design" states for cycle counting.
-_DESIGN_STATES = frozenset({
-    "QUICK_DESIGN", "DESIGN_PLANNED", "DESIGN_DECOMPOSED",
-})
+_DESIGN_STATES = frozenset(
+    {
+        "QUICK_DESIGN",
+        "DESIGN_PLANNED",
+        "DESIGN_DECOMPOSED",
+    }
+)
 
 
 class ResourceManager:

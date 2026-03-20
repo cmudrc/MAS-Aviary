@@ -1,6 +1,5 @@
 """Tests for orchestration-specific metrics computation."""
 
-
 from src.coordination.history import AgentMessage, ToolCallRecord
 from src.logging.orchestration_metrics import (
     compute_cross_prompt_metrics,
@@ -8,6 +7,7 @@ from src.logging.orchestration_metrics import (
 )
 
 # ---- Per-prompt metrics ------------------------------------------------------
+
 
 class TestOrchestrationMetrics:
     def test_empty_messages(self):
@@ -47,12 +47,9 @@ class TestOrchestrationMetrics:
 
     def test_token_growth(self):
         msgs = [
-            AgentMessage(agent_name="orchestrator", content="x", turn_number=1,
-                         timestamp=1.0, token_count=100),
-            AgentMessage(agent_name="orchestrator", content="y", turn_number=2,
-                         timestamp=2.0, token_count=200),
-            AgentMessage(agent_name="w1", content="z", turn_number=3,
-                         timestamp=3.0, token_count=50),
+            AgentMessage(agent_name="orchestrator", content="x", turn_number=1, timestamp=1.0, token_count=100),
+            AgentMessage(agent_name="orchestrator", content="y", turn_number=2, timestamp=2.0, token_count=200),
+            AgentMessage(agent_name="w1", content="z", turn_number=3, timestamp=3.0, token_count=50),
         ]
         result = compute_orchestration_metrics(msgs)
         assert result["orchestrator_token_growth"] == [100, 200]
@@ -60,14 +57,20 @@ class TestOrchestrationMetrics:
     def test_tool_distribution(self):
         msgs = [
             AgentMessage(
-                agent_name="w1", content="x", turn_number=1, timestamp=1.0,
+                agent_name="w1",
+                content="x",
+                turn_number=1,
+                timestamp=1.0,
                 tool_calls=[
                     ToolCallRecord("calc", {}, "4", 0.1),
                     ToolCallRecord("echo", {}, "hi", 0.1),
                 ],
             ),
             AgentMessage(
-                agent_name="w2", content="y", turn_number=2, timestamp=2.0,
+                agent_name="w2",
+                content="y",
+                turn_number=2,
+                timestamp=2.0,
                 tool_calls=[ToolCallRecord("calc", {}, "5", 0.1)],
             ),
         ]
@@ -77,20 +80,16 @@ class TestOrchestrationMetrics:
 
     def test_information_ratio(self):
         msgs = [
-            AgentMessage(agent_name="orchestrator", content="x", turn_number=1,
-                         timestamp=1.0, token_count=300),
-            AgentMessage(agent_name="w1", content="y", turn_number=2,
-                         timestamp=2.0, token_count=100),
+            AgentMessage(agent_name="orchestrator", content="x", turn_number=1, timestamp=1.0, token_count=300),
+            AgentMessage(agent_name="w1", content="y", turn_number=2, timestamp=2.0, token_count=100),
         ]
         result = compute_orchestration_metrics(msgs)
         assert result["information_ratio"] == 3.0  # 300/100
 
     def test_information_ratio_no_worker_tokens(self):
         msgs = [
-            AgentMessage(agent_name="orchestrator", content="x", turn_number=1,
-                         timestamp=1.0, token_count=100),
-            AgentMessage(agent_name="w1", content="y", turn_number=2,
-                         timestamp=2.0),  # no token_count
+            AgentMessage(agent_name="orchestrator", content="x", turn_number=1, timestamp=1.0, token_count=100),
+            AgentMessage(agent_name="w1", content="y", turn_number=2, timestamp=2.0),  # no token_count
         ]
         result = compute_orchestration_metrics(msgs)
         assert result["information_ratio"] == 0.0
@@ -108,6 +107,7 @@ class TestOrchestrationMetrics:
 
 # ---- Cross-prompt metrics ----------------------------------------------------
 
+
 class TestCrossPromptMetrics:
     def test_single_prompt(self):
         prompt1 = [
@@ -120,12 +120,22 @@ class TestCrossPromptMetrics:
 
     def test_multi_prompt_scores(self):
         prompt1 = [
-            AgentMessage(agent_name="w1", content="ok", turn_number=1, timestamp=1.0,
-                         tool_calls=[ToolCallRecord("calc", {}, "4", 0.1)]),
+            AgentMessage(
+                agent_name="w1",
+                content="ok",
+                turn_number=1,
+                timestamp=1.0,
+                tool_calls=[ToolCallRecord("calc", {}, "4", 0.1)],
+            ),
         ]
         prompt2 = [
-            AgentMessage(agent_name="w1", content="ok", turn_number=1, timestamp=1.0,
-                         tool_calls=[ToolCallRecord("calc", {}, "", 0.1, error="fail")]),
+            AgentMessage(
+                agent_name="w1",
+                content="ok",
+                turn_number=1,
+                timestamp=1.0,
+                tool_calls=[ToolCallRecord("calc", {}, "", 0.1, error="fail")],
+            ),
         ]
         result = compute_cross_prompt_metrics([prompt1, prompt2])
         agent = result["per_agent"]["w1"]

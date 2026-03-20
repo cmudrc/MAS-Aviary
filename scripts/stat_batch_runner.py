@@ -43,12 +43,14 @@ import torch
 
 try:
     import wandb
+
     HAS_WANDB = True
 except ImportError:
     HAS_WANDB = False
 
 try:
     import weave
+
     HAS_WEAVE = True
 except ImportError:
     HAS_WEAVE = False
@@ -140,6 +142,7 @@ def uses_valid_params(combo_name: str) -> bool:
 # Checkpoint management
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class RunKey:
     repeat: int
@@ -170,9 +173,11 @@ def run_key(repeat: int, combo_name: str) -> str:
 # Pre-hook: programmatic MCP calls to set starting parameters
 # ---------------------------------------------------------------------------
 
+
 def _load_mcp_tools(config) -> dict:
     """Load MCP tools and return a name→tool mapping."""
     from src.tools.tool_loader import load_tools_for_agent
+
     tools = load_tools_for_agent([], config)  # empty list = load all
     return {t.name: t for t in tools}
 
@@ -183,6 +188,7 @@ def _extract_session_id(resp) -> str:
         return resp["session_id"]
     # Fall back to regex extraction from string responses
     import re
+
     m = re.search(
         r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
         str(resp),
@@ -292,6 +298,7 @@ _DEFAULT_TIMEOUT_MINUTES = 20
 # Timeout wrapper — runs run_combination with a wall-clock deadline
 # ---------------------------------------------------------------------------
 
+
 def _aggressive_gpu_cleanup():
     """Force-free all GPU memory between runs.
 
@@ -342,8 +349,13 @@ def _run_with_timeout(combo, task, config, domain, timeout_seconds, session_id=N
     def _target():
         try:
             from src.runners.batch_runner import run_combination
+
             result_box[0] = run_combination(
-                combo, task, config, domain=domain, session_id=session_id,
+                combo,
+                task,
+                config,
+                domain=domain,
+                session_id=session_id,
             )
         except Exception as e:
             error_box[0] = e
@@ -355,9 +367,7 @@ def _run_with_timeout(combo, task, config, domain, timeout_seconds, session_id=N
     if t.is_alive():
         # Force GPU cleanup even though the thread is still alive
         _aggressive_gpu_cleanup()
-        raise TimeoutError(
-            f"Run exceeded {timeout_seconds/60:.0f}m timeout"
-        )
+        raise TimeoutError(f"Run exceeded {timeout_seconds / 60:.0f}m timeout")
     if error_box[0] is not None:
         raise error_box[0]
     return result_box[0]
@@ -393,8 +403,7 @@ def run_stat_batch(
 
     # Filter to non-placeholder combos.
     _SKIP = {"placeholder"}
-    combos = [c for c in all_combos
-              if "placeholder" not in c.name and c.name not in _SKIP]
+    combos = [c for c in all_combos if "placeholder" not in c.name and c.name not in _SKIP]
     if combo_names:
         combos = [c for c in combos if c.name in combo_names]
 
@@ -415,7 +424,8 @@ def run_stat_batch(
     with open(params_file, "w") as f:
         json.dump(
             {"base_seed": base_seed, "n_repeats": n_repeats, "params": param_sets},
-            f, indent=2,
+            f,
+            indent=2,
         )
 
     if dry_run:
@@ -468,9 +478,9 @@ def run_stat_batch(
 
     run_count = 0
     for combo in combos:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"COMBO: {combo.name} (0/{n_repeats} repeats)")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         for repeat_idx in range(n_repeats):
             params = param_sets[repeat_idx]
@@ -488,8 +498,7 @@ def run_stat_batch(
                 except Exception:
                     pass
 
-            print(f"[{run_count}/{total_runs - completed - failed}] "
-                  f"repeat={repeat_idx:03d} combo={combo.name}")
+            print(f"[{run_count}/{total_runs - completed - failed}] repeat={repeat_idx:03d} combo={combo.name}")
 
             # For networked combos (except graph_routed), use pre-validated
             # params so agents don't waste steps on invalid starting points.
@@ -518,16 +527,18 @@ def run_stat_batch(
                 }
                 save_checkpoint(ckpt_path, checkpoint)
                 if wb_run:
-                    wandb.log({
-                        "repeat": repeat_idx,
-                        "combo": combo.name,
-                        "org_structure": combo.org_structure,
-                        "handler": combo.handler,
-                        "status": "failed",
-                        "error": f"pre-hook: {e}",
-                        "completed_total": len(checkpoint["completed"]),
-                        "failed_total": len(checkpoint["failed"]),
-                    })
+                    wandb.log(
+                        {
+                            "repeat": repeat_idx,
+                            "combo": combo.name,
+                            "org_structure": combo.org_structure,
+                            "handler": combo.handler,
+                            "status": "failed",
+                            "error": f"pre-hook: {e}",
+                            "completed_total": len(checkpoint["completed"]),
+                            "failed_total": len(checkpoint["failed"]),
+                        }
+                    )
                 continue
 
             task = build_task_with_session(_DEFAULT_AVIARY_TASK, session_id, params)
@@ -538,7 +549,9 @@ def run_stat_batch(
             for attempt in range(1, max_retries + 1):
                 try:
                     result = _run_with_timeout(
-                        combo, task, config,
+                        combo,
+                        task,
+                        config,
                         domain="aviary",
                         timeout_seconds=timeout_sec,
                         session_id=session_id,
@@ -582,13 +595,9 @@ def run_stat_batch(
                     if attempt == 1:
                         actual_seed = base_seed + repeat_idx
                     else:
-                        actual_seed = (
-                            base_seed + repeat_idx + (attempt - 1) * 1000
-                        )
+                        actual_seed = base_seed + repeat_idx + (attempt - 1) * 1000
                     result_dict["seed"] = actual_seed
-                    result_dict["initial_params"] = {
-                        k: v for k, v in params.items() if not k.startswith("_")
-                    }
+                    result_dict["initial_params"] = {k: v for k, v in params.items() if not k.startswith("_")}
                     result_dict["session_id"] = session_id
                     result_dict["attempt"] = attempt
 
@@ -608,9 +617,11 @@ def run_stat_batch(
                     ec = result.eval_classification or {}
                     fuel = ec.get("fuel_burned_kg", "?")
                     eval_res = ec.get("result", "?")
-                    print(f"  → {result.status} | eval={eval_res} | fuel={fuel} | "
-                          f"{result.total_turns}t | {result.duration_seconds:.0f}s "
-                          f"(attempt {attempt})")
+                    print(
+                        f"  → {result.status} | eval={eval_res} | fuel={fuel} | "
+                        f"{result.total_turns}t | {result.duration_seconds:.0f}s "
+                        f"(attempt {attempt})"
+                    )
 
                     # Log to wandb
                     if wb_run:
@@ -681,22 +692,24 @@ def run_stat_batch(
                 save_checkpoint(ckpt_path, checkpoint)
                 print(f"  FAILED after {max_retries} attempts: {last_error}")
                 if wb_run:
-                    wandb.log({
-                        "repeat": repeat_idx,
-                        "combo": combo.name,
-                        "org_structure": combo.org_structure,
-                        "handler": combo.handler,
-                        "status": "failed",
-                        "error": last_error,
-                        "attempt": max_retries,
-                        "completed_total": len(checkpoint["completed"]),
-                        "failed_total": len(checkpoint["failed"]),
-                    })
+                    wandb.log(
+                        {
+                            "repeat": repeat_idx,
+                            "combo": combo.name,
+                            "org_structure": combo.org_structure,
+                            "handler": combo.handler,
+                            "status": "failed",
+                            "error": last_error,
+                            "attempt": max_retries,
+                            "completed_total": len(checkpoint["completed"]),
+                            "failed_total": len(checkpoint["failed"]),
+                        }
+                    )
 
     # Final summary
     completed = len(checkpoint["completed"])
     failed = len(checkpoint["failed"])
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"DONE: {completed} completed, {failed} failed out of {total_runs}")
     print(f"Results: {out_path}/")
 
@@ -710,18 +723,35 @@ def run_stat_batch(
             rows = []
             for key, res in checkpoint["completed"].items():
                 ec = res.get("eval_classification") or {}
-                rows.append([
-                    res.get("repeat_index"), res.get("name"),
-                    res.get("org_structure"), res.get("handler"),
-                    res.get("status"), ec.get("result"),
-                    ec.get("fuel_burned_kg"), ec.get("gtow_kg"),
-                    ec.get("optimality_gap_pct"),
-                    res.get("duration_seconds"), res.get("total_turns"),
-                ])
+                rows.append(
+                    [
+                        res.get("repeat_index"),
+                        res.get("name"),
+                        res.get("org_structure"),
+                        res.get("handler"),
+                        res.get("status"),
+                        ec.get("result"),
+                        ec.get("fuel_burned_kg"),
+                        ec.get("gtow_kg"),
+                        ec.get("optimality_gap_pct"),
+                        res.get("duration_seconds"),
+                        res.get("total_turns"),
+                    ]
+                )
             table = wandb.Table(
-                columns=["repeat", "combo", "org", "handler", "status",
-                         "eval", "fuel_kg", "gtow_kg", "gap_pct",
-                         "duration_s", "turns"],
+                columns=[
+                    "repeat",
+                    "combo",
+                    "org",
+                    "handler",
+                    "status",
+                    "eval",
+                    "fuel_kg",
+                    "gtow_kg",
+                    "gap_pct",
+                    "duration_s",
+                    "turns",
+                ],
                 data=rows,
             )
             wandb.log({"results_table": table})
@@ -732,9 +762,18 @@ def _safe_result_dict(result) -> dict:
     """Convert CombinationResult to a JSON-safe dict (no traces)."""
     d = {}
     for field_name in [
-        "name", "org_structure", "handler", "status", "error_message",
-        "duration_seconds", "total_turns", "total_tokens", "gpu_memory_mb",
-        "eval_classification", "cross_strategy_metrics", "org_theory_metrics",
+        "name",
+        "org_structure",
+        "handler",
+        "status",
+        "error_message",
+        "duration_seconds",
+        "total_turns",
+        "total_tokens",
+        "gpu_memory_mb",
+        "eval_classification",
+        "cross_strategy_metrics",
+        "org_theory_metrics",
     ]:
         d[field_name] = getattr(result, field_name, None)
     # Include messages (without traces)
@@ -753,23 +792,25 @@ def _save_aggregate_summary(
     rows = []
     for key, result in checkpoint["completed"].items():
         ec = result.get("eval_classification") or {}
-        rows.append({
-            "repeat": result.get("repeat_index"),
-            "combo": result.get("name"),
-            "org_structure": result.get("org_structure"),
-            "handler": result.get("handler"),
-            "status": result.get("status"),
-            "eval_result": ec.get("result"),
-            "fuel_burned_kg": ec.get("fuel_burned_kg"),
-            "gtow_kg": ec.get("gtow_kg"),
-            "wing_mass_kg": ec.get("wing_mass_kg"),
-            "optimality_gap_pct": ec.get("optimality_gap_pct"),
-            "converged": ec.get("converged"),
-            "duration_seconds": result.get("duration_seconds"),
-            "total_turns": result.get("total_turns"),
-            "attempt": result.get("attempt"),
-            "seed": result.get("seed"),
-        })
+        rows.append(
+            {
+                "repeat": result.get("repeat_index"),
+                "combo": result.get("name"),
+                "org_structure": result.get("org_structure"),
+                "handler": result.get("handler"),
+                "status": result.get("status"),
+                "eval_result": ec.get("result"),
+                "fuel_burned_kg": ec.get("fuel_burned_kg"),
+                "gtow_kg": ec.get("gtow_kg"),
+                "wing_mass_kg": ec.get("wing_mass_kg"),
+                "optimality_gap_pct": ec.get("optimality_gap_pct"),
+                "converged": ec.get("converged"),
+                "duration_seconds": result.get("duration_seconds"),
+                "total_turns": result.get("total_turns"),
+                "attempt": result.get("attempt"),
+                "seed": result.get("seed"),
+            }
+        )
 
     # Save as JSON
     summary = {
@@ -788,6 +829,7 @@ def _save_aggregate_summary(
     # Save as CSV for easy analysis
     if rows:
         import csv
+
         csv_path = out_path / "stat_summary.csv"
         with open(csv_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=rows[0].keys())
@@ -800,44 +842,63 @@ def _save_aggregate_summary(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Statistical batch runner for Aviary (N repeats × 8 combos)",
     )
     parser.add_argument(
-        "--repeats", type=int, default=30,
+        "--repeats",
+        type=int,
+        default=30,
         help="Number of repeats per combination (default: 30)",
     )
     parser.add_argument(
-        "--combinations", type=str, nargs="*", default=None,
+        "--combinations",
+        type=str,
+        nargs="*",
+        default=None,
         help="Specific combination names (default: all 8 non-placeholder)",
     )
     parser.add_argument(
-        "--config", type=str, default="config/aviary_run.yaml",
+        "--config",
+        type=str,
+        default="config/aviary_run.yaml",
         help="Path to AppConfig YAML",
     )
     parser.add_argument(
-        "--output-dir", type=str, default=None,
+        "--output-dir",
+        type=str,
+        default=None,
         help="Output directory (default: logs/stat_results/{timestamp})",
     )
     parser.add_argument(
-        "--max-retries", type=int, default=3,
+        "--max-retries",
+        type=int,
+        default=3,
         help="Max retry attempts per run (default: 3)",
     )
     parser.add_argument(
-        "--base-seed", type=int, default=42,
+        "--base-seed",
+        type=int,
+        default=42,
         help="Base random seed (default: 42)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print parameter sets without running",
     )
     parser.add_argument(
-        "--timeout", type=float, default=_DEFAULT_TIMEOUT_MINUTES,
+        "--timeout",
+        type=float,
+        default=_DEFAULT_TIMEOUT_MINUTES,
         help=f"Per-run timeout in minutes (default: {_DEFAULT_TIMEOUT_MINUTES})",
     )
     parser.add_argument(
-        "--mcp-url", type=str, default=None,
+        "--mcp-url",
+        type=str,
+        default=None,
         help="MCP server URL (overrides config; e.g. http://127.0.0.1:8600/mcp)",
     )
     args = parser.parse_args()

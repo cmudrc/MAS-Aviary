@@ -76,6 +76,7 @@ class GraphDefinition:
 # Loading
 # ---------------------------------------------------------------------------
 
+
 def _load_transition(data: dict) -> GraphTransition:
     """Parse a single transition dict."""
     return GraphTransition(
@@ -156,6 +157,7 @@ def load_graph_from_yaml(path: str) -> GraphDefinition:
 # Validation
 # ---------------------------------------------------------------------------
 
+
 class GraphValidationError(Exception):
     """Raised when a graph definition fails validation."""
 
@@ -176,9 +178,7 @@ def validate_graph(graph: GraphDefinition) -> list[str]:
 
     # 1. Initial state exists.
     if graph.initial_state not in graph.states:
-        errors.append(
-            f"Initial state {graph.initial_state!r} not found in states"
-        )
+        errors.append(f"Initial state {graph.initial_state!r} not found in states")
 
     # 2. Terminal states exist.
     for ts in graph.terminal_states:
@@ -189,10 +189,7 @@ def validate_graph(graph: GraphDefinition) -> list[str]:
     for state in graph.states.values():
         for trans in state.transitions:
             if trans.target not in graph.states:
-                errors.append(
-                    f"State {state.name!r} has transition to unknown "
-                    f"state {trans.target!r}"
-                )
+                errors.append(f"State {state.name!r} has transition to unknown state {trans.target!r}")
 
     # 4. Orphan detection — every non-initial state must be reachable
     #    from at least one transition.
@@ -220,9 +217,7 @@ def validate_graph(graph: GraphDefinition) -> list[str]:
 
         terminal_reachable = any(ts in visited for ts in graph.terminal_states)
         if not terminal_reachable:
-            errors.append(
-                "No terminal state is reachable from the initial state"
-            )
+            errors.append("No terminal state is reachable from the initial state")
 
     return errors
 
@@ -232,8 +227,7 @@ def validate_graph_strict(graph: GraphDefinition) -> None:
     errors = validate_graph(graph)
     if errors:
         raise GraphValidationError(
-            f"Graph validation failed with {len(errors)} error(s):\n"
-            + "\n".join(f"  - {e}" for e in errors)
+            f"Graph validation failed with {len(errors)} error(s):\n" + "\n".join(f"  - {e}" for e in errors)
         )
 
 
@@ -299,7 +293,9 @@ def _role_match_score(role_tokens: set[str], agent_tokens: set[str]) -> float:
 
 
 def resolve_agent_for_role(
-    role: str, agents: dict, state_name: str,
+    role: str,
+    agents: dict,
+    state_name: str,
 ) -> Any:
     """Find the agent matching a role name from the agents dict.
 
@@ -362,6 +358,5 @@ def resolve_agent_for_role(
         return best_agent
 
     raise ValueError(
-        f"No agent available for role {role!r} at state {state_name!r}. "
-        f"Available agents: {list(agents.keys())}"
+        f"No agent available for role {role!r} at state {state_name!r}. Available agents: {list(agents.keys())}"
     )

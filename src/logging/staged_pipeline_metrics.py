@@ -14,6 +14,7 @@ from src.coordination.staged_pipeline_handler import StageResult
 # Per-prompt aggregate metrics
 # ---------------------------------------------------------------------------
 
+
 def compute_per_prompt_metrics(
     stage_results: list[StageResult],
 ) -> dict[str, Any]:
@@ -47,16 +48,10 @@ def compute_per_prompt_metrics(
     total_tokens = sum(r.stage_tokens for r in stage_results)
 
     # Error propagation: stages where received_failed_input AND completion NOT met.
-    error_propagation_count = sum(
-        1 for r in stage_results
-        if r.received_failed_input and not r.completion_met
-    )
+    error_propagation_count = sum(1 for r in stage_results if r.received_failed_input and not r.completion_met)
 
     # Error recovery: stages where received_failed_input AND completion MET.
-    error_recovery_count = sum(
-        1 for r in stage_results
-        if r.received_failed_input and r.completion_met
-    )
+    error_recovery_count = sum(1 for r in stage_results if r.received_failed_input and r.completion_met)
 
     # First failure stage.
     first_failure_stage: int | None = None
@@ -118,6 +113,7 @@ def _compute_propagation_depth(stage_results: list[StageResult]) -> int:
 # Error propagation analysis
 # ---------------------------------------------------------------------------
 
+
 def compute_error_propagation(
     stage_results: list[StageResult],
 ) -> dict[str, Any]:
@@ -131,9 +127,7 @@ def compute_error_propagation(
     """
     if len(stage_results) < 2:
         return {
-            "chain_length": 0 if not stage_results else (
-                0 if stage_results[0].completion_met else 1
-            ),
+            "chain_length": 0 if not stage_results else (0 if stage_results[0].completion_met else 1),
             "propagation_rate": 0.0,
             "recovery_rate": 0.0,
             "independent_failure_rate": 0.0,
@@ -142,11 +136,11 @@ def compute_error_propagation(
     chain_length = _compute_propagation_depth(stage_results)
 
     # Count conditional probabilities.
-    prev_failed_count = 0       # number of stages where prev failed
-    propagated_count = 0        # prev failed AND current failed
-    recovered_count = 0         # prev failed AND current succeeded
+    prev_failed_count = 0  # number of stages where prev failed
+    propagated_count = 0  # prev failed AND current failed
+    recovered_count = 0  # prev failed AND current succeeded
 
-    prev_succeeded_count = 0    # number of stages where prev succeeded
+    prev_succeeded_count = 0  # number of stages where prev succeeded
     independent_fail_count = 0  # prev succeeded AND current failed
 
     for i in range(1, len(stage_results)):
@@ -164,18 +158,9 @@ def compute_error_propagation(
             if not curr_met:
                 independent_fail_count += 1
 
-    propagation_rate = (
-        propagated_count / prev_failed_count
-        if prev_failed_count > 0 else 0.0
-    )
-    recovery_rate = (
-        recovered_count / prev_failed_count
-        if prev_failed_count > 0 else 0.0
-    )
-    independent_failure_rate = (
-        independent_fail_count / prev_succeeded_count
-        if prev_succeeded_count > 0 else 0.0
-    )
+    propagation_rate = propagated_count / prev_failed_count if prev_failed_count > 0 else 0.0
+    recovery_rate = recovered_count / prev_failed_count if prev_failed_count > 0 else 0.0
+    independent_failure_rate = independent_fail_count / prev_succeeded_count if prev_succeeded_count > 0 else 0.0
 
     return {
         "chain_length": chain_length,
@@ -188,6 +173,7 @@ def compute_error_propagation(
 # ---------------------------------------------------------------------------
 # Cross-prompt metrics
 # ---------------------------------------------------------------------------
+
 
 def compute_cross_prompt_metrics(
     prompt_metrics_list: list[dict],
@@ -214,19 +200,14 @@ def compute_cross_prompt_metrics(
     total = len(prompt_metrics_list)
 
     # Omission: prompts where completion_rate < 0.5 (many stages failed).
-    omissions = sum(
-        1 for m in prompt_metrics_list
-        if m.get("completion_rate", 1.0) < 0.5
-    )
+    omissions = sum(1 for m in prompt_metrics_list if m.get("completion_rate", 1.0) < 0.5)
 
     # Commission: prompts where completion_rate == 1.0 but we know from
     # external eval that the result is bad. Since we don't have external
     # eval, approximate as prompts where all completed but propagation
     # depth > 0 (some error chaining happened then recovered).
     commissions = sum(
-        1 for m in prompt_metrics_list
-        if m.get("completion_rate", 0.0) >= 1.0
-        and m.get("propagation_depth", 0) > 0
+        1 for m in prompt_metrics_list if m.get("completion_rate", 0.0) >= 1.0 and m.get("propagation_depth", 0) > 0
     )
 
     # Mean completion rate.
@@ -238,9 +219,7 @@ def compute_cross_prompt_metrics(
     mean_depth = sum(depths) / total
 
     # Mean error propagation rate (from error_propagation analysis).
-    prop_rates = [
-        m.get("propagation_rate", 0.0) for m in prompt_metrics_list
-    ]
+    prop_rates = [m.get("propagation_rate", 0.0) for m in prompt_metrics_list]
     mean_prop = sum(prop_rates) / total
 
     # Mean recovery rate.

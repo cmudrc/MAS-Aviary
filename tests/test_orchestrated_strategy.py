@@ -3,7 +3,6 @@
 No GPU needed. Uses DummyModel and mock tools throughout.
 """
 
-
 import pytest
 from smolagents import ToolCallingAgent
 from smolagents.models import Model
@@ -17,13 +16,14 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class DummyModel(Model):
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.types import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -86,6 +86,7 @@ def strategy_with_tools(orchestrator_agent, worker_tools, base_config):
 
 # ---- Initialization tests ----------------------------------------------------
 
+
 class TestInitialize:
     def test_reads_config(self, orchestrator_agent, base_config, worker_tools):
         base_config["_worker_tools"] = worker_tools
@@ -124,6 +125,7 @@ class TestInitialize:
 
 # ---- Phase 1: Team creation -------------------------------------------------
 
+
 class TestCreationPhase:
     def test_first_step_invokes_orchestrator(self, strategy_with_tools):
         action = strategy_with_tools.next_step([], {"task": "Do something"})
@@ -134,8 +136,10 @@ class TestCreationPhase:
     def test_subsequent_steps_invoke_orchestrator(self, strategy_with_tools):
         strategy_with_tools.next_step([], {"task": "Task"})
         msg = AgentMessage(
-            agent_name="orchestrator", content="Thinking...",
-            turn_number=1, timestamp=1.0,
+            agent_name="orchestrator",
+            content="Thinking...",
+            turn_number=1,
+            timestamp=1.0,
         )
         action2 = strategy_with_tools.next_step([msg], {"task": "Task"})
         assert action2.action_type == "invoke_agent"
@@ -151,7 +155,8 @@ class TestCreationPhase:
         msg = AgentMessage(
             agent_name="orchestrator",
             content=f"Team ready. {DELEGATION_COMPLETE}",
-            turn_number=1, timestamp=1.0,
+            turn_number=1,
+            timestamp=1.0,
         )
         strategy_with_tools.next_step([msg], {"task": "Task"})
         assert strategy_with_tools.phase == "execution"
@@ -167,19 +172,25 @@ class TestCreationPhase:
         strategy.context.created_agents.extend(["w1", "w2"])
         strategy.context.agents["w1"] = "placeholder"
         strategy.context.agents["w2"] = "placeholder"
-        strategy.context.assignments.extend([
-            {"agent_name": "w1", "task": "T1", "assigned_at_turn": 1},
-            {"agent_name": "w2", "task": "T2", "assigned_at_turn": 2},
-        ])
+        strategy.context.assignments.extend(
+            [
+                {"agent_name": "w1", "task": "T1", "assigned_at_turn": 1},
+                {"agent_name": "w2", "task": "T2", "assigned_at_turn": 2},
+            ]
+        )
 
         history = []
         for i in range(2):
             action = strategy.next_step(history, {"task": "Task"})
             assert action.agent_name == "orchestrator"
-            history.append(AgentMessage(
-                agent_name="orchestrator", content="working",
-                turn_number=i + 1, timestamp=float(i),
-            ))
+            history.append(
+                AgentMessage(
+                    agent_name="orchestrator",
+                    content="working",
+                    turn_number=i + 1,
+                    timestamp=float(i),
+                )
+            )
 
         # Third call exceeds max_orchestrator_turns=2 → transitions to execution.
         action = strategy.next_step(history, {"task": "Task"})
@@ -191,7 +202,8 @@ class TestCreationPhase:
         msg = AgentMessage(
             agent_name="orchestrator",
             content=DELEGATION_COMPLETE,
-            turn_number=1, timestamp=1.0,
+            turn_number=1,
+            timestamp=1.0,
         )
         action = strategy_with_tools.next_step([msg], {"task": "Task"})
         assert action.action_type == "terminate"
@@ -199,6 +211,7 @@ class TestCreationPhase:
 
 
 # ---- Phase 2: Execution (setup_only) ----------------------------------------
+
 
 class TestSetupOnlyExecution:
     def _setup_with_assignments(self, strategy_with_tools):
@@ -208,10 +221,12 @@ class TestSetupOnlyExecution:
         ctx.created_agents.extend(["w1", "w2"])
         ctx.agents["w1"] = "mock_agent_w1"
         ctx.agents["w2"] = "mock_agent_w2"
-        ctx.assignments.extend([
-            {"agent_name": "w1", "task": "Task 1", "assigned_at_turn": 1},
-            {"agent_name": "w2", "task": "Task 2", "assigned_at_turn": 2},
-        ])
+        ctx.assignments.extend(
+            [
+                {"agent_name": "w1", "task": "Task 1", "assigned_at_turn": 1},
+                {"agent_name": "w2", "task": "Task 2", "assigned_at_turn": 2},
+            ]
+        )
         # Transition to execution.
         strategy_with_tools._phase = "execution"
         return strategy_with_tools
@@ -247,6 +262,7 @@ class TestSetupOnlyExecution:
 
 
 # ---- Phase 2: Execution (active) --------------------------------------------
+
 
 class TestActiveExecution:
     def _setup_active(self, orchestrator_agent, base_config, worker_tools):
@@ -288,6 +304,7 @@ class TestActiveExecution:
 
 # ---- Information mode --------------------------------------------------------
 
+
 class TestInformationMode:
     def test_transparent_includes_full_output(self, orchestrator_agent, base_config, worker_tools):
         base_config["_worker_tools"] = worker_tools
@@ -296,8 +313,11 @@ class TestInformationMode:
         strategy.initialize({"orchestrator": orchestrator_agent}, base_config)
 
         msg = AgentMessage(
-            agent_name="worker1", content="Full detailed output here",
-            turn_number=1, timestamp=1.0, duration_seconds=2.5,
+            agent_name="worker1",
+            content="Full detailed output here",
+            turn_number=1,
+            timestamp=1.0,
+            duration_seconds=2.5,
         )
         context = strategy._format_context_for_orchestrator([msg])
         assert "Full detailed output here" in context
@@ -310,8 +330,11 @@ class TestInformationMode:
         strategy.initialize({"orchestrator": orchestrator_agent}, base_config)
 
         msg = AgentMessage(
-            agent_name="worker1", content="Detailed secret output",
-            turn_number=1, timestamp=1.0, duration_seconds=2.5,
+            agent_name="worker1",
+            content="Detailed secret output",
+            turn_number=1,
+            timestamp=1.0,
+            duration_seconds=2.5,
         )
         context = strategy._format_context_for_orchestrator([msg])
         assert "Detailed secret output" not in context
@@ -324,8 +347,11 @@ class TestInformationMode:
         strategy.initialize({"orchestrator": orchestrator_agent}, base_config)
 
         msg = AgentMessage(
-            agent_name="worker1", content="",
-            turn_number=1, timestamp=1.0, error="Something broke",
+            agent_name="worker1",
+            content="",
+            turn_number=1,
+            timestamp=1.0,
+            error="Something broke",
         )
         context = strategy._format_context_for_orchestrator([msg])
         assert "FAILED" in context
@@ -337,14 +363,18 @@ class TestInformationMode:
         strategy.initialize({"orchestrator": orchestrator_agent}, base_config)
 
         msg = AgentMessage(
-            agent_name="worker1", content="output",
-            turn_number=1, timestamp=1.0,
-            tool_calls=[ToolCallRecord(
-                tool_name="calculator_tool",
-                inputs={"expression": "2+2"},
-                output="4",
-                duration_seconds=0.1,
-            )],
+            agent_name="worker1",
+            content="output",
+            turn_number=1,
+            timestamp=1.0,
+            tool_calls=[
+                ToolCallRecord(
+                    tool_name="calculator_tool",
+                    inputs={"expression": "2+2"},
+                    output="4",
+                    duration_seconds=0.1,
+                )
+            ],
         )
         context = strategy._format_context_for_orchestrator([msg])
         assert "calculator_tool" in context
@@ -352,18 +382,25 @@ class TestInformationMode:
 
 # ---- Authority transfer ------------------------------------------------------
 
+
 class TestAuthorityTransfer:
     def test_scores_computed_correctly(self, strategy_with_tools):
         history = [
             AgentMessage(
-                agent_name="worker1", content="ok", turn_number=1, timestamp=1.0,
+                agent_name="worker1",
+                content="ok",
+                turn_number=1,
+                timestamp=1.0,
                 tool_calls=[
                     ToolCallRecord("calc", {}, "4", 0.1),
                     ToolCallRecord("calc", {}, "err", 0.1, error="failed"),
                 ],
             ),
             AgentMessage(
-                agent_name="worker1", content="ok", turn_number=2, timestamp=2.0,
+                agent_name="worker1",
+                content="ok",
+                turn_number=2,
+                timestamp=2.0,
             ),
         ]
         scores = strategy_with_tools.compute_authority_scores(history)
@@ -387,12 +424,9 @@ class TestAuthorityTransfer:
 
         # History where worker outperforms orchestrator.
         history = [
-            AgentMessage(agent_name="orchestrator", content="ok", turn_number=1,
-                         timestamp=1.0, error="had an error"),
-            AgentMessage(agent_name="best_worker", content="great", turn_number=2,
-                         timestamp=2.0),
-            AgentMessage(agent_name="best_worker", content="perfect", turn_number=3,
-                         timestamp=3.0),
+            AgentMessage(agent_name="orchestrator", content="ok", turn_number=1, timestamp=1.0, error="had an error"),
+            AgentMessage(agent_name="best_worker", content="great", turn_number=2, timestamp=2.0),
+            AgentMessage(agent_name="best_worker", content="perfect", turn_number=3, timestamp=3.0),
         ]
 
         # First prompt: not enough yet.
@@ -416,12 +450,18 @@ class TestAuthorityTransfer:
 
         # Create the manual authority agent.
         special = ToolCallingAgent(
-            tools=[], model=dummy_model, name="special_agent",
-            description="Manual authority", add_base_tools=False,
+            tools=[],
+            model=dummy_model,
+            name="special_agent",
+            description="Manual authority",
+            add_base_tools=False,
         )
         orchestrator = ToolCallingAgent(
-            tools=[], model=dummy_model, name="orchestrator",
-            description="Default orch", add_base_tools=False,
+            tools=[],
+            model=dummy_model,
+            name="orchestrator",
+            description="Default orch",
+            add_base_tools=False,
         )
         agents = {"orchestrator": orchestrator, "special_agent": special}
 
@@ -434,6 +474,7 @@ class TestAuthorityTransfer:
 
 # ---- is_complete tests -------------------------------------------------------
 
+
 class TestIsComplete:
     def test_done_phase_is_complete(self, strategy_with_tools):
         strategy_with_tools._phase = "done"
@@ -441,8 +482,10 @@ class TestIsComplete:
 
     def test_task_complete_keyword(self, strategy_with_tools):
         msg = AgentMessage(
-            agent_name="w", content="TASK_COMPLETE all done",
-            turn_number=1, timestamp=1.0,
+            agent_name="w",
+            content="TASK_COMPLETE all done",
+            turn_number=1,
+            timestamp=1.0,
         )
         assert strategy_with_tools.is_complete([msg], {}) is True
 
@@ -452,15 +495,14 @@ class TestIsComplete:
         strategy = OrchestratedStrategy()
         strategy.initialize({"orchestrator": orchestrator_agent}, base_config)
 
-        msgs = [
-            AgentMessage(agent_name="a", content="x", turn_number=i, timestamp=float(i))
-            for i in range(4)
-        ]
+        msgs = [AgentMessage(agent_name="a", content="x", turn_number=i, timestamp=float(i)) for i in range(4)]
         assert strategy.is_complete(msgs, {}) is True
 
     def test_not_complete_during_creation(self, strategy_with_tools):
         msg = AgentMessage(
-            agent_name="orchestrator", content="still thinking",
-            turn_number=1, timestamp=1.0,
+            agent_name="orchestrator",
+            content="still thinking",
+            turn_number=1,
+            timestamp=1.0,
         )
         assert strategy_with_tools.is_complete([msg], {}) is False

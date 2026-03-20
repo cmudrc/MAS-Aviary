@@ -15,23 +15,24 @@ from dataclasses import dataclass
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CompletionCriteria:
     """Definition of what "done" means for a single pipeline stage."""
 
-    type: str                          # "output_contains", "tool_attempted", "any"
-    check: str                         # specific check within the type
-    description: str = ""              # human-readable description
-    tool_name: str | None = None       # for tool_attempted type
+    type: str  # "output_contains", "tool_attempted", "any"
+    check: str  # specific check within the type
+    description: str = ""  # human-readable description
+    tool_name: str | None = None  # for tool_attempted type
 
 
 @dataclass
 class CompletionResult:
     """Result of evaluating a completion criteria against agent output."""
 
-    met: bool                          # was the criteria satisfied
-    reason: str = ""                   # why it was/wasn't met
-    evidence: str = ""                 # what was found (or not found)
+    met: bool  # was the criteria satisfied
+    reason: str = ""  # why it was/wasn't met
+    evidence: str = ""  # what was found (or not found)
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +60,7 @@ DEFAULT_VERDICT_PATTERNS: list[str] = [
 # ---------------------------------------------------------------------------
 # Evaluation
 # ---------------------------------------------------------------------------
+
 
 def evaluate_completion(
     criteria: CompletionCriteria,
@@ -116,6 +118,7 @@ def evaluate_completion(
 # Internal checkers
 # ---------------------------------------------------------------------------
 
+
 def _check_output_contains(
     check: str,
     content: str,
@@ -149,9 +152,7 @@ def _check_output_contains(
                     evidence=f"Matched pattern: {pat!r}",
                 )
         # Also check import + def/assignment heuristic.
-        if re.search(r"\bimport\b", content) and re.search(
-            r"\b(def |class |\w+\s*=)", content
-        ):
+        if re.search(r"\bimport\b", content) and re.search(r"\b(def |class |\w+\s*=)", content):
             return CompletionResult(
                 met=True,
                 reason="Python code detected via import + definition pattern",
@@ -232,6 +233,7 @@ def _check_tool_attempted(
 # ---------------------------------------------------------------------------
 # Loading from config dict
 # ---------------------------------------------------------------------------
+
 
 def load_completion_criteria(data: dict) -> CompletionCriteria:
     """Create a CompletionCriteria from a YAML-parsed dict.

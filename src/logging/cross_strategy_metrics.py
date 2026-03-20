@@ -47,6 +47,7 @@ def _extract_error_signatures(content: str) -> set[str]:
 # Core metrics
 # ---------------------------------------------------------------------------
 
+
 def compute_coordination_overhead(
     messages: list[AgentMessage],
     minimum_turns: int | None = None,
@@ -135,7 +136,9 @@ def compute_coordination_efficiency(
         Float (can be negative if redundancy + errors > 1.0).
     """
     redundancy = compute_redundancy_rate(
-        messages, similarity_threshold, similarity_method,
+        messages,
+        similarity_threshold,
+        similarity_method,
     )
     error_count = sum(1 for m in messages if _has_error(m.content) or m.error)
     error_rate = error_count / len(messages) if messages else 0.0
@@ -174,6 +177,7 @@ def compute_error_amplification(
 # All-in-one computation
 # ---------------------------------------------------------------------------
 
+
 def compute_cross_strategy_metrics(
     messages: list[AgentMessage],
     minimum_turns: int | None = None,
@@ -192,7 +196,9 @@ def compute_cross_strategy_metrics(
         Dict with all 5 metric keys.
     """
     redundancy = compute_redundancy_rate(
-        messages, similarity_threshold, similarity_method,
+        messages,
+        similarity_threshold,
+        similarity_method,
     )
     error_count = sum(1 for m in messages if _has_error(m.content) or m.error)
     error_rate = error_count / len(messages) if messages else 0.0

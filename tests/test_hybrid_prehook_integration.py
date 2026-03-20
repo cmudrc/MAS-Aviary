@@ -39,6 +39,7 @@ from scripts.stat_batch_runner import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def gpu_cleanup_between_tests():
     """Free GPU memory before and after each test to prevent OOM."""
@@ -48,10 +49,12 @@ def gpu_cleanup_between_tests():
     except Exception:
         pass
 
+
 @pytest.fixture(scope="module")
 def aviary_config():
     """Load the aviary run config."""
     from src.config.loader import load_config
+
     return load_config("config/aviary_run.yaml")
 
 
@@ -71,12 +74,14 @@ def tool_map(aviary_config):
 def aviary_combos():
     """Get the AVIARY_COMBINATIONS list."""
     from src.runners.batch_runner import AVIARY_COMBINATIONS
+
     return {c.name: c for c in AVIARY_COMBINATIONS}
 
 
 # ---------------------------------------------------------------------------
 # Pre-hook MCP tests (fast — no GPU/LLM needed)
 # ---------------------------------------------------------------------------
+
 
 class TestPrehookMCP:
     """Test that the pre-hook creates sessions and sets params via MCP."""
@@ -216,7 +221,7 @@ def _run_combo_with_prehook(combo, tool_map, config, seed=42, timeout_seconds=_T
     t.join(timeout=timeout_seconds)
 
     if t.is_alive():
-        raise TimeoutError(f"Run exceeded {timeout_seconds/60:.0f}m timeout — possible infinite loop")
+        raise TimeoutError(f"Run exceeded {timeout_seconds / 60:.0f}m timeout — possible infinite loop")
     if error_box[0] is not None:
         raise error_box[0]
 
@@ -232,9 +237,7 @@ class TestOrchestatedIterativeFeedback:
         if combo is None:
             pytest.skip("Combo not found")
 
-        result, session_id, params = _run_combo_with_prehook(
-            combo, tool_map, aviary_config, seed=42
-        )
+        result, session_id, params = _run_combo_with_prehook(combo, tool_map, aviary_config, seed=42)
 
         # Basic completion checks
         assert result is not None, "Run returned None"
@@ -244,8 +247,10 @@ class TestOrchestatedIterativeFeedback:
         # Fuel check
         ec = result.eval_classification or {}
         fuel = ec.get("fuel_burned_kg")
-        print(f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
-              f"duration={result.duration_seconds:.0f}s")
+        print(
+            f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
+            f"duration={result.duration_seconds:.0f}s"
+        )
         assert fuel is not None and fuel > 0, f"Zero or missing fuel: {fuel}"
 
         # Duration sanity check (should finish well under timeout)
@@ -261,9 +266,7 @@ class TestOrchestratedStagedPipeline:
         if combo is None:
             pytest.skip("Combo not found")
 
-        result, session_id, params = _run_combo_with_prehook(
-            combo, tool_map, aviary_config, seed=77
-        )
+        result, session_id, params = _run_combo_with_prehook(combo, tool_map, aviary_config, seed=77)
 
         assert result is not None
         assert result.status == "success", f"Run failed: {result.error_message}"
@@ -271,8 +274,10 @@ class TestOrchestratedStagedPipeline:
 
         ec = result.eval_classification or {}
         fuel = ec.get("fuel_burned_kg")
-        print(f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
-              f"duration={result.duration_seconds:.0f}s")
+        print(
+            f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
+            f"duration={result.duration_seconds:.0f}s"
+        )
         assert fuel is not None and fuel > 0, f"Zero or missing fuel: {fuel}"
 
 
@@ -293,7 +298,10 @@ class TestOrchestratedGraphRouted:
         # Use seed=42 (same as sequential/iterative_feedback tests).
         # Graph-routed needs more time: graph traversal + up to 2 signal retries.
         result, session_id, params = _run_combo_with_prehook(
-            combo, tool_map, aviary_config, seed=42,
+            combo,
+            tool_map,
+            aviary_config,
+            seed=42,
             timeout_seconds=20 * 60,  # 20 min — matches production timeout
         )
 
@@ -302,14 +310,15 @@ class TestOrchestratedGraphRouted:
 
         # The key check: should NOT have excessive turns (looping = 100+ turns)
         assert result.total_turns < 80, (
-            f"Possible looping detected: {result.total_turns} turns "
-            f"(expected <80 for a healthy run)"
+            f"Possible looping detected: {result.total_turns} turns (expected <80 for a healthy run)"
         )
 
         ec = result.eval_classification or {}
         fuel = ec.get("fuel_burned_kg")
-        print(f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
-              f"duration={result.duration_seconds:.0f}s")
+        print(
+            f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
+            f"duration={result.duration_seconds:.0f}s"
+        )
         assert fuel is not None and fuel > 0, f"Zero or missing fuel: {fuel}"
 
 
@@ -322,17 +331,17 @@ class TestSequentialStagedPipeline:
         if combo is None:
             pytest.skip("Combo not found")
 
-        result, session_id, params = _run_combo_with_prehook(
-            combo, tool_map, aviary_config, seed=42
-        )
+        result, session_id, params = _run_combo_with_prehook(combo, tool_map, aviary_config, seed=42)
 
         assert result is not None
         assert result.status == "success", f"Run failed: {result.error_message}"
 
         ec = result.eval_classification or {}
         fuel = ec.get("fuel_burned_kg")
-        print(f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
-              f"duration={result.duration_seconds:.0f}s")
+        print(
+            f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
+            f"duration={result.duration_seconds:.0f}s"
+        )
         assert fuel is not None and fuel > 0, f"Zero or missing fuel: {fuel}"
 
 
@@ -345,17 +354,17 @@ class TestNetworkedIterativeFeedback:
         if combo is None:
             pytest.skip("Combo not found")
 
-        result, session_id, params = _run_combo_with_prehook(
-            combo, tool_map, aviary_config, seed=55
-        )
+        result, session_id, params = _run_combo_with_prehook(combo, tool_map, aviary_config, seed=55)
 
         assert result is not None
         assert result.status == "success", f"Run failed: {result.error_message}"
 
         ec = result.eval_classification or {}
         fuel = ec.get("fuel_burned_kg")
-        print(f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
-              f"duration={result.duration_seconds:.0f}s")
+        print(
+            f"  Result: status={result.status}, fuel={fuel}, turns={result.total_turns}, "
+            f"duration={result.duration_seconds:.0f}s"
+        )
         # Networked may produce 0 fuel (known issue) — just check it completes
         assert result.total_turns > 0
 
@@ -370,9 +379,7 @@ class TestSessionIdPreservedInResult:
         if combo is None:
             pytest.skip("Combo not found")
 
-        result, session_id, params = _run_combo_with_prehook(
-            combo, tool_map, aviary_config, seed=42
-        )
+        result, session_id, params = _run_combo_with_prehook(combo, tool_map, aviary_config, seed=42)
 
         assert result is not None
         assert result.status == "success"

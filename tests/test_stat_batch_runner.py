@@ -22,6 +22,7 @@ from scripts.stat_batch_runner import (
 # Parameter generation
 # ---------------------------------------------------------------------------
 
+
 class TestGenerateRandomParams:
     def test_all_params_present(self):
         params = generate_random_params(seed=42)
@@ -32,17 +33,12 @@ class TestGenerateRandomParams:
     def test_params_within_range(self):
         params = generate_random_params(seed=99)
         for name, (lo, hi) in PARAM_RANGES.items():
-            assert lo <= params[name] <= hi, (
-                f"{name}={params[name]} outside [{lo}, {hi}]"
-            )
+            assert lo <= params[name] <= hi, f"{name}={params[name]} outside [{lo}, {hi}]"
 
     def test_derived_span_correct(self):
         params = generate_random_params(seed=42)
         expected = round(
-            math.sqrt(
-                params["Aircraft.Wing.ASPECT_RATIO"]
-                * params["Aircraft.Wing.AREA"]
-            ),
+            math.sqrt(params["Aircraft.Wing.ASPECT_RATIO"] * params["Aircraft.Wing.AREA"]),
             4,
         )
         assert params["_derived_span"] == expected
@@ -87,6 +83,7 @@ class TestGenerateAllParamSets:
 # Checkpoint management
 # ---------------------------------------------------------------------------
 
+
 class TestCheckpoint:
     def test_load_nonexistent(self, tmp_path):
         ckpt = load_checkpoint(tmp_path / "missing.json")
@@ -120,6 +117,7 @@ class TestRunKey:
 # Session ID extraction
 # ---------------------------------------------------------------------------
 
+
 class TestExtractSessionId:
     def test_from_dict(self):
         resp = {"success": True, "session_id": "abc-123-def"}
@@ -145,6 +143,7 @@ class TestExtractSessionId:
 # ---------------------------------------------------------------------------
 # setup_session_with_params (mocked MCP tools)
 # ---------------------------------------------------------------------------
+
 
 class TestSetupSessionWithParams:
     def _make_tool_map(self, create_resp, configure_resp=None):
@@ -173,16 +172,12 @@ class TestSetupSessionWithParams:
 
         assert result["session_id"] == "aaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
         # Should pass only settable params (no _derived_span)
-        tool_map["create_session"].forward.assert_called_once_with(
-            initial_parameters={"Aircraft.Wing.AREA": 130.0}
-        )
+        tool_map["create_session"].forward.assert_called_once_with(initial_parameters={"Aircraft.Wing.AREA": 130.0})
         # Should configure mission
         tool_map["configure_mission"].forward.assert_called_once()
 
     def test_filters_underscore_params(self):
-        tool_map = self._make_tool_map(
-            create_resp={"session_id": "11111111-2222-3333-4444-555555555555"}
-        )
+        tool_map = self._make_tool_map(create_resp={"session_id": "11111111-2222-3333-4444-555555555555"})
         params = {
             "Aircraft.Wing.AREA": 140.0,
             "Aircraft.Wing.SWEEP": 25.0,
@@ -198,9 +193,7 @@ class TestSetupSessionWithParams:
         assert "Aircraft.Wing.AREA" in passed_params
 
     def test_string_response_uuid_extraction(self):
-        tool_map = self._make_tool_map(
-            create_resp="Session 12345678-abcd-1234-abcd-123456789abc created OK"
-        )
+        tool_map = self._make_tool_map(create_resp="Session 12345678-abcd-1234-abcd-123456789abc created OK")
         result = setup_session_with_params(tool_map, {})
         assert result["session_id"] == "12345678-abcd-1234-abcd-123456789abc"
 
@@ -213,6 +206,7 @@ class TestSetupSessionWithParams:
 # ---------------------------------------------------------------------------
 # build_task_with_session
 # ---------------------------------------------------------------------------
+
 
 class TestBuildTaskWithSession:
     def test_contains_session_id(self):

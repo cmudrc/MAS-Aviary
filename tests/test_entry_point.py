@@ -12,6 +12,7 @@ from src.coordination.strategies.sequential import SequentialStrategy
 
 # ---- parse_args --------------------------------------------------------------
 
+
 class TestParseArgs:
     def test_task_only(self):
         args = parse_args(["Do something"])
@@ -34,12 +35,17 @@ class TestParseArgs:
         assert args.export == "output.json"
 
     def test_all_options(self):
-        args = parse_args([
-            "--config", "c.yaml",
-            "--strategy", "orchestrated",
-            "--export", "out.json",
-            "Big task",
-        ])
+        args = parse_args(
+            [
+                "--config",
+                "c.yaml",
+                "--strategy",
+                "orchestrated",
+                "--export",
+                "out.json",
+                "Big task",
+            ]
+        )
         assert args.config == "c.yaml"
         assert args.strategy == "orchestrated"
         assert args.export == "out.json"
@@ -51,6 +57,7 @@ class TestParseArgs:
 
 
 # ---- _load_strategy ----------------------------------------------------------
+
 
 class TestLoadStrategy:
     def test_load_sequential(self):
@@ -70,6 +77,7 @@ class TestLoadStrategy:
 
 
 # ---- main() with mocks -------------------------------------------------------
+
 
 class _MockAgent:
     """Minimal mock agent with a run() method."""
@@ -118,7 +126,9 @@ class TestMainCLI:
         mock_load_config.return_value = AppConfig()
         mock_coordinator = MagicMock()
         mock_coordinator.run.return_value = CoordinationResult(
-            final_output="done", history=[], metrics={},
+            final_output="done",
+            history=[],
+            metrics={},
         )
         mock_from_config.return_value = mock_coordinator
 
@@ -137,7 +147,9 @@ class TestMainCLI:
         mock_load_config.return_value = AppConfig()
         mock_coordinator = MagicMock()
         mock_coordinator.run.return_value = CoordinationResult(
-            final_output="exported", history=[], metrics={"total_messages": 0},
+            final_output="exported",
+            history=[],
+            metrics={"total_messages": 0},
         )
         mock_from_config.return_value = mock_coordinator
 

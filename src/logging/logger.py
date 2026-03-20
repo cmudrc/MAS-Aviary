@@ -44,11 +44,13 @@ class InstrumentationLogger:
     def compute_metrics(self) -> dict:
         """Compute aggregate metrics from the logged history."""
         from src.logging.metrics import compute_metrics
+
         return compute_metrics(self._messages)
 
     def export_json(self, path: str | None = None) -> str:
         """Export the full run log as a JSON file. Returns the file path."""
         from src.logging.exporter import export_run
+
         if path is None:
             os.makedirs(self._output_dir, exist_ok=True)
             path = os.path.join(self._output_dir, f"{self._run_id}.json")

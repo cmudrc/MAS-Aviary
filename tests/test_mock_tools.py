@@ -23,6 +23,7 @@ def _clean_log():
 
 # ---- Echo Tool ----------------------------------------------------------------
 
+
 class TestEchoTool:
     def test_is_smolagents_tool(self):
         assert isinstance(EchoTool(), Tool)
@@ -52,6 +53,7 @@ class TestEchoTool:
 
 
 # ---- Calculator Tool ----------------------------------------------------------
+
 
 class TestCalculatorTool:
     def test_is_smolagents_tool(self):
@@ -112,6 +114,7 @@ class TestCalculatorTool:
 
 # ---- State Tool ---------------------------------------------------------------
 
+
 class TestStateTool:
     def test_is_smolagents_tool(self):
         assert isinstance(StateTool(), Tool)
@@ -148,6 +151,7 @@ class TestStateTool:
 
 
 # ---- create_mock_tool factory -------------------------------------------------
+
 
 class TestCreateMockTool:
     def test_creates_echo(self):

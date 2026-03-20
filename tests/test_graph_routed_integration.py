@@ -31,6 +31,7 @@ from src.logging.logger import InstrumentationLogger
 
 # ---- Model stub (no GPU) ---------------------------------------------------
 
+
 class _FinalAnswerModel(Model):
     """Returns a final_answer tool call so ToolCallingAgents complete in 1 step."""
 
@@ -39,8 +40,7 @@ class _FinalAnswerModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         tc = ChatMessageToolCall(
             id=f"call_{self._call_count}",
@@ -54,6 +54,7 @@ class _FinalAnswerModel(Model):
 
 
 # ---- Mock agents -----------------------------------------------------------
+
 
 class _MockAgent:
     """Agent stub returning fixed output."""
@@ -104,6 +105,7 @@ class _FailOnceAgent:
 
 # ---- Minimal strategy for coordinator tests --------------------------------
 
+
 class _SingleAgentStrategy(CoordinationStrategy):
     """Invokes agents once each in order, then terminates."""
 
@@ -120,13 +122,17 @@ class _SingleAgentStrategy(CoordinationStrategy):
             self._task = state["task"]
         if self._index >= len(self._names):
             return CoordinationAction(
-                action_type="terminate", agent_name=None, input_context="",
+                action_type="terminate",
+                agent_name=None,
+                input_context="",
             )
         name = self._names[self._index]
         self._index += 1
         ctx = self._task if not history else history[-1].content
         return CoordinationAction(
-            action_type="invoke_agent", agent_name=name, input_context=ctx,
+            action_type="invoke_agent",
+            agent_name=name,
+            input_context=ctx,
         )
 
     def is_complete(self, history, state):
@@ -134,6 +140,7 @@ class _SingleAgentStrategy(CoordinationStrategy):
 
 
 # ---- Handler-level integration tests (fast) --------------------------------
+
 
 class TestHandlerIntegration:
     """Test the handler with mock agents — no coordinator, no GPU."""
@@ -171,7 +178,8 @@ class TestHandlerIntegration:
         agents = {"worker": _MockAgent("result")}
         msgs = handler.execute(
             [Assignment(agent_name="worker", task="Do something")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 1
         assert msgs[0].content == "result"
@@ -202,7 +210,9 @@ class TestHandlerIntegration:
                     "transitions": [{"condition": "always", "target": "COMPLETE"}],
                 },
                 "COMPLETE": {
-                    "agent": None, "description": "Done", "transitions": [],
+                    "agent": None,
+                    "description": "Done",
+                    "transitions": [],
                 },
             },
         }
@@ -213,7 +223,8 @@ class TestHandlerIntegration:
         }
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Build a box")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 2  # classifier + worker
         assert msgs[1].content == "quick result"
@@ -252,14 +263,17 @@ class TestHandlerIntegration:
         handler = GraphRoutedHandler({"_graph_data": graph_data, "max_transitions": 20})
         agents = {
             "coder": _SequencedAgent(["code v1", "code v2"]),
-            "executor": _SequencedAgent([
-                "execution failed SyntaxError",
-                "execution success stl produced",
-            ]),
+            "executor": _SequencedAgent(
+                [
+                    "execution failed SyntaxError",
+                    "execution success stl produced",
+                ]
+            ),
         }
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Write code")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # coder → executor (fail) → ERROR_ROUTE → coder → executor (success)
         assert len(msgs) >= 4
@@ -284,7 +298,8 @@ class TestHandlerIntegration:
         agents = {"other": _MockAgent("hi")}
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Do it")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 1
         assert msgs[0].error is not None
@@ -313,8 +328,10 @@ class TestHandlerIntegration:
             },
             "resource_budgets": {
                 "simple": {
-                    "max_passes": 6, "context_budget": 2000,
-                    "reasoning_enabled": False, "max_code_review_cycles": 1,
+                    "max_passes": 6,
+                    "context_budget": 2000,
+                    "reasoning_enabled": False,
+                    "max_code_review_cycles": 1,
                     "escalation_threshold": 2,
                 },
             },
@@ -326,7 +343,8 @@ class TestHandlerIntegration:
         }
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         pm = compute_per_prompt_metrics(handler.transition_history)
         assert pm["total_transitions"] == 2
@@ -334,7 +352,8 @@ class TestHandlerIntegration:
         assert pm["cycle_count"] == 0
 
         rq = compute_routing_quality(
-            handler.transition_history, terminal_states=["COMPLETE"],
+            handler.transition_history,
+            terminal_states=["COMPLETE"],
         )
         assert rq["routing_accuracy"] == 1.0
         assert rq["misroute_rate"] == 0.0
@@ -342,6 +361,7 @@ class TestHandlerIntegration:
     def test_config_file_loads(self):
         """graph_routed.yaml loads without error."""
         from src.config.loader import load_yaml
+
         cfg = load_yaml("config/graph_routed.yaml")
         assert "graph_routed" in cfg
         assert cfg["graph_routed"]["graph_mode"] == "predefined"
@@ -361,14 +381,17 @@ class TestHandlerIntegration:
                 "DONE": {"agent": None, "description": "Done", "transitions": []},
             },
         }
-        handler = GraphRoutedHandler({
-            "_graph_data": graph_data,
-            "internal_representations": {"enabled": True},
-        })
+        handler = GraphRoutedHandler(
+            {
+                "_graph_data": graph_data,
+                "internal_representations": {"enabled": True},
+            }
+        )
         agents = {"worker": _MockAgent("result")}
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         ctx = agents["worker"].calls[0]
         assert "WORKFLOW CONTEXT" in ctx
@@ -390,47 +413,56 @@ class TestHandlerIntegration:
                 "DONE": {"agent": None, "description": "Done", "transitions": []},
             },
         }
-        handler = GraphRoutedHandler({
-            "_graph_data": graph_data,
-            "max_transitions": 5,
-        })
+        handler = GraphRoutedHandler(
+            {
+                "_graph_data": graph_data,
+                "max_transitions": 5,
+            }
+        )
         agents = {"worker": _MockAgent("looping")}
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) <= 6  # at most 5 transitions + 1 final agent
 
     def test_llm_graph_mode_with_mock(self):
         """LLM graph mode generates and uses a valid graph."""
-        graph_json = json.dumps({
-            "initial_state": "START",
-            "terminal_states": ["END"],
-            "states": {
-                "START": {
-                    "agent": "doer",
-                    "description": "Do it",
-                    "transitions": [{"condition": "always", "target": "END"}],
+        graph_json = json.dumps(
+            {
+                "initial_state": "START",
+                "terminal_states": ["END"],
+                "states": {
+                    "START": {
+                        "agent": "doer",
+                        "description": "Do it",
+                        "transitions": [{"condition": "always", "target": "END"}],
+                    },
+                    "END": {"agent": None, "description": "Done", "transitions": []},
                 },
-                "END": {"agent": None, "description": "Done", "transitions": []},
-            },
-        })
-        handler = GraphRoutedHandler({
-            "graph_mode": "llm_generated",
-            "max_transitions": 10,
-        })
+            }
+        )
+        handler = GraphRoutedHandler(
+            {
+                "graph_mode": "llm_generated",
+                "max_transitions": 10,
+            }
+        )
         agents = {
             "graph_designer": _MockAgent(graph_json),
             "doer": _MockAgent("done by llm graph"),
         }
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert any(m.content == "done by llm graph" for m in msgs)
 
 
 # ---- Coordinator-level integration tests (fast) ----------------------------
+
 
 class TestCoordinatorWithHandler:
     """Test handler wired through the Coordinator."""
@@ -504,6 +536,7 @@ class TestCoordinatorWithHandler:
 
 # ---- Cross-prompt metrics end-to-end --------------------------------------
 
+
 class TestCrossPromptMetrics:
     def test_cross_prompt_from_multiple_runs(self):
         """Metrics computed from multiple handler runs."""
@@ -528,8 +561,10 @@ class TestCrossPromptMetrics:
             },
             "resource_budgets": {
                 "simple": {
-                    "max_passes": 6, "context_budget": 2000,
-                    "reasoning_enabled": False, "max_code_review_cycles": 1,
+                    "max_passes": 6,
+                    "context_budget": 2000,
+                    "reasoning_enabled": False,
+                    "max_code_review_cycles": 1,
                     "escalation_threshold": 2,
                 },
             },
@@ -544,7 +579,8 @@ class TestCrossPromptMetrics:
             }
             handler.execute(
                 [Assignment(agent_name="x", task=task)],
-                agents, logger=None,
+                agents,
+                logger=None,
             )
             pm = compute_per_prompt_metrics(
                 handler.transition_history,
@@ -560,6 +596,7 @@ class TestCrossPromptMetrics:
 
 
 # ---- Real LLM integration test (slow) -------------------------------------
+
 
 @pytest.mark.slow
 class TestRealLLMIntegration:
@@ -581,12 +618,18 @@ class TestRealLLMIntegration:
 
         # Create agents for the graph roles.
         classifier = ToolCallingAgent(
-            tools=tools, model=model, name="classifier",
-            add_base_tools=False, max_steps=3,
+            tools=tools,
+            model=model,
+            name="classifier",
+            add_base_tools=False,
+            max_steps=3,
         )
         worker = ToolCallingAgent(
-            tools=tools, model=model, name="worker",
-            add_base_tools=False, max_steps=5,
+            tools=tools,
+            model=model,
+            name="worker",
+            add_base_tools=False,
+            max_steps=5,
         )
 
         graph_data = {
@@ -613,38 +656,49 @@ class TestRealLLMIntegration:
                     ],
                 },
                 "COMPLETE": {
-                    "agent": None, "description": "Done", "transitions": [],
+                    "agent": None,
+                    "description": "Done",
+                    "transitions": [],
                 },
             },
             "resource_budgets": {
                 "simple": {
-                    "max_passes": 6, "context_budget": 2000,
-                    "reasoning_enabled": False, "max_code_review_cycles": 1,
+                    "max_passes": 6,
+                    "context_budget": 2000,
+                    "reasoning_enabled": False,
+                    "max_code_review_cycles": 1,
                     "escalation_threshold": 2,
                 },
                 "moderate": {
-                    "max_passes": 12, "context_budget": 3000,
-                    "reasoning_enabled": True, "max_code_review_cycles": 2,
+                    "max_passes": 12,
+                    "context_budget": 3000,
+                    "reasoning_enabled": True,
+                    "max_code_review_cycles": 2,
                     "escalation_threshold": 3,
                 },
                 "complex": {
-                    "max_passes": 20, "context_budget": 4000,
-                    "reasoning_enabled": True, "max_code_review_cycles": 3,
+                    "max_passes": 20,
+                    "context_budget": 4000,
+                    "reasoning_enabled": True,
+                    "max_code_review_cycles": 3,
                     "escalation_threshold": 4,
                 },
             },
         }
 
-        handler = GraphRoutedHandler({
-            "_graph_data": graph_data,
-            "max_transitions": 20,
-        })
+        handler = GraphRoutedHandler(
+            {
+                "_graph_data": graph_data,
+                "max_transitions": 20,
+            }
+        )
         logger = InstrumentationLogger()
 
         agents = {"classifier": classifier, "worker": worker}
         msgs = handler.execute(
             [Assignment(agent_name="classifier", task="Calculate 15 * 7")],
-            agents, logger=logger,
+            agents,
+            logger=logger,
         )
 
         assert len(msgs) >= 2  # at least classifier + worker
@@ -653,6 +707,7 @@ class TestRealLLMIntegration:
         pm = compute_per_prompt_metrics(handler.transition_history)
         assert pm["total_transitions"] >= 2
         rq = compute_routing_quality(
-            handler.transition_history, terminal_states=["COMPLETE"],
+            handler.transition_history,
+            terminal_states=["COMPLETE"],
         )
         assert rq["routing_accuracy"] > 0

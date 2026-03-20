@@ -20,15 +20,16 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class DummyModel(Model):
     """Minimal model stub."""
 
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.models import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -81,6 +82,7 @@ def _msg(agent, content, turn, error=None):
 
 # ---- Human mode initialization -----------------------------------------------
 
+
 class TestHumanModeInit:
     def test_creates_agents_from_linear(self, dummy_model, worker_tools):
         strategy = SequentialStrategy()
@@ -99,8 +101,11 @@ class TestHumanModeInit:
         strategy.initialize(agents, config)
         assert len(agents) == 5
         assert strategy.stage_order == [
-            "requirements_analyst", "system_designer",
-            "detailed_designer", "implementer", "integration_verifier",
+            "requirements_analyst",
+            "system_designer",
+            "detailed_designer",
+            "implementer",
+            "integration_verifier",
         ]
 
     def test_creates_agents_from_mbse(self, dummy_model, worker_tools):
@@ -151,10 +156,8 @@ class TestHumanModeInit:
             worker_tools,
             pipeline_template="custom",
             custom_stages=[
-                {"name": "a", "role": "Do A", "allowed_tools": [],
-                 "interface_output": "A output"},
-                {"name": "b", "role": "Do B", "allowed_tools": ["*"],
-                 "interface_output": "B output"},
+                {"name": "a", "role": "Do A", "allowed_tools": [], "interface_output": "A output"},
+                {"name": "b", "role": "Do B", "allowed_tools": ["*"], "interface_output": "B output"},
             ],
         )
         config["_model"] = dummy_model
@@ -175,6 +178,7 @@ class TestHumanModeInit:
 
 # ---- LLM mode initialization ------------------------------------------------
 
+
 class _MockPlannerModel(Model):
     """Model that returns a JSON pipeline when called."""
 
@@ -182,9 +186,9 @@ class _MockPlannerModel(Model):
         super().__init__(model_id="mock-planner")
         self._output = output
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.models import ChatMessage
+
         return ChatMessage(role="assistant", content=self._output)
 
 
@@ -210,6 +214,7 @@ class TestLLMMode:
 
 
 # ---- next_step tests ---------------------------------------------------------
+
 
 class TestNextStep:
     def _init(self, dummy_model, worker_tools, **overrides):
@@ -271,12 +276,17 @@ class TestNextStep:
 
     def test_v_model_5_stages_in_order(self, dummy_model, worker_tools):
         strategy, agents = self._init(
-            dummy_model, worker_tools, pipeline_template="v_model",
+            dummy_model,
+            worker_tools,
+            pipeline_template="v_model",
         )
         state = {"task": "Build it"}
         expected = [
-            "requirements_analyst", "system_designer",
-            "detailed_designer", "implementer", "integration_verifier",
+            "requirements_analyst",
+            "system_designer",
+            "detailed_designer",
+            "implementer",
+            "integration_verifier",
         ]
         history = []
         for i, name in enumerate(expected):
@@ -286,6 +296,7 @@ class TestNextStep:
 
 
 # ---- is_complete tests -------------------------------------------------------
+
 
 class TestIsComplete:
     def _init(self, dummy_model, worker_tools, **overrides):
@@ -325,6 +336,7 @@ class TestIsComplete:
 
 # ---- Interface validation ----------------------------------------------------
 
+
 class TestInterfaceValidation:
     def _init(self, dummy_model, worker_tools):
         strategy = SequentialStrategy()
@@ -355,14 +367,15 @@ class TestInterfaceValidation:
 
 # ---- Planner output parsing ---------------------------------------------------
 
+
 class TestParsePlannerOutput:
     def test_valid_json(self):
-        raw = json.dumps([
-            {"stage_name": "s1", "role": "Do A",
-             "allowed_tools": [], "interface_output": "Out A"},
-            {"stage_name": "s2", "role": "Do B",
-             "allowed_tools": ["*"], "interface_output": "Out B"},
-        ])
+        raw = json.dumps(
+            [
+                {"stage_name": "s1", "role": "Do A", "allowed_tools": [], "interface_output": "Out A"},
+                {"stage_name": "s2", "role": "Do B", "allowed_tools": ["*"], "interface_output": "Out B"},
+            ]
+        )
         result = _parse_planner_output(raw)
         assert len(result) == 2
         assert result[0]["stage_name"] == "s1"
@@ -397,6 +410,7 @@ class TestParsePlannerOutput:
 
 
 # ---- Interface validation helper ---------------------------------------------
+
 
 class TestValidateInterface:
     def test_non_empty_with_overlap(self):

@@ -19,6 +19,7 @@ from smolagents.models import (
 # 1. mock_model – a FinalAnswerModel that immediately returns final_answer
 # ---------------------------------------------------------------------------
 
+
 class FinalAnswerModel(Model):
     """Model that immediately returns final_answer with configurable output.
 
@@ -31,8 +32,7 @@ class FinalAnswerModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         answer = f"{self._answer} [call {self._call_count}]"
         tc = ChatMessageToolCall(
@@ -55,6 +55,7 @@ def mock_model():
 # ---------------------------------------------------------------------------
 # 2. mock_mcp_tools – list of mock Aviary MCP tools
 # ---------------------------------------------------------------------------
+
 
 class _MockMCPTool:
     """Lightweight stand-in for a smolagents MCP tool.
@@ -96,6 +97,7 @@ def mock_mcp_tools():
 # ---------------------------------------------------------------------------
 # 3. tmp_config – creates temp YAML config files for testing
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tmp_config(tmp_path):
@@ -154,15 +156,16 @@ def tmp_config(tmp_path):
 # 4. sample_result – representative Aviary simulation result dict
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture
 def sample_result():
     """Return a sample Aviary result dict with typical output values."""
     return {
-        "fuel_burn": 12345.6,       # lbm
-        "gtow": 175000.0,           # lbm  (gross takeoff weight)
-        "wing_mass": 18500.0,       # lbm
-        "range": 3500.0,            # nmi
-        "payload": 36000.0,         # lbm
+        "fuel_burn": 12345.6,  # lbm
+        "gtow": 175000.0,  # lbm  (gross takeoff weight)
+        "wing_mass": 18500.0,  # lbm
+        "range": 3500.0,  # nmi
+        "payload": 36000.0,  # lbm
         "converged": True,
         "constraints_satisfied": True,
         "objective": 12345.6,

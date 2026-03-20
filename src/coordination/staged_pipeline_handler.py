@@ -34,6 +34,7 @@ from src.logging.logger import InstrumentationLogger
 # Token count extraction helper (Fix 7)
 # ---------------------------------------------------------------------------
 
+
 def _extract_token_count(agent: Any, content: str) -> int | None:
     """Return token count from smolagents agent, or char-based estimate."""
     for attr in ("token_count", "total_tokens"):
@@ -59,9 +60,11 @@ def _extract_token_count(agent: Any, content: str) -> int | None:
         return max(1, len(content) // 4)
     return None
 
+
 # ---------------------------------------------------------------------------
 # Per-stage result record (used by metrics later)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class StageResult:
@@ -94,6 +97,7 @@ _SUMMARY_TOKEN_LIMIT = 100  # approx tokens for summary mode
 # Handler
 # ---------------------------------------------------------------------------
 
+
 class StagedPipelineHandler(ExecutionHandler):
     """Deterministic staged pipeline execution handler.
 
@@ -110,17 +114,20 @@ class StagedPipelineHandler(ExecutionHandler):
             self._context_mode = "last_only"
 
         self._include_completion_status: bool = config.get(
-            "include_completion_status", True,
+            "include_completion_status",
+            True,
         )
         self._termination_keyword: str = config.get(
-            "termination_keyword", "TASK_COMPLETE",
+            "termination_keyword",
+            "TASK_COMPLETE",
         )
 
         # TEMPORARY FLAG: abort pipeline early when a stage exhausts all its
         # validate_parameters attempts without ever getting valid=true.
         # Set to False to restore original unconditional-advance behaviour.
         self._abort_on_validation_exhaustion: bool = config.get(
-            "abort_on_validation_exhaustion", True,
+            "abort_on_validation_exhaustion",
+            True,
         )
 
         # Configurable patterns.
@@ -219,9 +226,7 @@ class StagedPipelineHandler(ExecutionHandler):
             # Use persistent cursor so stage advances across execute() calls.
             idx = self._stage_cursor + assign_idx
             turn += 1
-            stage: StageDefinition | None = (
-                pipeline.stages[idx] if idx < num_stages else None
-            )
+            stage: StageDefinition | None = pipeline.stages[idx] if idx < num_stages else None
 
             # Early-exit: if the incoming context already signals task
             # completion (e.g. task_complete written to the blackboard by
@@ -247,20 +252,20 @@ class StagedPipelineHandler(ExecutionHandler):
                 messages.append(msg)
                 if logger is not None:
                     logger.log_turn(msg)
-                stage_results.append(StageResult(
-                    stage_name=stage_name,
-                    stage_index=idx,
-                    completion_met=True,
-                    completion_reason="task_complete_detected_in_context",
-                    agent_name=assignment.agent_name,
-                ))
+                stage_results.append(
+                    StageResult(
+                        stage_name=stage_name,
+                        stage_index=idx,
+                        completion_met=True,
+                        completion_reason="task_complete_detected_in_context",
+                        agent_name=assignment.agent_name,
+                    )
+                )
                 break
 
             # Build completion criteria (use stage's or fallback to always).
             criteria = (
-                stage.completion_criteria
-                if stage is not None
-                else CompletionCriteria(type="any", check="always")
+                stage.completion_criteria if stage is not None else CompletionCriteria(type="any", check="always")
             )
 
             # Check if we received failed input from previous stage.
@@ -307,19 +312,23 @@ class StagedPipelineHandler(ExecutionHandler):
                     reason="Agent not found",
                     evidence=f"Agent '{assignment.agent_name}' not in agents dict",
                 )
-                previous_outputs.append((
-                    stage.name if stage else f"stage_{idx}",
-                    "",
-                    result,
-                ))
-                stage_results.append(StageResult(
-                    stage_name=stage.name if stage else f"stage_{idx}",
-                    stage_index=idx,
-                    completion_met=False,
-                    completion_reason="Agent not found",
-                    received_failed_input=received_failed,
-                    agent_name=assignment.agent_name,
-                ))
+                previous_outputs.append(
+                    (
+                        stage.name if stage else f"stage_{idx}",
+                        "",
+                        result,
+                    )
+                )
+                stage_results.append(
+                    StageResult(
+                        stage_name=stage.name if stage else f"stage_{idx}",
+                        stage_index=idx,
+                        completion_met=False,
+                        completion_reason="Agent not found",
+                        received_failed_input=received_failed,
+                        agent_name=assignment.agent_name,
+                    )
+                )
                 continue
 
             # Run the agent.
@@ -379,26 +388,25 @@ class StagedPipelineHandler(ExecutionHandler):
             tools_succeeded = sum(1 for tc in tool_calls if tc.error is None)
             tools_failed = sum(1 for tc in tool_calls if tc.error is not None)
 
-            stage_results.append(StageResult(
-                stage_name=stage_name,
-                stage_index=idx,
-                completion_met=comp_result.met,
-                completion_reason=comp_result.reason,
-                stage_duration=duration,
-                stage_tokens=msg.token_count or 0,
-                tools_called=tools_called,
-                tools_succeeded=tools_succeeded,
-                tools_failed=tools_failed,
-                output_length=len(content),
-                received_failed_input=received_failed,
-                agent_name=assignment.agent_name,
-            ))
+            stage_results.append(
+                StageResult(
+                    stage_name=stage_name,
+                    stage_index=idx,
+                    completion_met=comp_result.met,
+                    completion_reason=comp_result.reason,
+                    stage_duration=duration,
+                    stage_tokens=msg.token_count or 0,
+                    tools_called=tools_called,
+                    tools_succeeded=tools_succeeded,
+                    tools_failed=tools_failed,
+                    output_length=len(content),
+                    received_failed_input=received_failed,
+                    agent_name=assignment.agent_name,
+                )
+            )
 
             # Check for early termination keyword.
-            if (
-                self._termination_keyword
-                and self._termination_keyword in content
-            ):
+            if self._termination_keyword and self._termination_keyword in content:
                 break
 
             # TEMPORARY: abort if stage called validate_parameters but never
@@ -493,9 +501,7 @@ class StagedPipelineHandler(ExecutionHandler):
 
         if self._include_completion_status:
             status = "MET" if prev_result.met else "NOT MET"
-            parts.append(
-                f"COMPLETION STATUS: {status} — {prev_result.reason}"
-            )
+            parts.append(f"COMPLETION STATUS: {status} — {prev_result.reason}")
 
         parts.append("")
         parts.append("Previous stage output:")
@@ -503,10 +509,7 @@ class StagedPipelineHandler(ExecutionHandler):
 
         if not prev_result.met and self._include_completion_status:
             parts.append("")
-            parts.append(
-                "NOTE: The previous stage did not fully complete. "
-                "Work with whatever output is available."
-            )
+            parts.append("NOTE: The previous stage did not fully complete. Work with whatever output is available.")
 
     def _append_all_outputs(
         self,
@@ -522,9 +525,7 @@ class StagedPipelineHandler(ExecutionHandler):
 
             if self._include_completion_status:
                 status = "MET" if result.met else "NOT MET"
-                parts.append(
-                    f"COMPLETION STATUS: {status} — {result.reason}"
-                )
+                parts.append(f"COMPLETION STATUS: {status} — {result.reason}")
 
             parts.append("")
             parts.append(f"Stage {name} output:")
@@ -540,7 +541,7 @@ class StagedPipelineHandler(ExecutionHandler):
         for i, (name, content, result) in enumerate(previous_outputs):
             status = "MET" if result.met else "NOT MET"
             # Truncate content to approximate token limit.
-            truncated = content[:_SUMMARY_TOKEN_LIMIT * 4]
+            truncated = content[: _SUMMARY_TOKEN_LIMIT * 4]
             if len(content) > _SUMMARY_TOKEN_LIMIT * 4:
                 truncated += "..."
             parts.append(f"  Stage {i + 1} ({name}): [{status}] {truncated}")
@@ -580,6 +581,7 @@ class StagedPipelineHandler(ExecutionHandler):
     def _validation_exhausted(tool_calls: list[ToolCallRecord]) -> bool:
         """Return True if validate_parameters was called but never returned valid=true."""
         import json
+
         vp_calls = [tc for tc in tool_calls if tc.tool_name == "validate_parameters"]
         if not vp_calls:
             return False
@@ -629,11 +631,13 @@ class StagedPipelineHandler(ExecutionHandler):
             for tc in step_tool_calls:
                 name = getattr(tc, "name", "") or getattr(tc, "tool_name", "")
                 args = getattr(tc, "arguments", {}) or {}
-                tool_calls.append(ToolCallRecord(
-                    tool_name=name,
-                    inputs=args if isinstance(args, dict) else {},
-                    output=str(obs)[:2000] if obs else "",
-                    duration_seconds=0.0,
-                ))
+                tool_calls.append(
+                    ToolCallRecord(
+                        tool_name=name,
+                        inputs=args if isinstance(args, dict) else {},
+                        output=str(obs)[:2000] if obs else "",
+                        duration_seconds=0.0,
+                    )
+                )
 
         return tool_calls

@@ -43,35 +43,35 @@ COMBO_LABELS = {
 
 # Colors keyed by RAW agent name — unique per identity
 AGENT_COLORS = {
-    "orchestrator":          "#5B7FA5",
-    "mission_architect":     "#6AAB9C",
-    "aerodynamics_analyst":  "#E8A87C",
-    "weights_analyst":       "#D4A5A5",
-    "propulsion_analyst":    "#9B8EC0",
-    "simulation_executor":   "#7DB8D6",
-    "mdo_integrator":        "#C9B458",
-    "agent_1":               "#E07A5F",  # terracotta
-    "agent_2":               "#3D85C6",  # cobalt
-    "agent_3":               "#81B29A",  # seafoam
+    "orchestrator": "#5B7FA5",
+    "mission_architect": "#6AAB9C",
+    "aerodynamics_analyst": "#E8A87C",
+    "weights_analyst": "#D4A5A5",
+    "propulsion_analyst": "#9B8EC0",
+    "simulation_executor": "#7DB8D6",
+    "mdo_integrator": "#C9B458",
+    "agent_1": "#E07A5F",  # terracotta
+    "agent_2": "#3D85C6",  # cobalt
+    "agent_3": "#81B29A",  # seafoam
 }
 DEFAULT_COLOR = "#A0A0A0"
 
 TOOL_ICONS = {
-    "create_session":          "s",
-    "configure_mission":       "D",
-    "get_design_space":        "^",
+    "create_session": "s",
+    "configure_mission": "D",
+    "get_design_space": "^",
     "set_aircraft_parameters": "o",
-    "validate_parameters":     "P",
-    "run_simulation":          "*",
-    "get_results":             "X",
-    "check_constraints":       "h",
-    "write_blackboard":        "v",
-    "read_blackboard":         "<",
-    "mark_task_done":          ">",
-    "list_available_tools":    "p",
-    "create_agent":            "+",
-    "assign_task":             "1",
-    "list_graph_roles":        "2",
+    "validate_parameters": "P",
+    "run_simulation": "*",
+    "get_results": "X",
+    "check_constraints": "h",
+    "write_blackboard": "v",
+    "read_blackboard": "<",
+    "mark_task_done": ">",
+    "list_available_tools": "p",
+    "create_agent": "+",
+    "assign_task": "1",
+    "list_graph_roles": "2",
 }
 
 
@@ -90,13 +90,11 @@ def resolve_role(msg):
     if not name.startswith("agent_"):
         return name
     # Tool-based classification using official stage-gate mapping
-    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", [])
-                  if tc["tool_name"] != "final_answer"}
+    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"}
     if not tools_used:
         return "idle"
 
-    ORCHESTRATOR_TOOLS = {"list_available_tools", "create_agent", "assign_task",
-                          "list_graph_roles"}
+    ORCHESTRATOR_TOOLS = {"list_available_tools", "create_agent", "assign_task", "list_graph_roles"}
     if tools_used & ORCHESTRATOR_TOOLS:
         return "orchestrator"
     if "check_constraints" in tools_used or "mark_task_done" in tools_used:
@@ -112,8 +110,9 @@ def resolve_role(msg):
             if tc["tool_name"] == "set_aircraft_parameters":
                 params = tc.get("inputs", {}).get("parameters", {})
                 param_keys = " ".join(params.keys()) if params else ""
-                if ("Engine" in param_keys or "SCALE_FACTOR" in param_keys) \
-                        and not any(w in param_keys for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")):
+                if ("Engine" in param_keys or "SCALE_FACTOR" in param_keys) and not any(
+                    w in param_keys for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")
+                ):
                     return "propulsion_analyst"
                 return "aerodynamics_analyst"
     if "validate_parameters" in tools_used or "get_design_space" in tools_used:
@@ -153,17 +152,18 @@ def plot_sequence(key, result, output_dir):
         end_t = msg["timestamp"] - t0
         dur = msg.get("duration_seconds", 0)
         start_t = end_t - dur
-        tool_calls = [tc for tc in msg.get("tool_calls", [])
-                      if tc["tool_name"] != "final_answer"]
-        turns.append({
-            "turn": msg["turn_number"],
-            "agent": raw_name,
-            "role": role,
-            "start": start_t,
-            "end": end_t,
-            "dur": dur,
-            "tools": tool_calls,
-        })
+        tool_calls = [tc for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"]
+        turns.append(
+            {
+                "turn": msg["turn_number"],
+                "agent": raw_name,
+                "role": role,
+                "start": start_t,
+                "end": end_t,
+                "dur": dur,
+                "tools": tool_calls,
+            }
+        )
         agent_role_map.setdefault(raw_name, set()).add(role)
 
     # --- Figure setup ---
@@ -185,34 +185,52 @@ def plot_sequence(key, result, output_dir):
         is_idle = t["role"] == "idle"
 
         # Main bar
-        ax.barh(y, t["dur"], left=t["start"], height=bar_height,
-                color=color, alpha=0.40 if is_idle else 0.88,
-                edgecolor="#888" if is_idle else "#444",
-                linewidth=0.6,
-                hatch="///" if is_idle else None,
-                zorder=2)
+        ax.barh(
+            y,
+            t["dur"],
+            left=t["start"],
+            height=bar_height,
+            color=color,
+            alpha=0.40 if is_idle else 0.88,
+            edgecolor="#888" if is_idle else "#444",
+            linewidth=0.6,
+            hatch="///" if is_idle else None,
+            zorder=2,
+        )
 
         # Role label inside bar (right-aligned)
         bar_w = t["end"] - t["start"]
         if bar_w > total_duration * 0.06:
             role_label = t["role"]
-            ax.text(t["start"] + bar_w * 0.5, y, role_label,
-                    ha="center", va="center", fontsize=5.5,
-                    fontstyle="italic",
-                    color="white" if not is_idle else "#555",
-                    fontweight="medium",
-                    path_effects=[pe.withStroke(linewidth=1.5,
-                                               foreground="#333" if not is_idle else "#ccc")],
-                    zorder=5)
+            ax.text(
+                t["start"] + bar_w * 0.5,
+                y,
+                role_label,
+                ha="center",
+                va="center",
+                fontsize=5.5,
+                fontstyle="italic",
+                color="white" if not is_idle else "#555",
+                fontweight="medium",
+                path_effects=[pe.withStroke(linewidth=1.5, foreground="#333" if not is_idle else "#ccc")],
+                zorder=5,
+            )
 
         # Tool markers along top edge of bar
         n_tools = len(t["tools"])
         for j, tc in enumerate(t["tools"]):
             tx = t["start"] + (j + 0.5) * t["dur"] / max(n_tools, 1)
             marker = TOOL_ICONS.get(tc["tool_name"], ".")
-            ax.plot(tx, y - bar_height * 0.38, marker=marker,
-                    color="#222", markersize=4.5, markeredgewidth=0.4,
-                    zorder=6, alpha=0.75)
+            ax.plot(
+                tx,
+                y - bar_height * 0.38,
+                marker=marker,
+                color="#222",
+                markersize=4.5,
+                markeredgewidth=0.4,
+                zorder=6,
+                alpha=0.75,
+            )
             if tc["tool_name"] not in tool_legend:
                 tool_legend[tc["tool_name"]] = marker
 
@@ -221,12 +239,18 @@ def plot_sequence(key, result, output_dir):
             next_t = turns[i + 1]
             if t["agent"] != next_t["agent"]:
                 # Draw a thin arrow from end of this bar to start of next
-                ax.annotate("", xy=(next_t["start"], i + 1),
-                            xytext=(t["end"], i),
-                            arrowprops=dict(arrowstyle="->,head_width=0.15,head_length=0.1",
-                                            color="#999", lw=0.6,
-                                            connectionstyle="arc3,rad=0.15"),
-                            zorder=1)
+                ax.annotate(
+                    "",
+                    xy=(next_t["start"], i + 1),
+                    xytext=(t["end"], i),
+                    arrowprops=dict(
+                        arrowstyle="->,head_width=0.15,head_length=0.1",
+                        color="#999",
+                        lw=0.6,
+                        connectionstyle="arc3,rad=0.15",
+                    ),
+                    zorder=1,
+                )
 
     # --- Y-axis: turn labels with raw agent name ---
     y_labels = [f"T{t['turn']}  {t['agent']}" for t in turns]
@@ -249,19 +273,26 @@ def plot_sequence(key, result, output_dir):
     ax.set_axisbelow(True)
 
     # --- Title ---
-    subtitle = (f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
-                f"eval={eval_result}  |  {n_turns} turns  |  {total_duration:.0f}s")
-    ax.set_title(f"{label}  — Turn Sequence\n{subtitle}",
-                 fontsize=10, fontweight="bold", pad=10, loc="left")
+    subtitle = (
+        f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
+        f"eval={eval_result}  |  {n_turns} turns  |  {total_duration:.0f}s"
+    )
+    ax.set_title(f"{label}  — Turn Sequence\n{subtitle}", fontsize=10, fontweight="bold", pad=10, loc="left")
 
     # --- Agent color legend ---
     agent_patches = []
     for a in agent_order:
         c = AGENT_COLORS.get(a, DEFAULT_COLOR)
         agent_patches.append(mpatches.Patch(color=c, label=a, alpha=0.88))
-    leg1 = ax.legend(handles=agent_patches, loc="upper right", fontsize=6,
-                     framealpha=0.92, title="Agents", title_fontsize=7,
-                     ncol=min(3, len(agent_patches)))
+    leg1 = ax.legend(
+        handles=agent_patches,
+        loc="upper right",
+        fontsize=6,
+        framealpha=0.92,
+        title="Agents",
+        title_fontsize=7,
+        ncol=min(3, len(agent_patches)),
+    )
 
     # --- Role mapping box ---
     mapping_lines = []
@@ -271,24 +302,44 @@ def plot_sequence(key, result, output_dir):
             mapping_lines.append(f"{a} -> {', '.join(roles)}")
     if mapping_lines:
         mapping_text = "\n".join(mapping_lines)
-        props = dict(boxstyle="round,pad=0.4", facecolor="white",
-                     alpha=0.9, edgecolor="#ccc", linewidth=0.5)
+        props = dict(boxstyle="round,pad=0.4", facecolor="white", alpha=0.9, edgecolor="#ccc", linewidth=0.5)
         # Place in lower-left
-        ax.text(0.01, 0.01, mapping_text, transform=ax.transAxes,
-                fontsize=5, fontfamily="monospace", verticalalignment="bottom",
-                bbox=props, zorder=10)
+        ax.text(
+            0.01,
+            0.01,
+            mapping_text,
+            transform=ax.transAxes,
+            fontsize=5,
+            fontfamily="monospace",
+            verticalalignment="bottom",
+            bbox=props,
+            zorder=10,
+        )
 
     # --- Tool legend ---
     if tool_legend:
         tool_handles = []
         for tname, marker in sorted(tool_legend.items()):
-            h = plt.Line2D([0], [0], marker=marker, color="#222",
-                           linestyle="None", markersize=4,
-                           label=tname.replace("_", " "), alpha=0.75)
+            h = plt.Line2D(
+                [0],
+                [0],
+                marker=marker,
+                color="#222",
+                linestyle="None",
+                markersize=4,
+                label=tname.replace("_", " "),
+                alpha=0.75,
+            )
             tool_handles.append(h)
-        ax.legend(handles=tool_handles, loc="lower right", fontsize=5,
-                         framealpha=0.92, title="Tools", title_fontsize=6,
-                         ncol=min(3, len(tool_handles)))
+        ax.legend(
+            handles=tool_handles,
+            loc="lower right",
+            fontsize=5,
+            framealpha=0.92,
+            title="Tools",
+            title_fontsize=6,
+            ncol=min(3, len(tool_handles)),
+        )
         ax.add_artist(leg1)
 
     # --- Style ---
@@ -300,8 +351,7 @@ def plot_sequence(key, result, output_dir):
     plt.tight_layout()
 
     out_path = os.path.join(output_dir, f"{key}_sequence.png")
-    fig.savefig(out_path, dpi=600, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
+    fig.savefig(out_path, dpi=600, bbox_inches="tight", facecolor="white", edgecolor="none")
     plt.close(fig)
     print(f"  Saved: {out_path}")
 

@@ -15,6 +15,7 @@ from src.coordination.graph_routed_handler import (
 
 # ---- Mock agents -----------------------------------------------------------
 
+
 class _MockAgent:
     """Agent that returns a fixed response."""
 
@@ -77,6 +78,7 @@ class _AlwaysFailAgent:
 
 # ---- Graph data helpers ----------------------------------------------------
 
+
 def _simple_happy_path_graph() -> dict:
     """Two-state graph: START → DONE.  Simplest possible graph."""
     return {
@@ -137,13 +139,17 @@ def _classify_then_work_graph() -> dict:
         },
         "resource_budgets": {
             "simple": {
-                "max_passes": 6, "context_budget": 2000,
-                "reasoning_enabled": False, "max_code_review_cycles": 1,
+                "max_passes": 6,
+                "context_budget": 2000,
+                "reasoning_enabled": False,
+                "max_code_review_cycles": 1,
                 "escalation_threshold": 2,
             },
             "moderate": {
-                "max_passes": 12, "context_budget": 3000,
-                "reasoning_enabled": True, "max_code_review_cycles": 2,
+                "max_passes": 12,
+                "context_budget": 3000,
+                "reasoning_enabled": True,
+                "max_code_review_cycles": 2,
                 "escalation_threshold": 3,
             },
         },
@@ -188,8 +194,10 @@ def _error_routing_graph() -> dict:
         },
         "resource_budgets": {
             "simple": {
-                "max_passes": 6, "context_budget": 2000,
-                "reasoning_enabled": False, "max_code_review_cycles": 1,
+                "max_passes": 6,
+                "context_budget": 2000,
+                "reasoning_enabled": False,
+                "max_code_review_cycles": 1,
                 "escalation_threshold": 2,
             },
         },
@@ -299,13 +307,17 @@ def _escalation_graph() -> dict:
         },
         "resource_budgets": {
             "simple": {
-                "max_passes": 10, "context_budget": 2000,
-                "reasoning_enabled": False, "max_code_review_cycles": 1,
+                "max_passes": 10,
+                "context_budget": 2000,
+                "reasoning_enabled": False,
+                "max_code_review_cycles": 1,
                 "escalation_threshold": 2,
             },
             "moderate": {
-                "max_passes": 15, "context_budget": 3000,
-                "reasoning_enabled": True, "max_code_review_cycles": 2,
+                "max_passes": 15,
+                "context_budget": 3000,
+                "reasoning_enabled": True,
+                "max_code_review_cycles": 2,
                 "escalation_threshold": 3,
             },
         },
@@ -313,6 +325,7 @@ def _escalation_graph() -> dict:
 
 
 # ---- Helper to create handler from graph data -----------------------------
+
 
 def _handler_with_graph(graph_data: dict, **extra) -> GraphRoutedHandler:
     cfg = {"_graph_data": graph_data, "max_transitions": 50}
@@ -322,13 +335,15 @@ def _handler_with_graph(graph_data: dict, **extra) -> GraphRoutedHandler:
 
 # ---- Tests: Happy path -----------------------------------------------------
 
+
 class TestHappyPath:
     def test_simple_two_state_graph(self):
         handler = _handler_with_graph(_simple_happy_path_graph())
         agents = {"worker": _MockAgent("result")}
         msgs = handler.execute(
             [Assignment(agent_name="worker", task="Do X")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 1
         assert msgs[0].content == "result"
@@ -342,7 +357,8 @@ class TestHappyPath:
         }
         msgs = handler.execute(
             [Assignment(agent_name="classifier", task="Build a box")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # classifier → QUICK_WORK worker → COMPLETE
         assert len(msgs) == 2
@@ -357,7 +373,8 @@ class TestHappyPath:
         }
         msgs = handler.execute(
             [Assignment(agent_name="classifier", task="Build complex thing")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 2
         assert msgs[1].content == "detailed result"
@@ -365,19 +382,23 @@ class TestHappyPath:
 
 # ---- Tests: Error routing --------------------------------------------------
 
+
 class TestErrorRouting:
     def test_execution_failure_routes_to_error_classification(self):
         handler = _handler_with_graph(_error_routing_graph())
         agents = {
             "coder": _MockAgent("code here"),
-            "executor": _SequencedAgent([
-                "execution failed with SyntaxError",
-                "execution success, stl produced",
-            ]),
+            "executor": _SequencedAgent(
+                [
+                    "execution failed with SyntaxError",
+                    "execution success, stl produced",
+                ]
+            ),
         }
         msgs = handler.execute(
             [Assignment(agent_name="coder", task="Write code")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # coder → executor (fail) → ERROR_ROUTE → CODE → executor (success) → COMPLETE
         assert len(msgs) >= 3  # at least coder + executor fail + more
@@ -393,7 +414,8 @@ class TestErrorRouting:
         }
         msgs = handler.execute(
             [Assignment(agent_name="coder", task="Write code")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # Should have error message with SyntaxError
         error_msgs = [m for m in msgs if m.error]
@@ -401,6 +423,7 @@ class TestErrorRouting:
 
 
 # ---- Tests: Review routing -------------------------------------------------
+
 
 class TestReviewRouting:
     def test_review_passed_routes_to_execute(self):
@@ -413,7 +436,8 @@ class TestReviewRouting:
         }
         msgs = handler.execute(
             [Assignment(agent_name="coder", task="Write code")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # code → review (passed) → execute → output_review (passed) → COMPLETE
         assert len(msgs) == 4
@@ -430,7 +454,8 @@ class TestReviewRouting:
         }
         msgs = handler.execute(
             [Assignment(agent_name="coder", task="Write code")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # code → review (fail) → code → review (pass) → execute → output → COMPLETE
         assert len(msgs) >= 5
@@ -445,7 +470,8 @@ class TestReviewRouting:
         }
         msgs = handler.execute(
             [Assignment(agent_name="coder", task="Write code")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # At some point output_reviewer says minor_issues → back to CODE
         assert any(m.content == "minor_issues" for m in msgs)
@@ -460,12 +486,14 @@ class TestReviewRouting:
         }
         msgs = handler.execute(
             [Assignment(agent_name="coder", task="Write code")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert any(m.content == "major_issues" for m in msgs)
 
 
 # ---- Tests: Escalation ----------------------------------------------------
+
 
 class TestEscalation:
     def test_escalation_triggers_reclassification(self):
@@ -475,17 +503,20 @@ class TestEscalation:
         agents = {
             "classifier": _SequencedAgent(["simple", "moderate"]),
             "designer": _MockAgent("design plan"),
-            "executor": _SequencedAgent([
-                "execution failed",  # fail 1
-                "execution failed",  # fail 2
-                "execution failed",  # fail 3 (escalation should trigger)
-                "execution failed",  # after escalation
-                "execution success stl produced",  # finally
-            ]),
+            "executor": _SequencedAgent(
+                [
+                    "execution failed",  # fail 1
+                    "execution failed",  # fail 2
+                    "execution failed",  # fail 3 (escalation should trigger)
+                    "execution failed",  # after escalation
+                    "execution success stl produced",  # finally
+                ]
+            ),
         }
         handler.execute(
             [Assignment(agent_name="classifier", task="Build thing")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # classifier should have been called at least twice (initial + escalation)
         assert agents["classifier"]._index >= 2
@@ -501,7 +532,8 @@ class TestEscalation:
         }
         msgs = handler.execute(
             [Assignment(agent_name="classifier", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # Should terminate due to passes_remaining <= 0
         assert len(msgs) > 0
@@ -509,13 +541,15 @@ class TestEscalation:
 
 # ---- Tests: Agent mapping --------------------------------------------------
 
+
 class TestAgentMapping:
     def test_missing_role_reports_error(self):
         handler = _handler_with_graph(_simple_happy_path_graph())
         agents = {"other_agent": _MockAgent("hi")}  # no "worker"
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) == 1
         assert msgs[0].error is not None
@@ -526,12 +560,14 @@ class TestAgentMapping:
         agents = {"worker": _MockAgent("resolved")}
         msgs = handler.execute(
             [Assignment(agent_name="worker", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert msgs[0].content == "resolved"
 
 
 # ---- Tests: State dict updates --------------------------------------------
+
 
 class TestStateDictUpdates:
     def test_complexity_extracted_from_output(self):
@@ -542,7 +578,8 @@ class TestStateDictUpdates:
         }
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert handler._state_dict["complexity"] == "moderate"
 
@@ -556,12 +593,14 @@ class TestStateDictUpdates:
         }
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert handler._state_dict.get("review_passed") is True
 
 
 # ---- Tests: Internal representations --------------------------------------
+
 
 class TestInternalRepresentations:
     def test_mental_model_off_by_default(self):
@@ -569,7 +608,8 @@ class TestInternalRepresentations:
         agents = {"worker": _MockAgent("ok")}
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # Worker should only get task context, not workflow context
         ctx = agents["worker"].calls[0]
@@ -583,7 +623,8 @@ class TestInternalRepresentations:
         agents = {"worker": _MockAgent("ok")}
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         ctx = agents["worker"].calls[0]
         assert "WORKFLOW CONTEXT" in ctx
@@ -592,21 +633,25 @@ class TestInternalRepresentations:
 
 # ---- Tests: LLM graph mode ------------------------------------------------
 
+
 class TestLLMGraphMode:
     def test_llm_generated_valid_graph(self):
         """Mock LLM generates a valid graph."""
         graph_json = json.dumps(_simple_happy_path_graph())
-        handler = GraphRoutedHandler({
-            "graph_mode": "llm_generated",
-            "max_transitions": 10,
-        })
+        handler = GraphRoutedHandler(
+            {
+                "graph_mode": "llm_generated",
+                "max_transitions": 10,
+            }
+        )
         agents = {
             "graph_designer": _MockAgent(graph_json),
             "worker": _MockAgent("llm-graph result"),
         }
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(msgs) >= 1
         # The messages include graph_designer output and worker output
@@ -616,43 +661,52 @@ class TestLLMGraphMode:
 
     def test_llm_generated_invalid_graph_raises(self):
         """Mock LLM generates invalid JSON — should error."""
-        handler = GraphRoutedHandler({
-            "graph_mode": "llm_generated",
-            "max_transitions": 10,
-        })
+        handler = GraphRoutedHandler(
+            {
+                "graph_mode": "llm_generated",
+                "max_transitions": 10,
+            }
+        )
         agents = {
             "graph_designer": _MockAgent("not json"),
         }
         with pytest.raises(ValueError, match="valid JSON"):
             handler.execute(
                 [Assignment(agent_name="x", task="Task")],
-                agents, logger=None,
+                agents,
+                logger=None,
             )
 
     def test_missing_graph_designer_raises(self):
-        handler = GraphRoutedHandler({
-            "graph_mode": "llm_generated",
-            "max_transitions": 10,
-        })
+        handler = GraphRoutedHandler(
+            {
+                "graph_mode": "llm_generated",
+                "max_transitions": 10,
+            }
+        )
         agents = {"worker": _MockAgent("hi")}
         with pytest.raises(ValueError, match="graph_designer"):
             handler.execute(
                 [Assignment(agent_name="x", task="Task")],
-                agents, logger=None,
+                agents,
+                logger=None,
             )
 
 
 # ---- Tests: Max transitions safety valve -----------------------------------
 
+
 class TestMaxTransitions:
     def test_max_transitions_stops_execution(self):
         handler = _handler_with_graph(
-            _simple_happy_path_graph(), max_transitions=0,
+            _simple_happy_path_graph(),
+            max_transitions=0,
         )
         agents = {"worker": _MockAgent("hi")}
         msgs = handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         # With max_transitions=0, the loop body doesn't execute transitions
         # but the agent at the initial state still runs.
@@ -661,6 +715,7 @@ class TestMaxTransitions:
 
 
 # ---- Tests: Transition history ---------------------------------------------
+
 
 class TestTransitionHistory:
     def test_transitions_logged(self):
@@ -671,7 +726,8 @@ class TestTransitionHistory:
         }
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(handler.transition_history) >= 2
         # First transition: CLASSIFY → QUICK_WORK
@@ -684,7 +740,8 @@ class TestTransitionHistory:
         agents = {"worker": _MockAgent("ok")}
         handler.execute(
             [Assignment(agent_name="x", task="Task")],
-            agents, logger=None,
+            agents,
+            logger=None,
         )
         assert len(handler.transition_history) >= 1
         tr = handler.transition_history[0]
@@ -695,6 +752,7 @@ class TestTransitionHistory:
 
 
 # ---- Tests: Extraction helpers ---------------------------------------------
+
 
 class TestExtractionHelpers:
     def test_extract_complexity_simple(self):
@@ -746,6 +804,7 @@ class TestExtractionHelpers:
 
 
 # ---- Tests: Empty assignments ----------------------------------------------
+
 
 class TestEmptyAssignments:
     def test_empty_assignments(self):

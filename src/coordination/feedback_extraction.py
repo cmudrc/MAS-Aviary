@@ -37,9 +37,7 @@ class AttemptFeedback:
 
 
 # Common Python exception type patterns.
-_ERROR_TYPE_RE = re.compile(
-    r"\b([A-Z][a-zA-Z]*(?:Error|Exception|Warning|Fault))\b"
-)
+_ERROR_TYPE_RE = re.compile(r"\b([A-Z][a-zA-Z]*(?:Error|Exception|Warning|Fault))\b")
 
 
 def _extract_error_type(text: str) -> str | None:
@@ -116,9 +114,7 @@ def extract_feedback(message, attempt_number: int = 0) -> AttemptFeedback:
             if isinstance(parsed, dict) and "valid" in parsed and not parsed["valid"]:
                 val_errors = parsed.get("errors", [])
                 if val_errors:
-                    error_messages.append(
-                        f"Validation failed: {'; '.join(str(e) for e in val_errors)}"
-                    )
+                    error_messages.append(f"Validation failed: {'; '.join(str(e) for e in val_errors)}")
                 else:
                     error_messages.append("Validation failed: valid=false")
                 error_type = "ValidationError"
@@ -134,15 +130,17 @@ def extract_feedback(message, attempt_number: int = 0) -> AttemptFeedback:
         if stderr:
             all_stderr.append(stderr)
 
-        outcomes.append(ToolCallOutcome(
-            tool_name=tc.tool_name,
-            success=success,
-            return_code=rc,
-            stdout=stdout,
-            stderr=stderr,
-            error_type=error_type,
-            execution_time=tc.duration_seconds,
-        ))
+        outcomes.append(
+            ToolCallOutcome(
+                tool_name=tc.tool_name,
+                success=success,
+                return_code=rc,
+                stdout=stdout,
+                stderr=stderr,
+                error_type=error_type,
+                execution_time=tc.duration_seconds,
+            )
+        )
 
     # Also check top-level message error.
     if getattr(message, "error", None):

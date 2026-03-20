@@ -39,33 +39,51 @@ COMBO_LABELS = {
 
 # Tools grouped by stage-gate role, in pipeline order
 TOOL_GROUPS = [
-    ("Orchestrator", [
-        "list_available_tools",
-        "list_graph_roles",
-        "create_agent",
-        "assign_task",
-    ]),
-    ("Mission Architect", [
-        "create_session",
-        "configure_mission",
-    ]),
-    ("Aero / Propulsion", [
-        "get_design_space",
-        "set_aircraft_parameters",
-        "validate_parameters",
-    ]),
-    ("Simulation Executor", [
-        "run_simulation",
-        "get_results",
-    ]),
-    ("MDO Integrator", [
-        "check_constraints",
-        "mark_task_done",
-    ]),
-    ("Blackboard", [
-        "write_blackboard",
-        "read_blackboard",
-    ]),
+    (
+        "Orchestrator",
+        [
+            "list_available_tools",
+            "list_graph_roles",
+            "create_agent",
+            "assign_task",
+        ],
+    ),
+    (
+        "Mission Architect",
+        [
+            "create_session",
+            "configure_mission",
+        ],
+    ),
+    (
+        "Aero / Propulsion",
+        [
+            "get_design_space",
+            "set_aircraft_parameters",
+            "validate_parameters",
+        ],
+    ),
+    (
+        "Simulation Executor",
+        [
+            "run_simulation",
+            "get_results",
+        ],
+    ),
+    (
+        "MDO Integrator",
+        [
+            "check_constraints",
+            "mark_task_done",
+        ],
+    ),
+    (
+        "Blackboard",
+        [
+            "write_blackboard",
+            "read_blackboard",
+        ],
+    ),
 ]
 
 # Flatten to get canonical order
@@ -74,27 +92,27 @@ for _, tools in TOOL_GROUPS:
     ALL_TOOLS_ORDERED.extend(tools)
 
 AGENT_COLORS = {
-    "orchestrator":          "#5B7FA5",
-    "mission_architect":     "#6AAB9C",
-    "aerodynamics_analyst":  "#E8A87C",
-    "weights_analyst":       "#D4A5A5",
-    "propulsion_analyst":    "#9B8EC0",
-    "simulation_executor":   "#7DB8D6",
-    "mdo_integrator":        "#C9B458",
-    "agent_1":               "#E07A5F",
-    "agent_2":               "#3D85C6",
-    "agent_3":               "#81B29A",
+    "orchestrator": "#5B7FA5",
+    "mission_architect": "#6AAB9C",
+    "aerodynamics_analyst": "#E8A87C",
+    "weights_analyst": "#D4A5A5",
+    "propulsion_analyst": "#9B8EC0",
+    "simulation_executor": "#7DB8D6",
+    "mdo_integrator": "#C9B458",
+    "agent_1": "#E07A5F",
+    "agent_2": "#3D85C6",
+    "agent_3": "#81B29A",
 }
 DEFAULT_COLOR = "#A0A0A0"
 
 # Group divider colors
 GROUP_COLORS = {
-    "Orchestrator":         "#E8EDF2",
-    "Mission Architect":    "#E8F4F0",
-    "Aero / Propulsion":    "#FDF0E6",
-    "Simulation Executor":  "#E6F2F8",
-    "MDO Integrator":       "#F5F0DC",
-    "Blackboard":           "#F0ECF5",
+    "Orchestrator": "#E8EDF2",
+    "Mission Architect": "#E8F4F0",
+    "Aero / Propulsion": "#FDF0E6",
+    "Simulation Executor": "#E6F2F8",
+    "MDO Integrator": "#F5F0DC",
+    "Blackboard": "#F0ECF5",
 }
 
 
@@ -107,6 +125,7 @@ def load_batch(batch_dir):
 def find_trace_file(batch_dir):
     """Find the trace JSON file in a batch directory, if it exists."""
     import glob as globmod
+
     traces = globmod.glob(os.path.join(batch_dir, "*_trace.json"))
     return traces[0] if traces else None
 
@@ -136,13 +155,15 @@ def extract_calls_from_trace(trace_path):
                 tool_name = tc.get("name", "unknown")
                 if tool_name == "final_answer":
                     continue
-                all_steps.append({
-                    "agent": agent_name,
-                    "tool": tool_name,
-                    "start_abs": start,
-                    "dur": dur,
-                    "step_num": step.get("step_number", 0),
-                })
+                all_steps.append(
+                    {
+                        "agent": agent_name,
+                        "tool": tool_name,
+                        "start_abs": start,
+                        "dur": dur,
+                        "step_num": step.get("step_number", 0),
+                    }
+                )
 
     if not all_steps:
         return None
@@ -160,14 +181,16 @@ def extract_calls_from_trace(trace_path):
             prev_agent = s["agent"]
         if s["agent"] not in agents_seen:
             agents_seen.append(s["agent"])
-        calls.append({
-            "tool": s["tool"],
-            "agent": s["agent"],
-            "turn": turn_counter,
-            "start": s["start_abs"] - t0,
-            "end": s["start_abs"] - t0 + s["dur"],
-            "dur": s["dur"],
-        })
+        calls.append(
+            {
+                "tool": s["tool"],
+                "agent": s["agent"],
+                "turn": turn_counter,
+                "start": s["start_abs"] - t0,
+                "end": s["start_abs"] - t0 + s["dur"],
+                "dur": s["dur"],
+            }
+        )
 
     total_duration = trace.get("duration_seconds", 0)
     if not total_duration and calls:
@@ -191,8 +214,7 @@ def extract_calls_from_messages(messages):
         turn_dur = msg.get("duration_seconds", 0)
         turn_start = turn_end - turn_dur
 
-        tool_calls = [tc for tc in msg.get("tool_calls", [])
-                      if tc["tool_name"] != "final_answer"]
+        tool_calls = [tc for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"]
         n_tc = len(tool_calls)
         for j, tc in enumerate(tool_calls):
             tool_name = tc["tool_name"]
@@ -206,14 +228,16 @@ def extract_calls_from_messages(messages):
             if tc_dur > 0 and tc_dur < (tc_end - tc_start):
                 tc_start = tc_end - tc_dur
 
-            calls.append({
-                "tool": tool_name,
-                "agent": agent,
-                "turn": msg["turn_number"],
-                "start": tc_start,
-                "end": tc_end,
-                "dur": tc_end - tc_start,
-            })
+            calls.append(
+                {
+                    "tool": tool_name,
+                    "agent": agent,
+                    "turn": msg["turn_number"],
+                    "start": tc_start,
+                    "end": tc_end,
+                    "dur": tc_end - tc_start,
+                }
+            )
 
     return calls, agents_seen
 
@@ -279,16 +303,23 @@ def plot_tool_activity(key, result, output_dir, batch_dir):
     # Draw group background bands
     for group_name, y_start, y_end in group_spans:
         bg_color = GROUP_COLORS.get(group_name, "#f5f5f5")
-        ax.axhspan(y_start - 0.5, y_end - 0.5,
-                    color=bg_color, zorder=0, alpha=0.7)
+        ax.axhspan(y_start - 0.5, y_end - 0.5, color=bg_color, zorder=0, alpha=0.7)
 
     # Draw group labels on right side
     for group_name, y_start, y_end in group_spans:
         y_mid = (y_start + y_end) / 2 - 0.5
-        ax.text(total_duration * 1.07, y_mid, group_name,
-                ha="left", va="center", fontsize=8,
-                fontstyle="italic", color="#555", fontweight="medium",
-                zorder=10)
+        ax.text(
+            total_duration * 1.07,
+            y_mid,
+            group_name,
+            ha="left",
+            va="center",
+            fontsize=8,
+            fontstyle="italic",
+            color="#555",
+            fontweight="medium",
+            zorder=10,
+        )
 
     # Draw tool calls as bars
     for c in calls:
@@ -299,17 +330,32 @@ def plot_tool_activity(key, result, output_dir, batch_dir):
 
         # Bar for this tool call
         bar_w = max(c["dur"], total_duration * 0.004)  # minimum visible width
-        ax.barh(y, bar_w, left=c["start"], height=bar_height,
-                color=color, alpha=0.85,
-                edgecolor="#333", linewidth=0.4, zorder=3)
+        ax.barh(
+            y,
+            bar_w,
+            left=c["start"],
+            height=bar_height,
+            color=color,
+            alpha=0.85,
+            edgecolor="#333",
+            linewidth=0.4,
+            zorder=3,
+        )
 
         # Turn number inside bar if wide enough
         if bar_w > total_duration * 0.035:
-            ax.text(c["start"] + bar_w * 0.5, y, f"T{c['turn']}",
-                    ha="center", va="center", fontsize=7,
-                    color="white", fontweight="bold",
-                    path_effects=[pe.withStroke(linewidth=1.4, foreground="#222")],
-                    zorder=6)
+            ax.text(
+                c["start"] + bar_w * 0.5,
+                y,
+                f"T{c['turn']}",
+                ha="center",
+                va="center",
+                fontsize=7,
+                color="white",
+                fontweight="bold",
+                path_effects=[pe.withStroke(linewidth=1.4, foreground="#222")],
+                zorder=6,
+            )
 
     # Draw connection lines between consecutive tool calls per agent
     agent_calls = {}
@@ -328,14 +374,19 @@ def plot_tool_activity(key, result, output_dir, batch_dir):
             x1 = c1["end"]
             x2 = c2["start"]
             if y1 != y2:
-                ax.annotate("",
-                            xy=(x2, y2),
-                            xytext=(x1, y1),
-                            arrowprops=dict(
-                                arrowstyle="->,head_width=0.1,head_length=0.06",
-                                color=color, lw=0.5, alpha=0.35,
-                                connectionstyle="arc3,rad=0.15"),
-                            zorder=1)
+                ax.annotate(
+                    "",
+                    xy=(x2, y2),
+                    xytext=(x1, y1),
+                    arrowprops=dict(
+                        arrowstyle="->,head_width=0.1,head_length=0.06",
+                        color=color,
+                        lw=0.5,
+                        alpha=0.35,
+                        connectionstyle="arc3,rad=0.15",
+                    ),
+                    zorder=1,
+                )
 
     # --- Y-axis ---
     display_names = [t.replace("_", " ") for t in active_tools]
@@ -345,7 +396,7 @@ def plot_tool_activity(key, result, output_dir, batch_dir):
 
     # --- X-axis ---
     ax.set_xlabel("Time (seconds)", fontsize=11, fontweight="bold")
-    ax.tick_params(axis='x', labelsize=9)
+    ax.tick_params(axis="x", labelsize=9)
     ax.set_xlim(-total_duration * 0.02, total_duration * 1.18)
 
     # Grid
@@ -353,20 +404,27 @@ def plot_tool_activity(key, result, output_dir, batch_dir):
     ax.set_axisbelow(True)
 
     # --- Title ---
-    subtitle = (f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
-                f"eval={eval_result}  |  {n_turns} turns  |  "
-                f"{len(calls)} tool calls  |  {total_duration:.0f}s")
-    ax.set_title(f"{label}  — Tool Call Activity\n{subtitle}",
-                 fontsize=12, fontweight="bold", pad=10, loc="left")
+    subtitle = (
+        f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
+        f"eval={eval_result}  |  {n_turns} turns  |  "
+        f"{len(calls)} tool calls  |  {total_duration:.0f}s"
+    )
+    ax.set_title(f"{label}  — Tool Call Activity\n{subtitle}", fontsize=12, fontweight="bold", pad=10, loc="left")
 
     # --- Agent legend ---
     agent_patches = []
     for a in agents_seen:
         c = AGENT_COLORS.get(a, DEFAULT_COLOR)
         agent_patches.append(mpatches.Patch(color=c, label=a, alpha=0.85))
-    ax.legend(handles=agent_patches, loc="upper right", fontsize=8,
-              framealpha=0.92, title="Agent Identity", title_fontsize=9,
-              ncol=min(3, len(agent_patches)))
+    ax.legend(
+        handles=agent_patches,
+        loc="upper right",
+        fontsize=8,
+        framealpha=0.92,
+        title="Agent Identity",
+        title_fontsize=9,
+        ncol=min(3, len(agent_patches)),
+    )
 
     # --- Style ---
     ax.spines["top"].set_visible(False)
@@ -378,10 +436,8 @@ def plot_tool_activity(key, result, output_dir, batch_dir):
 
     out_png = os.path.join(output_dir, f"{key}_tool_activity.png")
     out_svg = os.path.join(output_dir, f"{key}_tool_activity.svg")
-    fig.savefig(out_png, dpi=600, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
-    fig.savefig(out_svg, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
+    fig.savefig(out_png, dpi=600, bbox_inches="tight", facecolor="white", edgecolor="none")
+    fig.savefig(out_svg, bbox_inches="tight", facecolor="white", edgecolor="none")
     plt.close(fig)
     print(f"  Saved: {out_png}")
     print(f"  Saved: {out_svg}")

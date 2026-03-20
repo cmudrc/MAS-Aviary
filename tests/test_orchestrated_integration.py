@@ -17,13 +17,14 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class DummyModel(Model):
     def __init__(self):
         super().__init__(model_id="dummy")
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         from smolagents.types import ChatMessage
+
         return ChatMessage(role="assistant", content="dummy response")
 
 
@@ -97,6 +98,7 @@ def orchestrated_config():
 
 # ---- Fast integration: setup_only mode --------------------------------------
 
+
 class TestOrchestratedSetupOnly:
     def test_full_flow_setup_only(self, worker_tools, orchestrated_config, tmp_path):
         orchestrated_config["orchestrated"]["lifecycle_mode"] = "setup_only"
@@ -127,9 +129,7 @@ class TestOrchestratedSetupOnly:
         assert len(worker_msgs) >= 1
 
         # No coordination-level errors.
-        assert result.metrics["error_count"] == 0 or any(
-            m.agent_name == "calc_worker" for m in result.history
-        )
+        assert result.metrics["error_count"] == 0 or any(m.agent_name == "calc_worker" for m in result.history)
 
     def test_orchestration_metrics_computed(self, worker_tools, orchestrated_config):
         orchestrated_config["orchestrated"]["lifecycle_mode"] = "setup_only"
@@ -150,6 +150,7 @@ class TestOrchestratedSetupOnly:
 
 
 # ---- Fast integration: active mode ------------------------------------------
+
 
 class TestOrchestratedActive:
     def test_active_mode_runs(self, worker_tools, orchestrated_config, tmp_path):
@@ -172,6 +173,7 @@ class TestOrchestratedActive:
 
 # ---- Config loading ----------------------------------------------------------
 
+
 class TestOrchestratedConfig:
     def test_orchestrated_config_loads(self):
         config = load_yaml("config/orchestrated.yaml")
@@ -187,11 +189,13 @@ class TestOrchestratedConfig:
 
     def test_strategy_loadable(self):
         from src.coordination.coordinator import _load_strategy
+
         strategy = _load_strategy("orchestrated")
         assert isinstance(strategy, OrchestratedStrategy)
 
 
 # ---- JSON export integration ------------------------------------------------
+
 
 class TestOrchestratedExport:
     def test_export_round_trip(self, worker_tools, orchestrated_config, tmp_path):
@@ -217,6 +221,7 @@ class TestOrchestratedExport:
 
 # ---- Real LLM integration (slow) -------------------------------------------
 
+
 @pytest.mark.slow
 class TestOrchestratedRealLLM:
     """Requires GPU + model download. Run with: pytest -m slow"""
@@ -230,12 +235,12 @@ class TestOrchestratedRealLLM:
 
         logger = InstrumentationLogger({"logging": {"output_dir": str(tmp_path)}})
         coordinator = Coordinator.from_config(
-            config, logger=logger, strategy_override="orchestrated",
+            config,
+            logger=logger,
+            strategy_override="orchestrated",
         )
 
-        result = coordinator.run(
-            "Calculate the sum of 15 and 27, then verify the result by multiplying 42 by 1"
-        )
+        result = coordinator.run("Calculate the sum of 15 and 27, then verify the result by multiplying 42 by 1")
 
         assert len(result.history) >= 2
         assert result.final_output != ""
@@ -243,6 +248,7 @@ class TestOrchestratedRealLLM:
         # Export.
         path = str(tmp_path / "orchestrated_e2e.json")
         from src.logging.exporter import export_run
+
         export_run(result.history, result.metrics, path)
 
         with open(path) as f:

@@ -1,6 +1,5 @@
 """Unit tests for stage definitions and pipeline loading."""
 
-
 import pytest
 import yaml
 
@@ -17,6 +16,7 @@ from src.coordination.stage_definition import (
 )
 
 # ---- load_stage ------------------------------------------------------------
+
 
 class TestLoadStage:
     def test_load_full_stage(self):
@@ -57,6 +57,7 @@ class TestLoadStage:
 
 # ---- load_pipeline ---------------------------------------------------------
 
+
 class TestLoadPipeline:
     def test_load_pipeline_with_stages(self):
         data = {
@@ -80,6 +81,7 @@ class TestLoadPipeline:
 
 
 # ---- load_pipeline_from_yaml -----------------------------------------------
+
 
 class TestLoadPipelineFromYaml:
     def test_load_pipeline_style(self, tmp_path):
@@ -152,17 +154,18 @@ class TestLoadPipelineFromYaml:
 
 # ---- validate_pipeline -----------------------------------------------------
 
+
 class TestValidatePipeline:
     def test_valid_pipeline(self):
-        p = PipelineDefinition(stages=[
-            StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
-            StageDefinition(
-                name="s2",
-                completion_criteria=CompletionCriteria(
-                    type="output_contains", check="code_block"
+        p = PipelineDefinition(
+            stages=[
+                StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="any", check="always")),
+                StageDefinition(
+                    name="s2",
+                    completion_criteria=CompletionCriteria(type="output_contains", check="code_block"),
                 ),
-            ),
-        ])
+            ]
+        )
         assert validate_pipeline(p) == []
 
     def test_empty_pipeline(self):
@@ -171,17 +174,21 @@ class TestValidatePipeline:
         assert any("no stages" in e.lower() for e in errors)
 
     def test_duplicate_names(self):
-        p = PipelineDefinition(stages=[
-            StageDefinition(name="dup", completion_criteria=CompletionCriteria(type="any", check="always")),
-            StageDefinition(name="dup", completion_criteria=CompletionCriteria(type="any", check="always")),
-        ])
+        p = PipelineDefinition(
+            stages=[
+                StageDefinition(name="dup", completion_criteria=CompletionCriteria(type="any", check="always")),
+                StageDefinition(name="dup", completion_criteria=CompletionCriteria(type="any", check="always")),
+            ]
+        )
         errors = validate_pipeline(p)
         assert any("Duplicate" in e for e in errors)
 
     def test_invalid_criteria_type(self):
-        p = PipelineDefinition(stages=[
-            StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="magic", check="x")),
-        ])
+        p = PipelineDefinition(
+            stages=[
+                StageDefinition(name="s1", completion_criteria=CompletionCriteria(type="magic", check="x")),
+            ]
+        )
         errors = validate_pipeline(p)
         assert any("invalid criteria type" in e.lower() for e in errors)
 
@@ -202,13 +209,16 @@ class TestValidatePipeline:
             validate_pipeline_strict(p)
 
     def test_validate_strict_passes(self):
-        p = PipelineDefinition(stages=[
-            StageDefinition(name="ok", completion_criteria=CompletionCriteria(type="any", check="always")),
-        ])
+        p = PipelineDefinition(
+            stages=[
+                StageDefinition(name="ok", completion_criteria=CompletionCriteria(type="any", check="always")),
+            ]
+        )
         validate_pipeline_strict(p)  # no exception
 
 
 # ---- Stage ordering --------------------------------------------------------
+
 
 class TestStageOrdering:
     def test_stages_maintain_order(self):

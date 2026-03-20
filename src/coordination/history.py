@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 @dataclass
 class ToolCallRecord:
     """Record of a single tool invocation within an agent turn."""
+
     tool_name: str
     inputs: dict
     output: str
@@ -16,6 +17,7 @@ class ToolCallRecord:
 @dataclass
 class AgentMessage:
     """A single agent turn in the coordination history."""
+
     agent_name: str
     content: str
     turn_number: int
@@ -69,7 +71,7 @@ class SharedHistory:
             result = result[-max_chars:]
             first_newline = result.find("\n")
             if first_newline != -1:
-                result = "...\n" + result[first_newline + 1:]
+                result = "...\n" + result[first_newline + 1 :]
             else:
                 result = "..." + result
         return result

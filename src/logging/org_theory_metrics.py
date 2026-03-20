@@ -24,6 +24,7 @@ from src.coordination.similarity import compute_similarity
 # Message field accessor (handles AgentMessage objects AND serialised dicts)
 # ---------------------------------------------------------------------------
 
+
 def _get(msg: Any, field: str, default: Any = None) -> Any:
     """Return ``msg.field`` or ``msg[field]``, falling back to *default*."""
     if isinstance(msg, dict):
@@ -43,6 +44,7 @@ _ESCALATION_SIMILARITY_THRESHOLD = 0.8
 # ---------------------------------------------------------------------------
 # Metadata accessors (Tier 1: read from msg.metadata; Tier 2: tool_calls)
 # ---------------------------------------------------------------------------
+
 
 def _meta(msg: Any, key: str, default: Any = None) -> Any:
     """Read a value from msg.metadata (dict or attr)."""
@@ -140,6 +142,7 @@ def _convergence_classification(score: float | None, eval_success: bool | None) 
 # Orchestrated OS metrics  (Span of Control, Oversight, Info Asymmetry)
 # ---------------------------------------------------------------------------
 
+
 def _orchestrated_os_metrics(
     messages: list,
     config: dict,
@@ -160,9 +163,7 @@ def _orchestrated_os_metrics(
     orchestrator_overhead_ratio = orchestrator_turns / total if total else 0.0
 
     # orchestrator_token_growth: needs token_count (always None)
-    warnings.append(
-        "orchestrator_token_growth: token_count is always null in current messages"
-    )
+    warnings.append("orchestrator_token_growth: token_count is always null in current messages")
 
     # cost_per_agent: mean orchestrator wall-time per spawned worker
     orch_time = sum(_get(m, "duration_seconds", 0.0) for m in orch_msgs)
@@ -173,24 +174,17 @@ def _orchestrated_os_metrics(
         (i for i, m in enumerate(messages) if _get(m, "agent_name") != "orchestrator"),
         total,
     )
-    reasoning_iterations = sum(
-        1 for m in messages[:first_worker_pos]
-        if _get(m, "agent_name") == "orchestrator"
-    )
+    reasoning_iterations = sum(1 for m in messages[:first_worker_pos] if _get(m, "agent_name") == "orchestrator")
 
     # --- Oversight ---
     # authority_holder: "orchestrator" by definition
     authority_holder = "orchestrator"
     # authority_transfers: requires metadata.event (not present)
-    warnings.append(
-        "authority_transfers: requires metadata.event='authority_transfer', not present in AgentMessage"
-    )
+    warnings.append("authority_transfers: requires metadata.event='authority_transfer', not present in AgentMessage")
 
     # --- Information Asymmetry ---
     # information_ratio: requires per-message token counts (always None)
-    warnings.append(
-        "information_ratio: requires token_count on messages, always null in current runs"
-    )
+    warnings.append("information_ratio: requires token_count on messages, always null in current runs")
 
     return {
         # Span of Control
@@ -227,9 +221,9 @@ def _networked_os_metrics(
     # (graph-driven mode uses role names like mission_architect but tags the
     # actual peer in metadata).
     peer_msgs = [
-        m for m in messages
-        if _PEER_NAME_RE.match(_get(m, "agent_name", ""))
-        or (_get(m, "metadata", {}) or {}).get("peer_agent")
+        m
+        for m in messages
+        if _PEER_NAME_RE.match(_get(m, "agent_name", "")) or (_get(m, "metadata", {}) or {}).get("peer_agent")
     ]
     # Count unique actual peers (prefer metadata.peer_agent over agent_name).
     unique_peers = set()
@@ -254,39 +248,28 @@ def _networked_os_metrics(
         mark_done = _count_tool_calls_by_name(peer_msgs, "mark_task_done")
         structural_writes = len(peer_msgs)  # 1 auto-write per turn
         bb_writes = explicit_writes + mark_done + structural_writes + 1  # +1 initial task entry
-        warnings.append(
-            "blackboard_writes_total: estimated from tool_calls (Tier 2 fallback)"
-        )
+        warnings.append("blackboard_writes_total: estimated from tool_calls (Tier 2 fallback)")
 
     if bb_size_final is None:
         # Estimate board size: unique agent names + 1 task entry.
         bb_size_final = agents_spawned + 1
-        warnings.append(
-            "blackboard_size_final: estimated from unique agents (Tier 2 fallback)"
-        )
+        warnings.append("blackboard_size_final: estimated from unique agents (Tier 2 fallback)")
 
     # Blackboard reads from tool_calls (Tier 2 — no metadata for reads yet).
     bb_reads = _count_tool_calls_by_name(peer_msgs, "read_blackboard")
     if bb_reads == 0:
         # Each agent implicitly reads at start of turn.
         bb_reads = len(peer_msgs)
-        warnings.append(
-            "blackboard_reads_total: estimated from turn count (Tier 2 fallback)"
-        )
+        warnings.append("blackboard_reads_total: estimated from turn count (Tier 2 fallback)")
 
     # Blackboard utilization: writes / (agents * turns).
     n_turns = len(peer_msgs)
-    bb_utilization = (
-        round(bb_writes / (agents_spawned * n_turns), 4)
-        if agents_spawned and n_turns else None
-    )
+    bb_utilization = round(bb_writes / (agents_spawned * n_turns), 4) if agents_spawned and n_turns else None
 
     # --- Peer Monitoring ---
     if claim_conflicts_total is None:
         claim_conflicts_total = 0
-        warnings.append(
-            "claim_conflicts: no metadata.claim_conflicts found, defaulting to 0"
-        )
+        warnings.append("claim_conflicts: no metadata.claim_conflicts found, defaulting to 0")
 
     # --- Joint Myopia ---
     convergence_score: float | None = None
@@ -298,16 +281,13 @@ def _networked_os_metrics(
 
     # --- Predictive Knowledge ---
     for metric in ("prediction_count", "prediction_accuracy_mean"):
-        warnings.append(
-            f"{metric}: requires metadata.prediction_made/accuracy, not present in AgentMessage"
-        )
+        warnings.append(f"{metric}: requires metadata.prediction_made/accuracy, not present in AgentMessage")
 
     # --- Self-Organization ---
     # agents_spawned: count unique "agent_N" names ✓
     # self_selection_diversity: needs structured subtask descriptions — not available
     warnings.append(
-        "self_selection_diversity: requires structured subtask descriptions, "
-        "not derivable from message content alone"
+        "self_selection_diversity: requires structured subtask descriptions, not derivable from message content alone"
     )
 
     dup_rate = _duplicate_work_rate(peer_texts)
@@ -337,6 +317,7 @@ def _networked_os_metrics(
 # Sequential OS metrics  (Decomposition, Modularity, Viscosity, Mirroring)
 # ---------------------------------------------------------------------------
 
+
 def _sequential_os_metrics(
     messages: list,
     config: dict,
@@ -354,19 +335,11 @@ def _sequential_os_metrics(
 
     stage_names = seen
     per_stage_duration = [round(stage_dur[s], 3) for s in stage_names]
-    stage_bottleneck = (
-        stage_names[per_stage_duration.index(max(per_stage_duration))]
-        if stage_names else None
-    )
+    stage_bottleneck = stage_names[per_stage_duration.index(max(per_stage_duration))] if stage_names else None
 
     # Propagation time: last timestamp minus first
-    timestamps = [
-        _get(m, "timestamp", 0.0) for m in messages
-        if _get(m, "timestamp") is not None
-    ]
-    propagation_time = (
-        round(max(timestamps) - min(timestamps), 3) if len(timestamps) > 1 else None
-    )
+    timestamps = [_get(m, "timestamp", 0.0) for m in messages if _get(m, "timestamp") is not None]
+    propagation_time = round(max(timestamps) - min(timestamps), 3) if len(timestamps) > 1 else None
 
     # Mirroring: pipeline template name from config
     template_used = None
@@ -385,7 +358,8 @@ def _sequential_os_metrics(
         tools_used: list[str] = []
         for tc in tcs:
             tname = (
-                tc.tool_name if hasattr(tc, "tool_name")
+                tc.tool_name
+                if hasattr(tc, "tool_name")
                 else (tc.get("tool_name", tc.get("name", "")) if isinstance(tc, dict) else "")
             )
             if tname and tname != "final_answer":
@@ -462,17 +436,12 @@ def _sequential_os_metrics(
         warnings.append("per_stage_tokens: token_count not available on messages")
 
     if tool_utilization is None and not has_any_tools:
-        warnings.append(
-            "tool_utilization_per_stage: no tool_calls found on messages"
-        )
+        warnings.append("tool_utilization_per_stage: no tool_calls found on messages")
     if stage_independence is None:
-        warnings.append(
-            "stage_independence_score: requires tool_calls or _stage_allowed_tools in config"
-        )
+        warnings.append("stage_independence_score: requires tool_calls or _stage_allowed_tools in config")
     if tool_violations is None and stage_allowed is None:
         warnings.append(
-            "tool_restriction_violations: _stage_allowed_tools not in config; "
-            "pass stage restrictions to enable"
+            "tool_restriction_violations: _stage_allowed_tools not in config; pass stage restrictions to enable"
         )
 
     return {
@@ -496,6 +465,7 @@ def _sequential_os_metrics(
 # ---------------------------------------------------------------------------
 # Iterative Feedback handler metrics  (Aspiration, Ambidexterity, Escalation)
 # ---------------------------------------------------------------------------
+
 
 def _iterative_feedback_metrics(
     messages: list,
@@ -530,10 +500,7 @@ def _iterative_feedback_metrics(
 
     # mean_attempts_to_success per agent — only meaningful when retries occurred
     has_retries = any(c > 1 for c in attempt_counts.values())
-    mean_attempts = (
-        sum(attempt_counts.values()) / len(attempt_counts)
-        if attempt_counts else None
-    )
+    mean_attempts = sum(attempt_counts.values()) / len(attempt_counts) if attempt_counts else None
     if not has_retries:
         warnings.append(
             "mean_attempts_to_success: no retries detected "
@@ -552,18 +519,12 @@ def _iterative_feedback_metrics(
     for name, attempts in agent_attempts.items():
         if len(attempts) < 2:
             continue
-        sims = [
-            compute_similarity(attempts[i], attempts[i + 1])
-            for i in range(len(attempts) - 1)
-        ]
+        sims = [compute_similarity(attempts[i], attempts[i + 1]) for i in range(len(attempts) - 1)]
         mean_sim = sum(sims) / len(sims)
         variance = sum((s - mean_sim) ** 2 for s in sims) / len(sims)
         agent_ambidexterity.append(variance)
 
-    ambidexterity_score = (
-        round(sum(agent_ambidexterity) / len(agent_ambidexterity), 4)
-        if agent_ambidexterity else None
-    )
+    ambidexterity_score = round(sum(agent_ambidexterity) / len(agent_ambidexterity), 4) if agent_ambidexterity else None
 
     # --- Escalation of Commitment ---
     # Longest consecutive run where output similarity > 0.8 AND the current
@@ -585,9 +546,7 @@ def _iterative_feedback_metrics(
     escalation_detected = escalation_length > 3
 
     # early_stopping_count: requires eval per-attempt, not available
-    warnings.append(
-        "early_stopping_count: requires per-attempt eval data, set to null"
-    )
+    warnings.append("early_stopping_count: requires per-attempt eval data, set to null")
 
     return {
         # Aspiration Levels
@@ -607,6 +566,7 @@ def _iterative_feedback_metrics(
 # ---------------------------------------------------------------------------
 # Graph-Routed handler metrics  (Attention, Omission/Commission, Coupled Search)
 # ---------------------------------------------------------------------------
+
 
 def _graph_routed_metrics(
     messages: list,
@@ -630,12 +590,8 @@ def _graph_routed_metrics(
 
     # Transitions toward COMPLETE: agent_name == "output_reviewer" heuristic
     terminal_states = {"output_reviewer", "COMPLETE"}
-    toward_complete = sum(
-        1 for s in state_sequence if s in terminal_states
-    )
-    routing_accuracy = (
-        toward_complete / total_transitions if total_transitions else None
-    )
+    toward_complete = sum(1 for s in state_sequence if s in terminal_states)
+    routing_accuracy = toward_complete / total_transitions if total_transitions else None
 
     # Misroute_rate: transitions that returned to a previously-visited state
     misroute_count = 0
@@ -648,8 +604,7 @@ def _graph_routed_metrics(
 
     # Missed routes: we cannot detect "always" fallback without graph definition data
     warnings.append(
-        "missed_routes: requires access to graph transition records, "
-        "set to null (infer from misroute_rate)"
+        "missed_routes: requires access to graph transition records, set to null (infer from misroute_rate)"
     )
 
     # --- Structural Distribution of Attention ---
@@ -700,8 +655,7 @@ def _graph_routed_metrics(
 
     if initial_complexity is None:
         warnings.append(
-            "initial_complexity: 'complexity' not found in message metadata; "
-            "ensure GraphRoutedHandler >= v2 is used"
+            "initial_complexity: 'complexity' not found in message metadata; ensure GraphRoutedHandler >= v2 is used"
         )
 
     # Internal representations toggle from config
@@ -732,6 +686,7 @@ def _graph_routed_metrics(
 # ---------------------------------------------------------------------------
 # Staged Pipeline handler metrics  (Decomposition, Aspiration, Error Propagation)
 # ---------------------------------------------------------------------------
+
 
 def _staged_pipeline_metrics(
     messages: list,
@@ -770,13 +725,10 @@ def _staged_pipeline_metrics(
         return True
 
     stage_results = [_stage_met(m) for m in stages]
-    completion_rate = (
-        sum(stage_results) / stage_count if stage_count else None
-    )
+    completion_rate = sum(stage_results) / stage_count if stage_count else None
 
     per_stage_completion = [
-        {"stage": name, "met": met, "reason": "heuristic"}
-        for name, met in zip(stage_names, stage_results)
+        {"stage": name, "met": met, "reason": "heuristic"} for name, met in zip(stage_names, stage_results)
     ]
 
     # Error propagation analysis
@@ -815,18 +767,12 @@ def _staged_pipeline_metrics(
         prev_failed = not met
 
     propagation_rate = (
-        propagation_rate_numerator / propagation_rate_denominator
-        if propagation_rate_denominator else None
+        propagation_rate_numerator / propagation_rate_denominator if propagation_rate_denominator else None
     )
-    recovery_rate = (
-        recovery_rate_numerator / recovery_rate_denominator
-        if recovery_rate_denominator else None
-    )
+    recovery_rate = recovery_rate_numerator / recovery_rate_denominator if recovery_rate_denominator else None
 
     # per_stage_tokens: not available
-    warnings.append(
-        "per_stage_tokens (staged_pipeline): token_count always null"
-    )
+    warnings.append("per_stage_tokens (staged_pipeline): token_count always null")
 
     return {
         # Decomposition
@@ -848,6 +794,7 @@ def _staged_pipeline_metrics(
 # ---------------------------------------------------------------------------
 # Top-level dispatcher
 # ---------------------------------------------------------------------------
+
 
 def compute_org_theory_metrics(
     messages: list,

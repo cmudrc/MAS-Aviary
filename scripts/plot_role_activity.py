@@ -50,46 +50,46 @@ ROLE_ORDER = [
 ]
 
 ROLE_DISPLAY = {
-    "orchestrator":         "Orchestrator",
-    "mission_architect":    "Mission Architect",
+    "orchestrator": "Orchestrator",
+    "mission_architect": "Mission Architect",
     "aerodynamics_analyst": "Aerodynamics Analyst",
-    "weights_analyst":      "Weights Analyst",
-    "propulsion_analyst":   "Propulsion Analyst",
-    "simulation_executor":  "Simulation Executor",
-    "mdo_integrator":       "MDO Integrator",
+    "weights_analyst": "Weights Analyst",
+    "propulsion_analyst": "Propulsion Analyst",
+    "simulation_executor": "Simulation Executor",
+    "mdo_integrator": "MDO Integrator",
 }
 
 # Colors keyed by AGENT IDENTITY — track who is doing what
 AGENT_COLORS = {
-    "orchestrator":          "#5B7FA5",
-    "mission_architect":     "#6AAB9C",
-    "aerodynamics_analyst":  "#E8A87C",
-    "weights_analyst":       "#D4A5A5",
-    "propulsion_analyst":    "#9B8EC0",
-    "simulation_executor":   "#7DB8D6",
-    "mdo_integrator":        "#C9B458",
-    "agent_1":               "#E07A5F",   # terracotta
-    "agent_2":               "#3D85C6",   # cobalt
-    "agent_3":               "#81B29A",   # seafoam
+    "orchestrator": "#5B7FA5",
+    "mission_architect": "#6AAB9C",
+    "aerodynamics_analyst": "#E8A87C",
+    "weights_analyst": "#D4A5A5",
+    "propulsion_analyst": "#9B8EC0",
+    "simulation_executor": "#7DB8D6",
+    "mdo_integrator": "#C9B458",
+    "agent_1": "#E07A5F",  # terracotta
+    "agent_2": "#3D85C6",  # cobalt
+    "agent_3": "#81B29A",  # seafoam
 }
 DEFAULT_COLOR = "#A0A0A0"
 
 TOOL_ICONS = {
-    "create_session":          "s",
-    "configure_mission":       "D",
-    "get_design_space":        "^",
+    "create_session": "s",
+    "configure_mission": "D",
+    "get_design_space": "^",
     "set_aircraft_parameters": "o",
-    "validate_parameters":     "P",
-    "run_simulation":          "*",
-    "get_results":             "X",
-    "check_constraints":       "h",
-    "write_blackboard":        "v",
-    "read_blackboard":         "<",
-    "mark_task_done":          ">",
-    "list_available_tools":    "p",
-    "create_agent":            "+",
-    "assign_task":             "1",
-    "list_graph_roles":        "2",
+    "validate_parameters": "P",
+    "run_simulation": "*",
+    "get_results": "X",
+    "check_constraints": "h",
+    "write_blackboard": "v",
+    "read_blackboard": "<",
+    "mark_task_done": ">",
+    "list_available_tools": "p",
+    "create_agent": "+",
+    "assign_task": "1",
+    "list_graph_roles": "2",
 }
 
 
@@ -123,14 +123,12 @@ def resolve_role(msg):
         return name
 
     # 3) Tool-based classification using official stage-gate mapping
-    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", [])
-                  if tc["tool_name"] != "final_answer"}
+    tools_used = {tc["tool_name"] for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"}
     if not tools_used:
         return "idle"
 
     # Orchestrator management tools (highest priority — these are meta-tools)
-    ORCHESTRATOR_TOOLS = {"list_available_tools", "create_agent", "assign_task",
-                          "list_graph_roles"}
+    ORCHESTRATOR_TOOLS = {"list_available_tools", "create_agent", "assign_task", "list_graph_roles"}
     if tools_used & ORCHESTRATOR_TOOLS:
         return "orchestrator"
 
@@ -158,8 +156,9 @@ def resolve_role(msg):
                 params = tc.get("inputs", {}).get("parameters", {})
                 param_keys = " ".join(params.keys()) if params else ""
                 # Engine/SCALE_FACTOR → propulsion; everything else → aero
-                if ("Engine" in param_keys or "SCALE_FACTOR" in param_keys) \
-                        and not any(w in param_keys for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")):
+                if ("Engine" in param_keys or "SCALE_FACTOR" in param_keys) and not any(
+                    w in param_keys for w in ("Wing", "ASPECT", "SWEEP", "TAPER", "AREA", "SPAN")
+                ):
                     return "propulsion_analyst"
                 return "aerodynamics_analyst"
 
@@ -205,17 +204,18 @@ def plot_role_activity(key, result, output_dir):
         end_t = msg["timestamp"] - t0
         dur = msg.get("duration_seconds", 0)
         start_t = end_t - dur
-        tool_calls = [tc for tc in msg.get("tool_calls", [])
-                      if tc["tool_name"] != "final_answer"]
-        turns.append({
-            "turn": msg["turn_number"],
-            "agent": raw_name,
-            "role": role,
-            "start": start_t,
-            "end": end_t,
-            "dur": dur,
-            "tools": tool_calls,
-        })
+        tool_calls = [tc for tc in msg.get("tool_calls", []) if tc["tool_name"] != "final_answer"]
+        turns.append(
+            {
+                "turn": msg["turn_number"],
+                "agent": raw_name,
+                "role": role,
+                "start": start_t,
+                "end": end_t,
+                "dur": dur,
+                "tools": tool_calls,
+            }
+        )
         if role != "idle" and role != "unknown":
             roles_seen.add(role)
         if raw_name not in agents_seen:
@@ -253,27 +253,49 @@ def plot_role_activity(key, result, output_dir):
         color = AGENT_COLORS.get(t["agent"], DEFAULT_COLOR)
 
         # Main bar
-        ax.barh(y, t["dur"], left=t["start"], height=bar_height,
-                color=color, alpha=0.85,
-                edgecolor="#333", linewidth=0.5, zorder=3)
+        ax.barh(
+            y,
+            t["dur"],
+            left=t["start"],
+            height=bar_height,
+            color=color,
+            alpha=0.85,
+            edgecolor="#333",
+            linewidth=0.5,
+            zorder=3,
+        )
 
         # Turn number label inside bar
         bar_w = t["end"] - t["start"]
         if bar_w > total_duration * 0.03:
-            ax.text(t["start"] + bar_w * 0.5, y, f"T{t['turn']}",
-                    ha="center", va="center", fontsize=5.5,
-                    color="white", fontweight="bold",
-                    path_effects=[pe.withStroke(linewidth=1.5, foreground="#222")],
-                    zorder=6)
+            ax.text(
+                t["start"] + bar_w * 0.5,
+                y,
+                f"T{t['turn']}",
+                ha="center",
+                va="center",
+                fontsize=5.5,
+                color="white",
+                fontweight="bold",
+                path_effects=[pe.withStroke(linewidth=1.5, foreground="#222")],
+                zorder=6,
+            )
 
         # Tool markers below bar
         n_tools = len(t["tools"])
         for j, tc in enumerate(t["tools"]):
             tx = t["start"] + (j + 0.5) * t["dur"] / max(n_tools, 1)
             marker = TOOL_ICONS.get(tc["tool_name"], ".")
-            ax.plot(tx, y + bar_height * 0.42, marker=marker,
-                    color="#222", markersize=4, markeredgewidth=0.3,
-                    zorder=7, alpha=0.7)
+            ax.plot(
+                tx,
+                y + bar_height * 0.42,
+                marker=marker,
+                color="#222",
+                markersize=4,
+                markeredgewidth=0.3,
+                zorder=7,
+                alpha=0.7,
+            )
             if tc["tool_name"] not in tool_legend:
                 tool_legend[tc["tool_name"]] = marker
 
@@ -289,23 +311,26 @@ def plot_role_activity(key, result, output_dir):
             x2_mid, y2, x2_start, _ = points[k + 1]
             if y1 != y2:
                 # Agent jumped to a different role — draw a connecting line
-                ax.annotate("",
-                            xy=(x2_start, y2),
-                            xytext=(x1_end, y1),
-                            arrowprops=dict(
-                                arrowstyle="->,head_width=0.12,head_length=0.08",
-                                color=color, lw=0.8, alpha=0.5,
-                                connectionstyle="arc3,rad=0.2"),
-                            zorder=2)
+                ax.annotate(
+                    "",
+                    xy=(x2_start, y2),
+                    xytext=(x1_end, y1),
+                    arrowprops=dict(
+                        arrowstyle="->,head_width=0.12,head_length=0.08",
+                        color=color,
+                        lw=0.8,
+                        alpha=0.5,
+                        connectionstyle="arc3,rad=0.2",
+                    ),
+                    zorder=2,
+                )
             else:
                 # Same role, draw a thin connector
-                ax.plot([x1_end, x2_start], [y1, y2],
-                        color=color, lw=0.5, alpha=0.3, zorder=1)
+                ax.plot([x1_end, x2_start], [y1, y2], color=color, lw=0.5, alpha=0.3, zorder=1)
 
     # --- Y-axis: role names ---
     ax.set_yticks(range(n_roles))
-    ax.set_yticklabels([ROLE_DISPLAY.get(r, r) for r in active_roles],
-                       fontsize=8, fontweight="bold")
+    ax.set_yticklabels([ROLE_DISPLAY.get(r, r) for r in active_roles], fontsize=8, fontweight="bold")
     ax.invert_yaxis()
 
     # --- X-axis ---
@@ -318,31 +343,51 @@ def plot_role_activity(key, result, output_dir):
     ax.set_axisbelow(True)
 
     # --- Title ---
-    subtitle = (f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
-                f"eval={eval_result}  |  {n_turns} turns  |  {total_duration:.0f}s")
-    ax.set_title(f"{label}  — Agent Role Activity\n{subtitle}",
-                 fontsize=10, fontweight="bold", pad=10, loc="left")
+    subtitle = (
+        f"fuel={fuel:.0f} kg  |  GTOW={gtow:.0f} kg  |  "
+        f"eval={eval_result}  |  {n_turns} turns  |  {total_duration:.0f}s"
+    )
+    ax.set_title(f"{label}  — Agent Role Activity\n{subtitle}", fontsize=10, fontweight="bold", pad=10, loc="left")
 
     # --- Agent identity legend ---
     agent_patches = []
     for a in agents_seen:
         c = AGENT_COLORS.get(a, DEFAULT_COLOR)
         agent_patches.append(mpatches.Patch(color=c, label=a, alpha=0.85))
-    leg1 = ax.legend(handles=agent_patches, loc="upper right", fontsize=6.5,
-                     framealpha=0.92, title="Agent Identity", title_fontsize=7,
-                     ncol=min(3, len(agent_patches)))
+    leg1 = ax.legend(
+        handles=agent_patches,
+        loc="upper right",
+        fontsize=6.5,
+        framealpha=0.92,
+        title="Agent Identity",
+        title_fontsize=7,
+        ncol=min(3, len(agent_patches)),
+    )
 
     # --- Tool legend ---
     if tool_legend:
         tool_handles = []
         for tname, marker in sorted(tool_legend.items()):
-            h = plt.Line2D([0], [0], marker=marker, color="#222",
-                           linestyle="None", markersize=4,
-                           label=tname.replace("_", " "), alpha=0.75)
+            h = plt.Line2D(
+                [0],
+                [0],
+                marker=marker,
+                color="#222",
+                linestyle="None",
+                markersize=4,
+                label=tname.replace("_", " "),
+                alpha=0.75,
+            )
             tool_handles.append(h)
-        ax.legend(handles=tool_handles, loc="lower right", fontsize=5,
-                         framealpha=0.92, title="Tools", title_fontsize=6,
-                         ncol=min(3, len(tool_handles)))
+        ax.legend(
+            handles=tool_handles,
+            loc="lower right",
+            fontsize=5,
+            framealpha=0.92,
+            title="Tools",
+            title_fontsize=6,
+            ncol=min(3, len(tool_handles)),
+        )
         ax.add_artist(leg1)
 
     # --- Style ---
@@ -359,8 +404,7 @@ def plot_role_activity(key, result, output_dir):
     plt.tight_layout()
 
     out_path = os.path.join(output_dir, f"{key}_role_activity.png")
-    fig.savefig(out_path, dpi=600, bbox_inches="tight",
-                facecolor="white", edgecolor="none")
+    fig.savefig(out_path, dpi=600, bbox_inches="tight", facecolor="white", edgecolor="none")
     plt.close(fig)
     print(f"  Saved: {out_path}")
 

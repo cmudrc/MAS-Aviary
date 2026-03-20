@@ -25,6 +25,7 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 class _FinalAnswerModel(Model):
     """Model that immediately returns final_answer with configurable output."""
 
@@ -33,8 +34,7 @@ class _FinalAnswerModel(Model):
         self._answer = answer
         self._call_count = 0
 
-    def generate(self, messages, stop_sequences=None, response_format=None,
-                 tools_to_call_from=None, **kwargs):
+    def generate(self, messages, stop_sequences=None, response_format=None, tools_to_call_from=None, **kwargs):
         self._call_count += 1
         answer = f"{self._answer} [call {self._call_count}]"
         tc = ChatMessageToolCall(
@@ -80,6 +80,7 @@ def _make_config(model, pipeline_template="linear", **seq_overrides):
 
 
 # ---- Fast integration tests (no GPU) ----------------------------------------
+
 
 class TestSequentialLinear:
     """Full pipeline with linear template."""
@@ -160,8 +161,11 @@ class TestSequentialVModel:
         assert len(result.history) == 5
         names = [m.agent_name for m in result.history]
         assert names == [
-            "requirements_analyst", "system_designer",
-            "detailed_designer", "implementer", "integration_verifier",
+            "requirements_analyst",
+            "system_designer",
+            "detailed_designer",
+            "implementer",
+            "integration_verifier",
         ]
 
     def test_all_durations_positive(self, tmp_path):
@@ -193,8 +197,11 @@ class TestSequentialMBSE:
         assert len(result.history) == 5
         names = [m.agent_name for m in result.history]
         assert names == [
-            "stakeholder_analyst", "system_architect",
-            "subsystem_designer", "implementer", "validator",
+            "stakeholder_analyst",
+            "system_architect",
+            "subsystem_designer",
+            "implementer",
+            "validator",
         ]
 
 
@@ -205,10 +212,8 @@ class TestSequentialCustom:
         model = _FinalAnswerModel("output")
         config = _make_config(model, pipeline_template="custom")
         config["sequential"]["custom_stages"] = [
-            {"name": "analyzer", "role": "Analyze", "allowed_tools": [],
-             "interface_output": "Analysis"},
-            {"name": "builder", "role": "Build", "allowed_tools": ["*"],
-             "interface_output": "Result"},
+            {"name": "analyzer", "role": "Analyze", "allowed_tools": [], "interface_output": "Analysis"},
+            {"name": "builder", "role": "Build", "allowed_tools": ["*"], "interface_output": "Result"},
         ]
         agents = {}
         strategy = SequentialStrategy()
@@ -221,6 +226,7 @@ class TestSequentialCustom:
 
 
 # ---- Metrics integration ----------------------------------------------------
+
 
 class TestSequentialMetricsIntegration:
     """Verify metrics computation works with real run data."""
@@ -254,12 +260,16 @@ class TestSequentialMetricsIntegration:
             result = coord.run("Calculate something")
 
             m = compute_sequential_metrics(
-                result.history, strategy.stage_order, template,
+                result.history,
+                strategy.stage_order,
+                template,
             )
-            runs.setdefault(template, []).append({
-                "metrics": m,
-                "success": True,
-            })
+            runs.setdefault(template, []).append(
+                {
+                    "metrics": m,
+                    "success": True,
+                }
+            )
 
         comparison = compute_template_comparison(runs)
         assert "linear" in comparison["per_template"]
@@ -269,6 +279,7 @@ class TestSequentialMetricsIntegration:
 
 
 # ---- Config file loading -----------------------------------------------------
+
 
 class TestSequentialConfigLoading:
     """Verify the sequential config files load correctly."""
@@ -297,6 +308,7 @@ class TestSequentialConfigLoading:
 
 # ---- Real LLM integration (slow) -------------------------------------------
 
+
 @pytest.mark.slow
 class TestSequentialRealLLM:
     """Run sequential strategy with real LLM. Requires GPU."""
@@ -307,11 +319,11 @@ class TestSequentialRealLLM:
             {"logging": {"output_dir": str(tmp_path)}},
         )
         coordinator = Coordinator.from_config(
-            config, logger=logger, strategy_override="sequential",
+            config,
+            logger=logger,
+            strategy_override="sequential",
         )
-        result = coordinator.run(
-            "Calculate the sum of 15 and 27, then verify the result"
-        )
+        result = coordinator.run("Calculate the sum of 15 and 27, then verify the result")
 
         assert len(result.history) >= 1
         assert result.final_output != ""

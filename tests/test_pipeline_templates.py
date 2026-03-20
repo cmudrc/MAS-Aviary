@@ -15,6 +15,7 @@ from src.tools.mock_tools import CalculatorTool, EchoTool, StateTool
 
 # ---- Fixtures ----------------------------------------------------------------
 
+
 @pytest.fixture
 def domain_tools():
     echo = EchoTool()
@@ -24,6 +25,7 @@ def domain_tools():
 
 
 # ---- Load built-in templates -------------------------------------------------
+
 
 class TestLoadBuiltinTemplates:
     def test_load_linear(self):
@@ -51,8 +53,11 @@ class TestLoadBuiltinTemplates:
         assert len(t.stages) == 5
         names = [s.name for s in t.stages]
         assert names == [
-            "requirements_analyst", "system_designer",
-            "detailed_designer", "implementer", "integration_verifier",
+            "requirements_analyst",
+            "system_designer",
+            "detailed_designer",
+            "implementer",
+            "integration_verifier",
         ]
 
     def test_v_model_only_implementer_has_tools(self):
@@ -69,8 +74,11 @@ class TestLoadBuiltinTemplates:
         assert len(t.stages) == 5
         names = [s.name for s in t.stages]
         assert names == [
-            "stakeholder_analyst", "system_architect",
-            "subsystem_designer", "implementer", "validator",
+            "stakeholder_analyst",
+            "system_architect",
+            "subsystem_designer",
+            "implementer",
+            "validator",
         ]
 
     def test_mbse_only_implementer_has_tools(self):
@@ -85,20 +93,17 @@ class TestLoadBuiltinTemplates:
         for name in TEMPLATE_NAMES:
             t = load_template(name)
             for stage in t.stages:
-                assert stage.interface_output, (
-                    f"Stage '{stage.name}' in '{name}' missing interface_output"
-                )
+                assert stage.interface_output, f"Stage '{stage.name}' in '{name}' missing interface_output"
 
 
 # ---- Load custom template ----------------------------------------------------
 
+
 class TestLoadCustomTemplate:
     def test_custom_from_stages(self):
         stages = [
-            {"name": "stage_a", "role": "Do A", "allowed_tools": [],
-             "interface_output": "A output"},
-            {"name": "stage_b", "role": "Do B", "allowed_tools": ["*"],
-             "interface_output": "B output"},
+            {"name": "stage_a", "role": "Do A", "allowed_tools": [], "interface_output": "A output"},
+            {"name": "stage_b", "role": "Do B", "allowed_tools": ["*"], "interface_output": "B output"},
         ]
         t = load_template("custom", custom_stages=stages)
         assert t.name == "custom"
@@ -117,13 +122,13 @@ class TestLoadCustomTemplate:
 
 # ---- Load from config templates ----------------------------------------------
 
+
 class TestLoadFromConfig:
     def test_template_from_config(self):
         templates_config = {
             "my_template": {
                 "stages": [
-                    {"name": "s1", "role": "Role 1", "allowed_tools": [],
-                     "interface_output": "Out 1"},
+                    {"name": "s1", "role": "Role 1", "allowed_tools": [], "interface_output": "Out 1"},
                 ]
             }
         }
@@ -139,6 +144,7 @@ class TestLoadFromConfig:
 
 # ---- Validation errors -------------------------------------------------------
 
+
 class TestValidation:
     def test_unknown_template_raises(self):
         with pytest.raises(ValueError, match="Unknown pipeline template"):
@@ -146,24 +152,22 @@ class TestValidation:
 
     def test_duplicate_stage_names_raises(self):
         stages = [
-            {"name": "stage_a", "role": "R1", "allowed_tools": [],
-             "interface_output": "O1"},
-            {"name": "stage_a", "role": "R2", "allowed_tools": [],
-             "interface_output": "O2"},
+            {"name": "stage_a", "role": "R1", "allowed_tools": [], "interface_output": "O1"},
+            {"name": "stage_a", "role": "R2", "allowed_tools": [], "interface_output": "O2"},
         ]
         with pytest.raises(ValueError, match="duplicate stage names"):
             load_template("custom", custom_stages=stages)
 
     def test_empty_stage_name_raises(self):
         stages = [
-            {"name": "", "role": "R1", "allowed_tools": [],
-             "interface_output": "O1"},
+            {"name": "", "role": "R1", "allowed_tools": [], "interface_output": "O1"},
         ]
         with pytest.raises(ValueError, match="empty name"):
             load_template("custom", custom_stages=stages)
 
 
 # ---- Tool resolution ---------------------------------------------------------
+
 
 class TestResolveTools:
     def test_wildcard_resolves_all(self, domain_tools):
@@ -193,6 +197,7 @@ class TestResolveTools:
 
 
 # ---- TEMPLATE_NAMES ---------------------------------------------------------
+
 
 class TestTemplateNames:
     def test_contains_expected(self):
