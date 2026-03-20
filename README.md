@@ -6,7 +6,7 @@ MAS-Aviary is a multi-agent LLM framework for aircraft design optimization
 using NASA's OpenMDAO/Aviary simulation. Autonomous agents powered by Qwen3-8B
 coordinate via the Model Context Protocol (MCP) to optimize aircraft parameters
 such as fuel burn, gross weight, and wing mass. The framework systematically
-explores nine distinct coordination strategies spanning three organizational
+explores eight distinct coordination strategies spanning three organizational
 structures and three task-handling paradigms, enabling rigorous comparison of
 multi-agent approaches on a real-world engineering optimization problem.
 
@@ -40,7 +40,7 @@ Aviary ──────────── NASA OpenMDAO aircraft design simula
 
 ## Coordination Strategies
 
-The framework evaluates all nine combinations of three organizational
+The framework evaluates **eight** combinations of three organizational
 structures and three task-handling paradigms:
 
 | # | Structure | Handler | Combination Name |
@@ -52,29 +52,127 @@ structures and three task-handling paradigms:
 | 5 | Orchestrated | Staged Pipeline | `aviary_orchestrated_staged_pipeline` |
 | 6 | Orchestrated | Graph-Routed | `aviary_orchestrated_graph_routed` |
 | 7 | Networked | Iterative Feedback | `aviary_networked_iterative_feedback` |
-| 8 | Networked | Staged Pipeline | `aviary_networked_staged_pipeline` |
-| 9 | Networked | Graph-Routed | `aviary_networked_graph_routed` |
+| 8 | Networked | Graph-Routed | `aviary_networked_graph_routed` |
+
+> **Note:** Networked + Staged Pipeline is **not a valid combination** and is
+> excluded from the experiment matrix. The Staged Pipeline handler assumes a
+> fixed sequence of pipeline stages with deterministic agent-to-stage assignment,
+> which conflicts with the Networked strategy's peer-based role rotation and
+> blackboard claiming model. Specifically, the Staged Pipeline requires each
+> stage to be assigned to a single named agent in a predetermined order, while
+> the Networked strategy dynamically assigns roles to whichever peer agent
+> claims the next available task from the blackboard. Adapting the Networked
+> strategy to enforce the rigid stage ordering required by the Staged Pipeline
+> handler would negate the collaborative, decentralized properties that define
+> the Networked approach. The combination is defined in the code
+> (`ALL_COMBINATIONS` in `src/runners/batch_runner.py`) for completeness but is
+> filtered out of all experiment runs.
+
+---
+
+## Prerequisites
+
+- **Python**: 3.12 or later
+- **GPU**: NVIDIA GPU with CUDA 12.x (for Qwen3-8B inference)
+- **OS**: Linux (tested on Ubuntu 22.04)
 
 ---
 
 ## Installation
 
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/Jezemba/MAS-Aviary.git
 cd MAS-Aviary
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
+```
+
+### 2. Create a virtual environment
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install PyTorch with CUDA support
+
+Install the version matching your CUDA driver. For CUDA 12.8:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu128
+```
+
+For CUDA 12.4:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cu124
+```
+
+Check your CUDA version with `nvidia-smi`.
+
+### 4. Install MAS-Aviary and dependencies
+
+```bash
+pip install -e ".[dev,ui,tracking]"
+```
+
+This installs:
+
+| Group | Packages |
+|-------|----------|
+| **Core** | torch, transformers, smolagents, scikit-learn, matplotlib, pyyaml, requests |
+| **dev** | pytest, pytest-cov, ruff, sphinx, sphinx-rtd-theme, sphinx-autodoc-typehints |
+| **ui** | streamlit, altair |
+| **tracking** | wandb |
+
+### 5. Verify the installation
+
+```bash
+# Lint check
+ruff check src/ tests/ scripts/
+
+# Run unit tests (no GPU or MCP server needed)
+pytest -m "not slow and not gpu and not mcp" -v
+
+# Check GPU access
+python -c "import torch; print(f'CUDA available: {torch.cuda.is_available()}, devices: {torch.cuda.device_count()}')"
 ```
 
 ---
 
 ## Quickstart
 
-Run a single optimization with one of the nine combinations:
+### 1. Start the Aviary MCP server
+
+The MCP server provides tool-based access to NASA OpenMDAO/Aviary simulations.
+It must be running on port 8600 before launching agents:
 
 ```bash
-python scripts/stat_batch_runner.py --repeats 1 --combinations aviary_sequential_iterative_feedback
+# See your Aviary MCP server documentation for startup instructions
+# The server should be accessible at http://127.0.0.1:8600/mcp
 ```
+
+### 2. Run a single optimization
+
+```bash
+python scripts/stat_batch_runner.py \
+    --repeats 1 \
+    --combinations aviary_sequential_iterative_feedback
+```
+
+### 3. Run all eight combinations
+
+```bash
+python scripts/stat_batch_runner.py --repeats 1
+```
+
+### 4. Run the full statistical batch (30 repeats)
+
+```bash
+python scripts/stat_batch_runner.py --repeats 30
+```
+
+The runner supports crash recovery — re-run the same command to resume from the checkpoint.
 
 ---
 
@@ -83,32 +181,30 @@ python scripts/stat_batch_runner.py --repeats 1 --combinations aviary_sequential
 Launch the Streamlit dashboard to visualize optimization results:
 
 ```bash
+pip install -e ".[ui]"  # if not already installed
 streamlit run src/ui/app.py
 ```
 
 ---
 
-## Key Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| torch | Tensor computation and GPU acceleration |
-| transformers | Qwen3-8B model loading and inference |
-| smolagents | Agent framework with tool-calling support |
-| scikit-learn | Statistical analysis of optimization results |
-| matplotlib | Result plotting and visualization |
-| streamlit | Interactive dashboard |
-| pyyaml | Configuration file parsing |
-| requests | MCP server communication |
-
----
-
 ## Testing
 
-Run the unit test suite (excludes slow, GPU, and MCP-dependent tests):
+Run the unit test suite (no GPU or MCP server required):
 
 ```bash
 pytest -m "not slow and not gpu and not mcp" -v
+```
+
+Run with coverage:
+
+```bash
+pytest -m "not slow and not gpu and not mcp" --cov=src --cov-report=term-missing -v
+```
+
+Run integration tests (requires GPU + MCP server):
+
+```bash
+pytest -m "slow or gpu" -v --timeout=600
 ```
 
 ---
@@ -122,6 +218,7 @@ To build locally:
 ```bash
 cd docs
 make html
+# Open _build/html/index.html in your browser
 ```
 
 ---

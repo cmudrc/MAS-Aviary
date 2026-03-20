@@ -15,10 +15,65 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ruff
-      - run: ruff check src/ tests/ scripts/
-      - run: ruff format --check src/ tests/ scripts/
+      - name: Check linting rules
+        run: ruff check src/ tests/ scripts/
+      - name: Check code formatting
+        run: ruff format --check src/ tests/ scripts/
 
-  test:
+  test-unit:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev]"
+      - name: Run unit tests
+        run: |
+          pytest -m "not slow and not gpu and not mcp" \
+            --cov=src --cov-report=xml --cov-report=term-missing \
+            -v --tb=short
+      - name: Upload coverage
+        if: matrix.python-version == '3.12'
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage.xml
+        continue-on-error: true
+
+  test-import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install package
+        run: |
+          pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e .
+      - name: Verify all modules import cleanly
+        run: |
+          python -c "from src.config.loader import load_config; print('config loader OK')"
+          python -c "from src.coordination.coordinator import Coordinator; print('coordinator OK')"
+          python -c "from src.coordination.strategies.sequential import SequentialStrategy; print('sequential OK')"
+          python -c "from src.coordination.strategies.orchestrated import OrchestratedStrategy; print('orchestrated OK')"
+          python -c "from src.coordination.strategies.networked import NetworkedStrategy; print('networked OK')"
+          python -c "from src.coordination.iterative_feedback_handler import IterativeFeedbackHandler; print('iterative feedback OK')"
+          python -c "from src.coordination.staged_pipeline_handler import StagedPipelineHandler; print('staged pipeline OK')"
+          python -c "from src.coordination.graph_routed_handler import GraphRoutedHandler; print('graph routed OK')"
+          python -c "from src.tools.mcp_connector import MCPConnector; print('mcp connector OK')"
+          python -c "from src.runners.batch_runner import ALL_COMBINATIONS; print(f'{len(ALL_COMBINATIONS)} combinations OK')"
+          python -c "from src.logging.eval_classifier import classify_aviary_eval; print('eval classifier OK')"
+
+  test-configs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,12 +83,56 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e ".[dev]"
-          # Install CPU-only torch for CI (no GPU)
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-      - name: Run unit tests (skip slow/GPU/MCP)
-        run: pytest -m "not slow and not gpu and not mcp" --cov=src --cov-report=xml -v
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          file: coverage.xml
+          pip install -e ".[dev]"
+      - name: Validate all YAML configs load without errors
+        run: |
+          python -c "
+          from src.config.loader import load_config, load_yaml
+          from src.coordination.graph_definition import load_graph_from_yaml, validate_graph
+          from src.coordination.stage_definition import load_pipeline_from_yaml
+
+          # Core configs
+          cfg = load_config('config/default.yaml')
+          assert cfg.llm.model_id, 'default.yaml: missing model_id'
+          print(f'default.yaml: OK (model={cfg.llm.model_id})')
+
+          # Coordination configs
+          for name in ['coordination', 'sequential', 'orchestrated', 'networked',
+                       'iterative_feedback', 'graph_routed', 'staged_pipeline']:
+              load_yaml(f'config/{name}.yaml')
+              print(f'{name}.yaml: OK')
+
+          # Aviary-specific configs
+          for name in ['aviary_run', 'aviary_sequential', 'aviary_networked',
+                       'aviary_staged_pipeline']:
+              load_yaml(f'config/{name}.yaml')
+              print(f'{name}.yaml: OK')
+
+          # Graph definition validates
+          graph = load_graph_from_yaml('config/aviary_graph.yaml')
+          errors = validate_graph(graph)
+          assert errors == [], f'aviary_graph.yaml validation errors: {errors}'
+          print(f'aviary_graph.yaml: OK ({len(graph.states)} states)')
+
+          # Pipeline definition validates
+          pipeline = load_pipeline_from_yaml('config/aviary_staged_pipeline.yaml')
+          assert len(pipeline.stages) > 0, 'aviary_staged_pipeline.yaml: no stages'
+          print(f'aviary_staged_pipeline.yaml: OK ({len(pipeline.stages)} stages)')
+
+          print('All configs validated successfully.')
+          "
+
+  test-no-meda-refs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure no MEDA/CAD/broadcast references remain
+        run: |
+          # Search for patterns that should not exist in the codebase
+          PATTERNS="meda|cadquery|execute_cadquery|evaluate_stl|\.stl|hausdorff|iogt|point_cloud_distance|broadcast|voler"
+          if grep -riE "$PATTERNS" src/ tests/ scripts/ config/ main.py --include="*.py" --include="*.yaml" --include="*.json" --include="*.yml"; then
+            echo "ERROR: Found prohibited references (MEDA/CAD/broadcast/Voler)"
+            exit 1
+          fi
+          echo "Clean: no prohibited references found."
