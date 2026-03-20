@@ -10,7 +10,7 @@ supports eight distinct coordination strategies formed by combining three
 organizational structures with three operational handlers.
 
 The Aviary MCP server backend is available at
-`github.com/Jezemba/Aviary <https://github.com/Jezemba/Aviary>`_.
+`github.com/cmudrc/aviary-mcp <https://github.com/cmudrc/aviary-mcp>`_.
 
 .. toctree::
    :maxdepth: 2

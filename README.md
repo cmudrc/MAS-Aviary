@@ -13,7 +13,7 @@ multi-agent approaches on a real-world engineering optimization problem.
 | Repository | Description |
 |------------|-------------|
 | **MAS-Aviary** (this repo) | Multi-agent LLM framework (client) |
-| [Aviary](https://github.com/Jezemba/Aviary) | MCP server wrapping NASA OpenMDAO/Aviary (backend) |
+| [Aviary](https://github.com/cmudrc/aviary-mcp) | MCP server wrapping NASA OpenMDAO/Aviary (backend) |
 
 ---
 
@@ -88,7 +88,7 @@ structures and three task-handling paradigms:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Jezemba/MAS-Aviary.git
+git clone https://github.com/cmudrc/MAS-Aviary.git
 cd MAS-Aviary
 ```
 
@@ -179,14 +179,14 @@ Other environment variable overrides:
 
 ### 1. Start the Aviary MCP server
 
-The MCP server ([Aviary repo](https://github.com/Jezemba/Aviary)) provides
+The MCP server ([Aviary repo](https://github.com/cmudrc/aviary-mcp)) provides
 tool-based access to NASA OpenMDAO/Aviary simulations. It must be running
 before launching agents:
 
 ```bash
 # Clone and install the Aviary MCP server (requires a separate conda env)
-git clone https://github.com/Jezemba/Aviary.git
-cd Aviary
+git clone https://github.com/cmudrc/aviary-mcp.git
+cd aviary-mcp
 conda create -n aviary python=3.11 -y
 conda activate aviary
 pip install -r requirements.txt
@@ -199,7 +199,7 @@ The server exposes 9 MCP tools: `get_design_space`, `create_session`,
 `set_aircraft_parameters`, `configure_mission`, `validate_parameters`,
 `run_simulation`, `get_results`, `get_trajectory`, `check_constraints`.
 
-See the [Aviary README](https://github.com/Jezemba/Aviary#readme) for full
+See the [Aviary README](https://github.com/cmudrc/aviary-mcp#readme) for full
 server documentation.
 
 ### 2. Run a single optimization
@@ -261,7 +261,7 @@ pytest -m "slow or gpu" -v --timeout=600
 
 ## Documentation
 
-Full documentation is hosted at **https://jezemba.github.io/MAS-Aviary/**
+Full documentation is hosted at **https://cmudrc.github.io/MAS-Aviary/**
 (auto-deployed on every push to main).
 
 To build locally:

@@ -9,7 +9,7 @@ Prerequisites
 =============
 
 - Python 3.12+ (for MAS-Aviary)
-- The `Aviary MCP server <https://github.com/Jezemba/Aviary>`_ (separate conda env, Python 3.11)
+- The `Aviary MCP server <https://github.com/cmudrc/aviary-mcp>`_ (separate conda env, Python 3.11)
 - NVIDIA GPU with CUDA 12.x (for Qwen3-8B inference)
 
 Installation
@@ -19,7 +19,7 @@ Installation
 
    .. code-block:: bash
 
-      git clone https://github.com/Jezemba/MAS-Aviary.git
+      git clone https://github.com/cmudrc/MAS-Aviary.git
       cd MAS-Aviary
 
 2. **Create and activate a virtual environment**
@@ -39,15 +39,15 @@ Installation
 Starting the Aviary MCP Server
 ==============================
 
-The `Aviary MCP server <https://github.com/Jezemba/Aviary>`_ must be running
+The `Aviary MCP server <https://github.com/cmudrc/aviary-mcp>`_ must be running
 before you launch any optimization. It exposes 9 aircraft design tools that
 agents interact with via the Model Context Protocol.
 
 .. code-block:: bash
 
    # Clone and install in a separate conda environment
-   git clone https://github.com/Jezemba/Aviary.git
-   cd Aviary
+   git clone https://github.com/cmudrc/aviary-mcp.git
+   cd aviary-mcp
    conda create -n aviary python=3.11 -y
    conda activate aviary
    pip install -r requirements.txt
@@ -55,7 +55,7 @@ agents interact with via the Model Context Protocol.
    # Start the server (listens on http://localhost:8600/mcp)
    python server/aviary_mcp_server.py
 
-See the `Aviary README <https://github.com/Jezemba/Aviary#readme>`_ for full
+See the `Aviary README <https://github.com/cmudrc/aviary-mcp#readme>`_ for full
 server documentation including design parameters, mission configuration, and
 tool reference.
 
